@@ -1,4 +1,4 @@
-# Framework Principal e Extensões
+#Framework Principal e Extensões
 Flask
 Flask-Login
 Flask-Migrate
@@ -7,14 +7,16 @@ Flask-WTF
 Flask-Mail
 Flask-APScheduler
 
-# Biblioteca da IA (versão mínima para garantir a sintaxe correta)
+#Biblioteca da IA
 google-generativeai>=0.3
 
-# ORM (versão mínima para garantir a sintaxe correta)
+#ORM
 SQLAlchemy>=2.0
 
-# Utilitários
+#Utilitários
 python-dotenv
+Markdown
 
-email_validator
-
+#Dependências de Produção (para Gunicorn e PostgreSQL)
+gunicorn
+psycopg2-binary
