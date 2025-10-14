@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .search-result-card {
+        border-left: 5px solid #0d6efd;
+    }
+    .log-content { 
+        white-space: pre-wrap; 
+        word-wrap: break-word; 
+    }
+    mark {
+        background-color: #ffc107;
+        padding: 0.2em;
+        border-radius: 3px;
+    }
+</style>
+
+<div class="content-card">
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary mb-3"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
+    
+    {% if query %}
+        <h3><i class="fas fa-search"></i> Resultados da Busca por: <mark>"{{ query }}"</mark></h3>
+    {% else %}
+        <h3><i class="fas fa-search"></i> Busca Global</h3>
+        <p class="text-muted">Por favor, digite um termo na barra de busca do painel.</p>
+    {% endif %}
+
+    <hr>
+
+    {% if results %}
+        <p class="text-muted">{{ results|length }} registro(s) encontrado(s).</p>
+        {% for log in results %}
+        <div class="card mb-3 search-result-card">
+            <div class="card-header bg-light d-flex justify-content-between">
+                <span>
+                    <i class="fas fa-user"></i> <strong>{{ log.author.username }}</strong>
+                </span>
+                <span>
+                    <i class="fas fa-calendar-day"></i> {{ log.entry_date.strftime('%d/%m/%Y') }}
+                </span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title"><strong>Projeto:</strong> {{ log.project | replace(query, '<mark>' + query + '</mark>') | safe }}</h5>
+                
+                <p class="mt-3"><strong><i class="fas fa-tasks"></i> Tarefas Realizadas:</strong></p>
+                <p class="log-content">{{ log.tasks_completed | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
+                
+                {% if log.observations %}
+                    <p><strong><i class="fas fa-lightbulb"></i> Observações:</strong></p>
+                    <p class="log-content">{{ log.observations | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
+                {% endif %}
+                
+                <p><strong><i class="fas fa-arrow-right"></i> Próximos Passos:</strong></p>
+                <p class="log-content">{{ log.next_steps | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    {% elif query %}
+        <div class="text-center mt-5">
+            <p class="lead">Nenhum resultado encontrado para o termo <strong>"{{ query }}"</strong>.</p>
+            <p class="text-muted">Tente usar palavras-chave diferentes.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

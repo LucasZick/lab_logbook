@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Estilos para o conteúdo renderizado a partir do Markdown */
+    .report-content {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.7;
+        color: #343a40;
+    }
+    .report-content h1, 
+    .report-content h2, 
+    .report-content h3, 
+    .report-content h4 {
+        font-weight: 700;
+        margin-top: 1.8rem;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+    }
+    .report-content strong {
+        font-weight: 700;
+        color: #212529;
+    }
+    .report-content ul, .report-content ol {
+        padding-left: 2rem;
+    }
+    .report-content li {
+        margin-bottom: 0.5rem;
+    }
+    .report-content code {
+        background-color: #e9ecef;
+        padding: 0.2em 0.4em;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+</style>
+
+<div class="content-card">
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary mb-3"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
+    
+    <h3><i class="fas fa-brain"></i> Análise Semanal Gerada pela IA</h3>
+    
+    <p class="text-muted">
+        Este é um resumo gerado com base nos registos da semana de 
+        <strong>{{ start_date.strftime('%d/%m/%Y') }}</strong> a <strong>{{ end_date.strftime('%d/%m/%Y') }}</strong>.
+    </p>
+    <hr>
+    
+    <div class="report-content">
+        {{ report_html | safe }}
+    </div>
+</div>
+
+{% endblock %}

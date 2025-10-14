@@ -1,0 +1,40 @@
+# Ambientes Virtuais
+# Ignora a pasta do nosso ambiente virtual e outros nomes comuns.
+venv/
+.venv/
+env/
+ENV/
+
+# Ficheiros de cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pasta de instância do Flask
+# Usada para configurações que não devem ir para o repositório.
+instance/
+
+# Ficheiro do banco de dados SQLite
+# A estrutura é gerida pelas migrações, os dados não devem ser versionados.
+*.db
+*.sqlite
+*.sqlite3
+
+# Ficheiro de variáveis de ambiente
+# CRÍTICO: Contém segredos como senhas e chaves de API. NUNCA versionar.
+.env
+
+# Ficheiros de configuração de Editores e IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Ficheiros gerados pelo Sistema Operativo
+.DS_Store
+Thumbs.db
+
+# Ficheiros de log
+*.log

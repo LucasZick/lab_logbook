@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Container com Rolagem Horizontal */
+    .table-container {
+        overflow-x: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+    .activity-grid {
+        margin-bottom: 0;
+    }
+
+    /* Estilo geral das células e cabeçalhos */
+    .activity-grid th, .activity-grid td {
+        text-align: center;
+        vertical-align: middle;
+        padding: 0.75rem 0.5rem;
+        white-space: nowrap;
+        min-width: 45px;
+    }
+
+    /* --- MELHORIA NA SEPARAÇÃO HORIZONTAL --- */
+    
+    /* 1. Adiciona uma borda inferior clara em cada linha */
+    .activity-grid tbody tr {
+        border-bottom: 1px solid #dee2e6; 
+    }
+    .activity-grid tbody tr:last-child {
+        border-bottom: none; /* Remove a borda da última linha */
+    }
+
+    /* 2. Mantém o "Zebra Striping" sutil para guiar o olho */
+    .activity-grid tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.02); /* Tom ainda mais sutil */
+    }
+
+    /* 3. Melhora o efeito de hover para destacar a linha inteira */
+    .activity-grid tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.1);
+        transition: background-color 0.15s ease-in-out;
+    }
+    
+    /* Coluna de Nomes Fixa (Sticky) */
+    .activity-grid thead th:first-child,
+    .activity-grid tbody td:first-child {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: #fff;
+    }
+    /* Garante que o fundo da célula fixa também mude no hover */
+    .activity-grid tbody tr:hover td:first-child {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    .activity-grid tbody td:first-child {
+        box-shadow: 5px 0 5px -5px rgba(0,0,0,0.1);
+    }
+    .activity-grid thead th:first-child {
+        z-index: 3;
+    }
+
+    /* Estilo da coluna de nomes */
+    .student-name {
+        text-align: left !important;
+        font-weight: 500;
+        min-width: 180px;
+    }
+
+    /* Estilo dos fins de semana */
+    .weekend-col {
+        background-color: #f0f2f5 !important;
+    }
+</style>
+
+<div class="content-card">
+    <h3><i class="fas fa-calendar-alt"></i> Grade de Atividades</h3>
+    
+    <div class="d-flex justify-content-between align-items-center my-3">
+        <a href="{{ url_for('main.calendar_view', ano=prev_month.ano, mes=prev_month.mes) }}" class="btn btn-outline-secondary">
+            &laquo; Anterior
+        </a>
+        <h4>{{ current_month_name }}</h4>
+        <a href="{{ url_for('main.calendar_view', ano=next_month.ano, mes=next_month.mes) }}" class="btn btn-outline-secondary">
+            Próximo &raquo;
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="table activity-grid">
+            <thead class="table-light">
+                <tr>
+                    <th class="student-name">Bolsista</th>
+                    {% for day_info in days_header %}
+                        <th class="{% if day_info.is_weekend %}weekend-col{% endif %}">{{ day_info.day }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for student_data in grid_data %}
+                <tr>
+                    <td class="student-name">{{ student_data.student.username }}</td>
+                    {% for day_status in student_data.days %}
+                        <td class="{% if day_status.is_weekend %}weekend-col{% endif %}">
+                            {% if day_status.has_log %}
+                                <i class="fas fa-check-circle text-success" title="Registro feito"></i>
+                            {% elif not day_status.is_weekend %}
+                                <i class="fas fa-times-circle text-danger" title="Registro não feito"></i>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
