@@ -20,3 +20,5 @@ Markdown
 #Dependências de Produção (para Gunicorn e PostgreSQL)
 gunicorn
 psycopg2-binary
+
+email_validator
