@@ -33,7 +33,7 @@ def send_weekly_report_job():
         ).order_by(User.username, LogEntry.entry_date).all()
 
         if not logs_current_week:
-            print(f"Nenhum registo encontrado na semana ({start_of_week.strftime('%d/%m')} a {today.strftime('%d/%m')}). Nenhum e-mail será enviado.")
+            print(f"Nenhum registo encontrado na semana ({start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}). E-mail não será enviado.")
             return
             
         formatted_logs = ""
@@ -42,8 +42,11 @@ def send_weekly_report_job():
             if log.observations: formatted_logs += f"Observações: {log.observations}\n"
             formatted_logs += f"Próximos Passos: {log.next_steps}\n---\n"
 
+        period_description = f"a semana de {start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}"
+        report_title = f"Análise Semanal: {start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}"
         master_prompt = f"""
-        Objetivo: Atue como um analisador de dados. Analise os registos de diário de bordo fornecidos e produza um relatório em formato Markdown.
+        Objetivo: Atue como um analisador de dados. Analise os registos de diário de bordo para {period_description} fornecidos e produza um relatório em formato Markdown.
+        
 
         Instruções Estritas:
         1. Baseie a sua análise EXCLUSIVAMENTE nos dados fornecidos.
@@ -59,7 +62,8 @@ def send_weekly_report_job():
         ## Sugestões para Reunião Semanal
         - (Tópicos para discussão.)
 
-        Dados Brutos para Análise:
+        Dados Brutos para {report_title}:
+
         ---
         {formatted_logs}
         """
@@ -74,7 +78,7 @@ def send_weekly_report_job():
             print(f"Erro ao comunicar com a IA: {e}")
             return
         
-        subject = f"Logbook: Análise Semanal ({start_of_week.strftime('%d/%m')} a {today.strftime('%d/%m')})"
+        subject = f"Logbook: Análise Semanal ({start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')})"
         
         send_email(subject,
                    sender=app.config['MAIL_USERNAME'],

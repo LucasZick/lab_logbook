@@ -39,7 +39,7 @@ def create_app(config_class=Config, start_scheduler=True):
                     func=send_weekly_report_job,
                     trigger='cron',
                     day_of_week='fri',
-                    hour=19,
+                    hour=21,
                     minute=00
                 )
 

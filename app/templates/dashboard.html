@@ -3,6 +3,9 @@
 {% block content %}
 <style>
     .action-buttons .btn { margin-left: 0.5rem; }
+    .flatpickr-input {
+        background-color: #fff; /* Garante fundo branco como outros inputs */
+    }
 </style>
 
 <div class="content-card mb-4">
@@ -17,9 +20,40 @@
 </div>
 
 <div class="content-card mb-4">
-    <h4><i class="fas fa-brain"></i> Análise Semanal com IA</h4>
-    <p class="text-muted">Clique no botão abaixo para que a IA analise todos os registos dos bolsistas ativos na última semana e gere um relatório executivo com os principais avanços e pontos de atenção.</p>
-    <a href="{{ url_for('main.generate_report') }}" class="btn btn-primary"><i class="fas fa-cogs"></i> Gerar Análise Semanal</a>
+    <h4><i class="fas fa-brain"></i> Análise de Desempenho com IA</h4>
+    <p class="text-muted">Selecione o tipo de período (semanal ou mensal) e a data/mês correspondente para gerar um relatório automático.</p>
+    
+    <form action="{{ url_for('main.generate_report') }}" method="get">
+        
+        <div class="mb-3">
+            <label class="form-label">Tipo de Relatório:</label>
+            <div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="report_type" id="report_week" value="week" checked onchange="toggleDateSelector()">
+                    <label class="form-check-label" for="report_week">Semanal</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="report_type" id="report_month" value="month" onchange="toggleDateSelector()">
+                    <label class="form-check-label" for="report_month">Mensal</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3" id="week_selector">
+            <label for="report_date" class="form-label">Selecione um dia da semana desejada:</label>
+            <input type="date" class="form-control" id="report_date" name="selected_date" value="{{ today_date }}">
+        </div>
+
+        <div class="mb-3" id="month_selector" style="display: none;">
+            <label for="report_month_flatpickr" class="form-label">Selecione o mês desejado:</label>
+            <input type="text" class="form-control" id="report_month_flatpickr" placeholder="Clique para selecionar o mês..." value="{{ current_month }}">
+            <input type="hidden" id="selected_month_hidden" name="selected_month" value="{{ current_month }}">
+        </div>
+        
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-cogs"></i> Gerar Relatório</button>
+        </div>
+    </form>
 </div>
 
 <div class="content-card mb-4">
@@ -40,6 +74,7 @@
         <p class="text-muted">Nenhuma solicitação pendente.</p>
     {% endif %}
 </div>
+
 <div class="content-card mb-4">
     <h4><i class="fas fa-users"></i> Bolsistas Ativos</h4>
     {% if active_bolsistas %}
@@ -58,6 +93,7 @@
         <p class="text-muted">Nenhum bolsista ativo no momento.</p>
     {% endif %}
 </div>
+
 <div class="content-card">
     <h4><i class="fas fa-user-lock"></i> Bolsistas Inativos</h4>
     {% if inactive_bolsistas %}
@@ -76,4 +112,52 @@
         <p class="text-muted">Nenhum bolsista inativo.</p>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }} <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/index.js"></script>
+<link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/style.css">
+
+<script>
+    function toggleDateSelector() {
+        const weekSelector = document.getElementById('week_selector');
+        const monthSelector = document.getElementById('month_selector');
+        const weekRadio = document.getElementById('report_week');
+        const dateInput = document.getElementById('report_date');
+        const monthHiddenInput = document.getElementById('selected_month_hidden');
+        
+        if (weekRadio.checked) {
+            weekSelector.style.display = 'block';
+            monthSelector.style.display = 'none';
+            dateInput.setAttribute('name', 'selected_date');
+            monthHiddenInput.removeAttribute('name');
+        } else {
+            weekSelector.style.display = 'none';
+            monthSelector.style.display = 'block';
+            dateInput.removeAttribute('name');
+            monthHiddenInput.setAttribute('name', 'selected_month');
+        }
+    }
+    
+    const fpMonth = flatpickr("#report_month_flatpickr", {
+        plugins: [
+            new monthSelectPlugin({
+              shorthand: false, // Usar nomes completos (ex: Janeiro)
+              dateFormat: "Y-m", // Formato enviado para o back-end (YYYY-MM)
+              altFormat: "F Y",  // Formato exibido para o utilizador (ex: Outubro 2025)
+              altInput: true,   // Cria um input visível com o formato amigável
+              theme: "light"    
+            })
+        ],
+        defaultDate: "{{ current_month }}", // Recebe 'YYYY-MM' do back-end
+        onChange: function(selectedDates, dateStr, instance) {
+            // Atualiza o valor do input oculto que será enviado
+            document.getElementById('selected_month_hidden').value = dateStr;
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', toggleDateSelector);
+</script>
 {% endblock %}

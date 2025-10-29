@@ -40,10 +40,10 @@
 <div class="content-card">
     <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary mb-3"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
     
-    <h3><i class="fas fa-brain"></i> Análise Semanal Gerada pela IA</h3>
+    <h3><i class="fas fa-brain"></i> {{ title }}</h3> 
     
     <p class="text-muted">
-        Este é um resumo gerado com base nos registos da semana de 
+        Este é um resumo gerado pela IA com base nos registos da semana de 
         <strong>{{ start_date.strftime('%d/%m/%Y') }}</strong> a <strong>{{ end_date.strftime('%d/%m/%Y') }}</strong>.
     </p>
     <hr>

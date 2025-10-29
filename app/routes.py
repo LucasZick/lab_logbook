@@ -65,24 +65,17 @@ def index():
         year, month = key
         month_name = f"{meses[month]} de {year}"
         available_months.append({'year': year, 'month': month, 'name': month_name})
-
     if target_year and target_month:
         display_logs = [log for log in all_logs if log.entry_date.year == target_year and log.entry_date.month == target_month]
         current_month_name = f"{meses[target_month]} de {target_year}"
     elif all_logs:
-        most_recent_log = all_logs[0]
-        mry, mrm = most_recent_log.entry_date.year, most_recent_log.entry_date.month
+        most_recent = all_logs[0]
+        mry, mrm = most_recent.entry_date.year, most_recent.entry_date.month
         display_logs = [log for log in all_logs if log.entry_date.year == mry and log.entry_date.month == mrm]
         current_month_name = f"{meses[mrm]} de {mry}"
     else:
         display_logs, current_month_name = [], "Nenhum registro encontrado"
-
-    return render_template('index.html', 
-                           title='Página Inicial', 
-                           form=form, 
-                           logs_to_display=display_logs,
-                           available_months=available_months,
-                           current_month_name=current_month_name)
+    return render_template('index.html', title='Página Inicial', form=form, logs_to_display=display_logs, available_months=available_months, current_month_name=current_month_name)
 
 
 # --- ROTA DE LOGIN ATUALIZADA ---
@@ -130,13 +123,19 @@ def approve_user(user_id):
 @professor_required
 def dashboard():
     pending_users = User.query.filter_by(is_approved=False).all()
-    # Separa os bolsistas em ativos e inativos
     active_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=True).order_by(User.username).all()
     inactive_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=False).order_by(User.username).all()
+    
+    today = date.today()
+    today_date_str = today.strftime('%Y-%m-%d') 
+    current_month_str = today.strftime('%Y-%m')
+    
     return render_template('dashboard.html', title='Painel do Professor', 
                            pending_users=pending_users, 
                            active_bolsistas=active_bolsistas, 
-                           inactive_bolsistas=inactive_bolsistas)
+                           inactive_bolsistas=inactive_bolsistas,
+                           today_date=today_date_str,
+                           current_month=current_month_str) # Variável adicionada
 
 # --- CALENDÁRIO ATUALIZADO ---
 # Mostra apenas bolsistas ativos na grade
@@ -284,6 +283,7 @@ def search():
                            query=query)
 
 
+# --- ROTA DE GERAÇÃO DE RELATÓRIO (ATUALIZADA PARA ACEITAR DATA) ---
 @bp.route('/generate_report')
 @login_required
 @professor_required
@@ -293,38 +293,93 @@ def generate_report():
         flash('A chave de API do Gemini não está configurada no servidor.', 'danger')
         return redirect(url_for('main.dashboard'))
 
-    today = date.today()
-    start_of_week = today - timedelta(days=today.weekday())
-    
-    logs_current_week = LogEntry.query.join(User).filter(
-        User.role == 'bolsista',
-        User.is_active == True,
-        LogEntry.entry_date >= start_of_week,
-        LogEntry.entry_date <= today
-    ).order_by(User.username, LogEntry.entry_date).all()
+    # 1. Identifica o tipo de relatório solicitado
+    report_type = request.args.get('report_type', 'week') # Padrão é semanal
 
-    if not logs_current_week:
-        flash(f"Não há registos na semana corrente ({start_of_week.strftime('%d/%m')} a {today.strftime('%d/%m')}) para gerar uma análise.", 'info')
+    start_period = None
+    end_period = None
+    period_description = ""
+    report_title = ""
+
+    meses = {1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'}
+
+    try:
+        if report_type == 'month':
+            # --- LÓGICA PARA RELATÓRIO MENSAL ---
+            selected_month_str = request.args.get('selected_month') # Formato YYYY-MM
+            if not selected_month_str:
+                flash('Mês não selecionado para o relatório mensal.', 'warning')
+                return redirect(url_for('main.dashboard'))
+            
+            year, month = map(int, selected_month_str.split('-'))
+            start_period = date(year, month, 1)
+            _, last_day = calendar.monthrange(year, month)
+            end_period = date(year, month, last_day)
+            
+            month_name = meses[month]
+            period_description = f"o mês de {month_name} de {year}"
+            report_title = f"Análise Mensal: {month_name} de {year}"
+
+        else: # Assume report_type == 'week'
+            # --- LÓGICA PARA RELATÓRIO SEMANAL ---
+            selected_date_str = request.args.get('selected_date')
+            if selected_date_str:
+                selected_date = date.fromisoformat(selected_date_str)
+            else:
+                selected_date = date.today() # Usa hoje se nada for selecionado
+
+            # Calcula início (Segunda) e fim (Domingo) da semana
+            start_period = selected_date - timedelta(days=selected_date.weekday())
+            end_period = start_period + timedelta(days=6)
+            
+            period_description = f"a semana de {start_period.strftime('%d/%m/%Y')} a {end_period.strftime('%d/%m/%Y')}"
+            report_title = f"Análise Semanal: {start_period.strftime('%d/%m/%Y')} a {end_period.strftime('%d/%m/%Y')}"
+
+    except ValueError:
+        flash('Data ou mês inválido selecionado.', 'warning')
         return redirect(url_for('main.dashboard'))
 
+    # 2. Busca os logs para o período calculado
+    logs_period = LogEntry.query.join(User).filter(
+        User.role == 'bolsista',
+        User.is_active == True,
+        LogEntry.entry_date >= start_period,
+        LogEntry.entry_date <= end_period
+    ).order_by(User.username, LogEntry.entry_date).all()
+
+    if not logs_period:
+        flash(f"Não há registos n{period_description} para gerar uma análise.", 'info')
+        return redirect(url_for('main.dashboard'))
+
+    # 3. Formata os dados (igual para ambos os tipos)
     formatted_logs = ""
-    for log in logs_current_week:
+    for log in logs_period:
         formatted_logs += f"Data: {log.entry_date.strftime('%d/%m/%Y')}\nBolsista: {log.author.username}\nProjeto: {log.project}\nTarefas Realizadas: {log.tasks_completed}\n"
         if log.observations: formatted_logs += f"Observações: {log.observations}\n"
         formatted_logs += f"Próximos Passos: {log.next_steps}\n---\n"
 
+    # 4. Seleciona e formata o Prompt Mestre
+    if report_type == 'month':
+        prompt_analysis_type = "mensal"
+        prompt_focus = "tendências, progressos gerais e problemas recorrentes ao longo do mês"
+        prompt_suggestions_focus = "estratégicos ou de longo prazo"
+    else:
+        prompt_analysis_type = "semanal"
+        prompt_focus = "progresso geral, ritmo de trabalho e projetos em foco na semana"
+        prompt_suggestions_focus = "imediatos ou para a próxima reunião"
+
     master_prompt = f"""
-    Objetivo: Atue como um analisador de dados. Analise os registos de diário de bordo fornecidos e produza um relatório em formato Markdown.
+    Objetivo: Atue como um analisador de dados. Analise os registos de diário de bordo fornecidos para {period_description} e produza um relatório {prompt_analysis_type} em formato Markdown.
 
     Instruções Estritas:
-    1.  Baseie a sua análise EXCLUSIVAMENTE nos dados fornecidos. Não invente, infira ou adicione qualquer informação externa.
-    2.  NÃO inclua saudações, introduções ou conclusões (ex: "Para:", "De:", "Atenciosamente"). O relatório deve começar diretamente no primeiro título.
-    3.  Use o seguinte formato Markdown:
+    1. Baseie a sua análise EXCLUSIVAMENTE nos dados fornecidos para este período.
+    2. NÃO inclua saudações, introduções ou conclusões. Comece diretamente no primeiro título.
+    3. Use o seguinte formato Markdown:
 
-    # Análise Semanal de Atividades
+    # {report_title}
 
-    ## Resumo Geral
-    (Um parágrafo conciso sobre o progresso geral e os projetos em foco, baseado nos dados.)
+    ## Resumo Geral {('do Mês' if report_type == 'month' else 'da Semana')}
+    (Um parágrafo conciso sobre {prompt_focus}, baseado nos dados.)
 
     ## Principais Avanços
     - (Use um tópico para cada conquista ou progresso significativo extraído dos registos.)
@@ -335,28 +390,30 @@ def generate_report():
     - (Agrupe problemas semelhantes e identifique se algum parece ser recorrente.)
     - (Se não houver problemas, indique "Nenhum problema reportado.")
 
-    ## Sugestões para Reunião Semanal
-    - (Sugira 2 ou 3 tópicos para discussão baseados estritamente nos avanços e gargalos identificados.)
+    ## Sugestões {('Estratégicas' if report_type == 'month' else 'para Reunião Semanal')}
+    - (Sugira 2 ou 3 tópicos de discussão {prompt_suggestions_focus} baseados estritamente nos avanços e gargalos identificados.)
 
-    Dados Brutos para Análise:
+    Dados Brutos para Análise ({period_description}):
     ---
     {formatted_logs}
     """
 
+    # 5. Chama a IA e renderiza o resultado
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-pro')
-        response = model.generate_content(master_prompt)
+        model = genai.GenerativeModel('gemini-pro')
+        # Aumentar o tempo limite pode ser útil para relatórios mensais mais longos
+        response = model.generate_content(master_prompt, request_options={'timeout': 120}) # Timeout de 2 minutos
         report_text = response.text
         report_html = markdown.markdown(report_text)
     except Exception as e:
-        flash(f'Ocorreu um erro ao comunicar com a IA: {e}', 'danger')
+        # Imprime o erro no log do servidor para depuração
+        print(f"Erro detalhado da API do Gemini: {e}") 
+        flash(f'Ocorreu um erro ao comunicar com a IA. Verifique os logs do servidor para detalhes.', 'danger')
         return redirect(url_for('main.dashboard'))
 
-    # --- CORREÇÃO APLICADA AQUI ---
-    # Adicionamos start_date e end_date para que o template os possa usar.
-    return render_template('report_view.html', 
-                           title="Análise Semanal da IA", 
+    return render_template('report_view.html',
+                           title=report_title,
                            report_html=report_html,
-                           start_date=start_of_week,
-                           end_date=today)
+                           start_date=start_period,
+                           end_date=end_period)
