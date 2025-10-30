@@ -19,41 +19,62 @@
     </form>
 </div>
 
+
 <div class="content-card mb-4">
     <h4><i class="fas fa-brain"></i> Análise de Desempenho com IA</h4>
-    <p class="text-muted">Selecione o tipo de período (semanal ou mensal) e a data/mês correspondente para gerar um relatório automático.</p>
+    <p class="text-muted">Gere relatórios semanais ou mensais com base nos registos dos bolsistas ativos.</p>
+    <hr>
     
-    <form action="{{ url_for('main.generate_report') }}" method="get">
-        
-        <div class="mb-3">
-            <label class="form-label">Tipo de Relatório:</label>
-            <div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="report_type" id="report_week" value="week" checked onchange="toggleDateSelector()">
-                    <label class="form-check-label" for="report_week">Semanal</label>
+    <div class="row">
+
+        <!-- Coluna da Esquerda: Relatório Semanal -->
+        <div class="col-md-6 border-end">
+            <h5 class="text-center">Relatório Semanal</h5>
+            <p class="text-muted text-center small">Selecione um dia qualquer. O relatório incluirá a semana inteira (Seg-Dom) desse dia.</p>
+            
+            <form action="{{ url_for('main.generate_report') }}" method="get" id="form-weekly-report">
+                <div class="mb-3">
+                    <label for="report_date_week" class="form-label">Data de Referência:</label>
+                    <input type="date" class="form-control" id="report_date_week" name="selected_date" value="{{ today_date }}">
                 </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="report_type" id="report_month" value="month" onchange="toggleDateSelector()">
-                    <label class="form-check-label" for="report_month">Mensal</label>
-                </div>
-            </div>
+                <button type="submit" class="btn btn-info w-100" id="btn-weekly-report">
+                    <i class="fas fa-calendar-week"></i> Gerar Relatório Semanal
+                </button>
+            </form>
         </div>
 
-        <div class="mb-3" id="week_selector">
-            <label for="report_date" class="form-label">Selecione um dia da semana desejada:</label>
-            <input type="date" class="form-control" id="report_date" name="selected_date" value="{{ today_date }}">
-        </div>
-
-        <div class="mb-3" id="month_selector" style="display: none;">
-            <label for="report_month_flatpickr" class="form-label">Selecione o mês desejado:</label>
-            <input type="text" class="form-control" id="report_month_flatpickr" placeholder="Clique para selecionar o mês..." value="{{ current_month }}">
-            <input type="hidden" id="selected_month_hidden" name="selected_month" value="{{ current_month }}">
+        <!-- Coluna da Direita: Relatório Mensal -->
+        <div class="col-md-6">
+            <h5 class="text-center">Relatório Mensal</h5>
+            <p class="text-muted text-center small">Selecione o mês e o ano desejados para a análise completa do período.</p>
+            
+            <form action="{{ url_for('main.generate_report') }}" method="get" id="form-monthly-report">
+                <input type="hidden" name="report_type" value="month">
+                <div class="row g-2">
+                    <div class="col-sm-7">
+                        <label for="month_num" class="form-label">Mês:</label>
+                        <select class="form-select" id="month_num" name="month_num">
+                            {% for num, nome in meses.items() %}
+                                <option value="{{ num }}" {% if num == current_month_num %}selected{% endif %}>{{ nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-5">
+                        <label for="year_select" class="form-label">Ano:</label>
+                        <select class="form-select" id="year_select" name="year">
+                            {% for y in available_years %}
+                                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success w-100 mt-3" id="btn-monthly-report">
+                    <i class="fas fa-chart-line"></i> Gerar Relatório Mensal
+                </button>
+            </form>
         </div>
         
-        <div class="mt-4">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-cogs"></i> Gerar Relatório</button>
-        </div>
-    </form>
+    </div>
 </div>
 
 <div class="content-card mb-4">
@@ -115,49 +136,61 @@
 {% endblock %}
 
 {% block scripts %}
-{{ super() }} <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/index.js"></script>
-<link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/plugins/monthSelect/style.css">
+{{ super() }} <!-- Inclui scripts do base.html, se houver -->
 
+<!-- SCRIPT DE LOADING (CORREÇÃO FINAL E ROBUSTA) -->
 <script>
-    function toggleDateSelector() {
-        const weekSelector = document.getElementById('week_selector');
-        const monthSelector = document.getElementById('month_selector');
-        const weekRadio = document.getElementById('report_week');
-        const dateInput = document.getElementById('report_date');
-        const monthHiddenInput = document.getElementById('selected_month_hidden');
+    document.addEventListener('DOMContentLoaded', function() {
         
-        if (weekRadio.checked) {
-            weekSelector.style.display = 'block';
-            monthSelector.style.display = 'none';
-            dateInput.setAttribute('name', 'selected_date');
-            monthHiddenInput.removeAttribute('name');
-        } else {
-            weekSelector.style.display = 'none';
-            monthSelector.style.display = 'block';
-            dateInput.removeAttribute('name');
-            monthHiddenInput.setAttribute('name', 'selected_month');
+        // --- LÓGICA PARA O BOTÃO SEMANAL ---
+        const weeklyButton = document.getElementById('btn-weekly-report');
+        if (weeklyButton) {
+            // 1. Ouvir o 'click' do BOTÃO
+            weeklyButton.addEventListener('click', function(event) {
+                // 2. Impedir a submissão padrão imediata
+                event.preventDefault(); 
+                
+                // 3. Mudar o botão para 'loading'
+                this.disabled = true; // 'this' é o botão
+                this.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    A gerar...
+                `;
+
+                // 4. Encontrar o formulário a que este botão pertence
+                const form = this.closest('form'); 
+
+                // 5. Agendar a submissão real para daqui a 50ms
+                setTimeout(() => {
+                    form.submit(); // Submete o formulário
+                }, 50); 
+            });
         }
-    }
-    
-    const fpMonth = flatpickr("#report_month_flatpickr", {
-        plugins: [
-            new monthSelectPlugin({
-              shorthand: false, // Usar nomes completos (ex: Janeiro)
-              dateFormat: "Y-m", // Formato enviado para o back-end (YYYY-MM)
-              altFormat: "F Y",  // Formato exibido para o utilizador (ex: Outubro 2025)
-              altInput: true,   // Cria um input visível com o formato amigável
-              theme: "light"    
-            })
-        ],
-        defaultDate: "{{ current_month }}", // Recebe 'YYYY-MM' do back-end
-        onChange: function(selectedDates, dateStr, instance) {
-            // Atualiza o valor do input oculto que será enviado
-            document.getElementById('selected_month_hidden').value = dateStr;
+
+        // --- LÓGICA PARA O BOTÃO MENSAL ---
+        const monthlyButton = document.getElementById('btn-monthly-report');
+        if (monthlyButton) {
+            // 1. Ouvir o 'click' do BOTÃO
+            monthlyButton.addEventListener('click', function(event) {
+                // 2. Impedir a submissão padrão imediata
+                event.preventDefault();
+
+                // 3. Mudar o botão para 'loading'
+                this.disabled = true; // 'this' é o botão
+                this.innerHTML = `
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    A gerar...
+                `;
+                
+                // 4. Encontrar o formulário a que este botão pertence
+                const form = this.closest('form');
+
+                // 5. Agendar a submissão real para daqui a 50ms
+                setTimeout(() => {
+                    form.submit();
+                }, 1000);
+            });
         }
     });
-
-    document.addEventListener('DOMContentLoaded', toggleDateSelector);
 </script>
 {% endblock %}

@@ -2,7 +2,7 @@ import itertools
 import google.generativeai as genai
 from datetime import date, timedelta
 import calendar
-from flask import current_app, render_template, flash, redirect, url_for, request, Blueprint, abort
+from flask import current_app, jsonify, render_template, flash, redirect, url_for, request, Blueprint, abort
 from sqlalchemy import or_
 from app import db
 from app.forms import LoginForm, RegistrationForm, LogEntryForm
@@ -117,7 +117,11 @@ def approve_user(user_id):
     flash(f'O usuário {user.username} foi aprovado e ativado!', 'success')
     return redirect(url_for('main.dashboard'))
 
-# --- PAINEL DO PROFESSOR ATUALIZADO ---
+meses = {
+    1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho',
+    7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+}
+
 @bp.route('/dashboard')
 @login_required
 @professor_required
@@ -126,16 +130,47 @@ def dashboard():
     active_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=True).order_by(User.username).all()
     inactive_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=False).order_by(User.username).all()
     
+    # --- DADOS PARA OS SELETORES ---
     today = date.today()
-    today_date_str = today.strftime('%Y-%m-%d') 
-    current_month_str = today.strftime('%Y-%m')
+    current_year = today.year
+    current_month_num = today.month
+    today_date_str = today.strftime('%Y-%m-%d')
+    available_years = [current_year, current_year - 1, current_year - 2, current_year - 3]
     
     return render_template('dashboard.html', title='Painel do Professor', 
                            pending_users=pending_users, 
                            active_bolsistas=active_bolsistas, 
                            inactive_bolsistas=inactive_bolsistas,
-                           today_date=today_date_str,
-                           current_month=current_month_str) # Variável adicionada
+                           today_date=today_date_str, # Para o seletor de semana
+                           meses=meses, # Para o seletor de mês
+                           available_years=available_years, # Para o seletor de ano
+                           current_year=current_year,
+                           current_month_num=current_month_num)
+
+@bp.route('/get_week_range')
+@login_required
+@professor_required
+def get_week_range():
+    """
+    Calcula e retorna o intervalo de uma semana (Seg-Dom) com base numa data.
+    Usado pelo JavaScript para dar feedback ao utilizador.
+    """
+    selected_date_str = request.args.get('date')
+    if not selected_date_str:
+        return jsonify({'error': 'Nenhuma data fornecida'}), 400
+    
+    try:
+        selected_date = date.fromisoformat(selected_date_str)
+        # Calcula o início (Segunda) e o fim (Domingo) da semana
+        start_of_week = selected_date - timedelta(days=selected_date.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        
+        # Formata a string de exibição no formato DD/MM/YYYY
+        display_string = f"Semana: {start_of_week.strftime('%d/%m/%Y')} a {end_of_week.strftime('%d/%m/%Y')}"
+        
+        return jsonify({'display': display_string})
+    except ValueError:
+        return jsonify({'error': 'Formato de data inválido'}), 400
 
 # --- CALENDÁRIO ATUALIZADO ---
 # Mostra apenas bolsistas ativos na grade
@@ -293,80 +328,70 @@ def generate_report():
         flash('A chave de API do Gemini não está configurada no servidor.', 'danger')
         return redirect(url_for('main.dashboard'))
 
-    # 1. Identifica o tipo de relatório solicitado
-    report_type = request.args.get('report_type', 'week') # Padrão é semanal
+    # --- LÓGICA DE DECISÃO INTELIGENTE ---
+    # Verificamos quais parâmetros foram enviados para decidir o tipo de relatório
+    if 'month_num' in request.args:
+        report_type = 'month'
+    else:
+        report_type = 'week'
 
-    start_period = None
-    end_period = None
-    period_description = ""
-    report_title = ""
-
-    meses = {1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'}
+    start_period, end_period = None, None
+    period_description, report_title = "", ""
 
     try:
         if report_type == 'month':
             # --- LÓGICA PARA RELATÓRIO MENSAL ---
-            selected_month_str = request.args.get('selected_month') # Formato YYYY-MM
-            if not selected_month_str:
-                flash('Mês não selecionado para o relatório mensal.', 'warning')
-                return redirect(url_for('main.dashboard'))
-            
-            year, month = map(int, selected_month_str.split('-'))
-            start_period = date(year, month, 1)
-            _, last_day = calendar.monthrange(year, month)
-            end_period = date(year, month, last_day)
-            
-            month_name = meses[month]
+            month_num = request.args.get('month_num', type=int)
+            year = request.args.get('year', type=int)
+            if not month_num or not year: raise ValueError("Mês ou Ano em falta.")
+
+            start_period = date(year, month_num, 1)
+            _, last_day = calendar.monthrange(year, month_num)
+            end_period = date(year, month_num, last_day)
+            month_name = meses[month_num]
             period_description = f"o mês de {month_name} de {year}"
             report_title = f"Análise Mensal: {month_name} de {year}"
 
-        else: # Assume report_type == 'week'
+        else: # report_type == 'week'
             # --- LÓGICA PARA RELATÓRIO SEMANAL ---
             selected_date_str = request.args.get('selected_date')
-            if selected_date_str:
-                selected_date = date.fromisoformat(selected_date_str)
-            else:
-                selected_date = date.today() # Usa hoje se nada for selecionado
+            selected_date = date.fromisoformat(selected_date_str) if selected_date_str else date.today()
 
-            # Calcula início (Segunda) e fim (Domingo) da semana
             start_period = selected_date - timedelta(days=selected_date.weekday())
             end_period = start_period + timedelta(days=6)
-            
             period_description = f"a semana de {start_period.strftime('%d/%m/%Y')} a {end_period.strftime('%d/%m/%Y')}"
             report_title = f"Análise Semanal: {start_period.strftime('%d/%m/%Y')} a {end_period.strftime('%d/%m/%Y')}"
 
-    except ValueError:
-        flash('Data ou mês inválido selecionado.', 'warning')
+    except Exception as e:
+        flash(f'Período inválido selecionado: {e}', 'warning')
         return redirect(url_for('main.dashboard'))
 
-    # 2. Busca os logs para o período calculado
+    # ... (O resto da função: buscar logs, formatar, chamar IA, e renderizar o 'report_view.html'
+    #      permanece exatamente o mesmo, pois já está a usar estas variáveis)
+    
     logs_period = LogEntry.query.join(User).filter(
         User.role == 'bolsista',
         User.is_active == True,
         LogEntry.entry_date >= start_period,
         LogEntry.entry_date <= end_period
     ).order_by(User.username, LogEntry.entry_date).all()
-
+    
     if not logs_period:
         flash(f"Não há registos n{period_description} para gerar uma análise.", 'info')
         return redirect(url_for('main.dashboard'))
 
-    # 3. Formata os dados (igual para ambos os tipos)
+    # ... (Formatação dos logs e prompt da IA)
     formatted_logs = ""
     for log in logs_period:
         formatted_logs += f"Data: {log.entry_date.strftime('%d/%m/%Y')}\nBolsista: {log.author.username}\nProjeto: {log.project}\nTarefas Realizadas: {log.tasks_completed}\n"
         if log.observations: formatted_logs += f"Observações: {log.observations}\n"
         formatted_logs += f"Próximos Passos: {log.next_steps}\n---\n"
-
-    # 4. Seleciona e formata o Prompt Mestre
+    
+    # Seleção do Prompt
     if report_type == 'month':
-        prompt_analysis_type = "mensal"
-        prompt_focus = "tendências, progressos gerais e problemas recorrentes ao longo do mês"
-        prompt_suggestions_focus = "estratégicos ou de longo prazo"
+        prompt_analysis_type = "mensal"; prompt_focus = "tendências e progressos gerais"; prompt_suggestions_focus = "estratégicos"
     else:
-        prompt_analysis_type = "semanal"
-        prompt_focus = "progresso geral, ritmo de trabalho e projetos em foco na semana"
-        prompt_suggestions_focus = "imediatos ou para a próxima reunião"
+        prompt_analysis_type = "semanal"; prompt_focus = "ritmo de trabalho e projetos em foco"; prompt_suggestions_focus = "imediatos"
 
     master_prompt = f"""
     Objetivo: Atue como um analisador de dados. Analise os registos de diário de bordo fornecidos para {period_description} e produza um relatório {prompt_analysis_type} em formato Markdown.
@@ -401,13 +426,11 @@ def generate_report():
     # 5. Chama a IA e renderiza o resultado
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')
-        # Aumentar o tempo limite pode ser útil para relatórios mensais mais longos
-        response = model.generate_content(master_prompt, request_options={'timeout': 120}) # Timeout de 2 minutos
+        model = genai.GenerativeModel('gemini-2.5-pro')
+        response = model.generate_content(master_prompt, request_options={'timeout': 120})
         report_text = response.text
         report_html = markdown.markdown(report_text)
     except Exception as e:
-        # Imprime o erro no log do servidor para depuração
         print(f"Erro detalhado da API do Gemini: {e}") 
         flash(f'Ocorreu um erro ao comunicar com a IA. Verifique os logs do servidor para detalhes.', 'danger')
         return redirect(url_for('main.dashboard'))
