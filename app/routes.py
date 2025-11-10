@@ -27,17 +27,16 @@ def professor_required(f):
 @bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-
     if current_user.role == 'professor':
         return redirect(url_for('main.dashboard'))
-    
+
     form = LogEntryForm()
     if form.validate_on_submit():
         log_entry = LogEntry(
             entry_date=form.entry_date.data,
             project=form.project.data,
             tasks_completed=form.tasks_completed.data,
-            observations=form.observations.data, # Campo atualizado
+            observations=form.observations.data,
             next_steps=form.next_steps.data,
             author=current_user
         )
@@ -48,35 +47,80 @@ def index():
         except IntegrityError:
             db.session.rollback()
             flash('Você já possui um registro para esta data.', 'danger')
+        # Redireciona de volta para a mesma página (index)
         return redirect(url_for('main.index'))
 
-    target_year = request.args.get('ano', type=int)
-    target_month = request.args.get('mes', type=int)
+    # --- LÓGICA DA PÁGINA (GET) ---
 
-    all_logs = current_user.logs.order_by(LogEntry.entry_date.desc()).all()
+    # 1. LÓGICA DO "REGISTO DE HOJE"
+    today = date.today()
+    has_log_today = LogEntry.query.filter_by(
+        author=current_user,
+        entry_date=today
+    ).first() is not None
+
+    # 2. LÓGICA DO CALENDÁRIO E HISTÓRICO (UNIFICADA)
+    # A página inteira (calendário e histórico) será controlada por estes parâmetros
+    year = request.args.get('ano', default=today.year, type=int)
+    month = request.args.get('mes', default=today.month, type=int)
+
+    # 3. Calcula as datas para os botões de navegação
+    current_date = date(year, month, 1)
+    prev_month_date = current_date - timedelta(days=1)
+    next_month_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
     
-    meses = {
-        1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho',
-        7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
-    }
+    # 4. Busca os registos do utilizador para o mês/ano selecionado
+    _, num_days_in_month = calendar.monthrange(year, month)
+    start_date = date(year, month, 1)
+    end_date = date(year, month, num_days_in_month)
+    
+    # Busca os logs UMA SÓ VEZ
+    logs_in_month = LogEntry.query.filter_by(author=current_user).filter(
+        LogEntry.entry_date >= start_date,
+        LogEntry.entry_date <= end_date
+    ).order_by(LogEntry.entry_date.desc()).all() # Ordena descendentemente para o histórico
 
-    available_months = []
-    for key, group in itertools.groupby(all_logs, key=lambda log: (log.entry_date.year, log.entry_date.month)):
-        year, month = key
-        month_name = f"{meses[month]} de {year}"
-        available_months.append({'year': year, 'month': month, 'name': month_name})
-    if target_year and target_month:
-        display_logs = [log for log in all_logs if log.entry_date.year == target_year and log.entry_date.month == target_month]
-        current_month_name = f"{meses[target_month]} de {target_year}"
-    elif all_logs:
-        most_recent = all_logs[0]
-        mry, mrm = most_recent.entry_date.year, most_recent.entry_date.month
-        display_logs = [log for log in all_logs if log.entry_date.year == mry and log.entry_date.month == mrm]
-        current_month_name = f"{meses[mrm]} de {mry}"
-    else:
-        display_logs, current_month_name = [], "Nenhum registro encontrado"
-    return render_template('index.html', title='Página Inicial', form=form, logs_to_display=display_logs, available_months=available_months, current_month_name=current_month_name)
+    # 5. Prepara os dados para a grelha do calendário
+    logs_lookup = {log.entry_date.day for log in logs_in_month}
+    days_status_list = []
+    for day in range(1, num_days_in_month + 1):
+        current_day_date = date(year, month, day)
+        is_weekend_day = current_day_date.weekday() >= 5
+        has_log = day in logs_lookup
+        
+        show_icon = True
+        icon_type = 'none'
+        if has_log:
+            icon_type = 'check'
+        elif current_day_date > today:
+            show_icon = False
+        elif is_weekend_day:
+            show_icon = False
+        else:
+            icon_type = 'times'
+            
+        days_status_list.append({
+            'day': day, 'show_icon': show_icon, 'icon_type': icon_type, 'is_weekend': is_weekend_day
+        })
+    
+    # 6. Prepara o cabeçalho da tabela
+    days_header_list = []
+    for day in range(1, num_days_in_month + 1):
+        is_weekend_day = date(year, month, day).weekday() >= 5
+        days_header_list.append({'day': day, 'is_weekend': is_weekend_day})
 
+    current_month_name = f"{meses[month]} de {year}"
+    
+    return render_template('index.html', 
+                           title='Meu Painel',
+                           form=form,
+                           has_log_today=has_log_today,
+                           days_status=days_status_list,
+                           days_header=days_header_list,
+                           logs_to_display=logs_in_month, # Passa os logs para o histórico
+                           current_month_name=current_month_name,
+                           prev_month={'ano': prev_month_date.year, 'mes': prev_month_date.month},
+                           next_month={'ano': next_month_date.year, 'mes': next_month_date.month})
 
 # --- ROTA DE LOGIN ATUALIZADA ---
 @bp.route('/login', methods=['GET', 'POST'])

@@ -1,173 +1,152 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <!-- Fontes e Ícones do Google Fonts e Font Awesome -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>
+    /* Estilos do Calendário (copiados de calendar_view.html) */
+    .table-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 8px; }
+    .activity-grid { margin-bottom: 0; }
+    .activity-grid th, .activity-grid td { text-align: center; vertical-align: middle; padding: 0.75rem 0.5rem; white-space: nowrap; min-width: 45px; }
+    .activity-grid tbody tr { border-bottom: 1px solid #dee2e6; }
+    .activity-grid tbody tr:hover { background-color: rgba(13, 110, 253, 0.1); }
+    .student-name { text-align: left !important; font-weight: 500; min-width: 180px; position: -webkit-sticky; position: sticky; left: 0; z-index: 2; background-color: #fff; }
+    .activity-grid tbody tr:hover .student-name { background-color: rgba(13, 110, 253, 0.1); }
+    .activity-grid thead th:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 3; }
+    .weekend-col { background-color: #f0f2f5 !important; }
+    .log-content { white-space: pre-wrap; word-wrap: break-word; }
+</style>
 
-    <style>
-        /* --- Estilo Global --- */
-        body {
-            background-color: #f0f2f5; /* Fundo cinza suave */
-            font-family: 'Inter', sans-serif; /* Nova fonte */
-            color: #333;
-        }
-
-        /* --- Cartão Principal --- */
-        .content-card {
-            background-color: #ffffff;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            margin-bottom: 2rem;
-        }
-
-        h2, h3, h4 {
-            font-weight: 700;
-            color: #2c3e50;
-        }
-
-        /* --- Formulário Melhorado --- */
-        .form-label {
-            font-weight: 500;
-            color: #555;
-        }
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            padding: 0.75rem 1rem;
-        }
-        .form-control:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-        .btn-success {
-            font-weight: 500;
-            border-radius: 8px;
-            padding: 0.75rem 1.5rem;
-        }
-
-        /* --- Design dos Registros Anteriores --- */
-        .log-list-container .list-group-item {
-            border-radius: 8px !important;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        .log-list-container .list-group-item.active {
-            background-color: #2c3e50; /* Azul escuro corporativo */
-            border-color: #2c3e50;
-        }
-        .log-card {
-            border: none;
-            border-left: 5px solid #0d6efd; /* Borda de destaque azul */
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        }
-        .log-card .card-header {
-            background-color: transparent;
-            border-bottom: 1px solid #eee;
-            font-weight: 700;
-        }
-        .log-card .card-body p strong {
-            color: #2c3e50;
-        }
-        .log-content { 
-            white-space: pre-wrap; 
-            word-wrap: break-word; 
-            color: #555;
-        }
-        .log-card .card-body i {
-            margin-right: 8px;
-            color: #0d6efd;
-        }
-    </style>
-
-    <div class="content-card">
-        <h2><i class="fas fa-clipboard-list" style="color: #2c3e50;"></i> Olá, {{ current_user.username }}!</h2>
-        <p class="text-muted">Bem-vindo ao seu diário de bordo. Registre suas atividades abaixo.</p>
-        <hr class="my-4">
-        
-        <h4><i class="fas fa-plus-circle" style="color: #198754;"></i> Novo Registro</h4>
-        <form action="" method="post" novalidate>
-            {{ form.hidden_tag() }}
-            
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    {{ form.entry_date.label(class="form-label") }}
-                    {{ form.entry_date(class="form-control" + (" is-invalid" if form.entry_date.errors else "")) }}
-                    <div class="invalid-feedback">{% for error in form.entry_date.errors %}<span>{{ error }}</span>{% endfor %}</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    {{ form.project.label(class="form-label") }}
-                    {{ form.project(class="form-control" + (" is-invalid" if form.project.errors else "")) }}
-                    <div class="invalid-feedback">{% for error in form.project.errors %}<span>{{ error }}</span>{% endfor %}</div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                {{ form.tasks_completed.label(class="form-label") }}
-                {{ form.tasks_completed(class="form-control" + (" is-invalid" if form.tasks_completed.errors else "")) }}
-                <div class="invalid-feedback">{% for error in form.tasks_completed.errors %}<span>{{ error }}</span>{% endfor %}</div>
-            </div>
-            
-            <div class="mb-3">
-                {{ form.observations.label(class="form-label") }}
-                {{ form.observations(class="form-control") }}
-            </div>
-            
-            <div class="mb-3">
-                {{ form.next_steps.label(class="form-label") }}
-                {{ form.next_steps(class="form-control" + (" is-invalid" if form.next_steps.errors else "")) }}
-                <div class="invalid-feedback">{% for error in form.next_steps.errors %}<span>{{ error }}</span>{% endfor %}</div>
-            </div>
-            
-            <p>{{ form.submit(class="btn btn-success") }}</p>
-        </form>
+{% if has_log_today %}
+    <div class="alert alert-success" role="alert">
+        <i class="fas fa-check-circle"></i> <strong>Ótimo trabalho!</strong> O seu registo de hoje já foi concluído.
     </div>
+{% else %}
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> <strong>Lembrete:</strong> O seu registo de hoje ainda não foi feito.
+    </div>
+{% endif %}
 
-    <div class="content-card">
-        <h3><i class="fas fa-history"></i> Meus Registros Anteriores</h3>
-        <div class="row mt-4">
-            <div class="col-md-3 log-list-container">
-                {% if available_months %}
-                <div class="list-group">
-                    {% for month_data in available_months %}
-                        <a href="{{ url_for('main.index', ano=month_data.year, mes=month_data.month) }}" 
-                           class="list-group-item list-group-item-action {% if month_data.name == current_month_name %}active{% endif %}">
-                           <i class="fas fa-calendar-alt"></i> {{ month_data.name }}
-                        </a>
-                    {% endfor %}
-                </div>
-                {% endif %}
+<div class="content-card mb-4">
+    <h4><i class="fas fa-plus-circle text-success"></i> Novo Registro</h4>
+    <p class="text-muted">Preencha o seu diário de bordo. O campo de data já vem com o dia de hoje.</p>
+    <form action="{{ url_for('main.index') }}" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ form.entry_date.label(class="form-label") }}
+                {{ form.entry_date(class="form-control" + (" is-invalid" if form.entry_date.errors else "")) }}
+                <div id="dateHelp" class="form-text text-muted"><i class="fas fa-info-circle"></i> Use o calendário para selecionar.</div>
+                <div class="invalid-feedback">{% for error in form.entry_date.errors %}<span>{{ error }}</span>{% endfor %}</div>
             </div>
-
-            <div class="col-md-9">
-                <h4>Exibindo: {{ current_month_name }}</h4>
-                <hr>
-                {% if logs_to_display %}
-                    {% for log in logs_to_display %}
-                    <div class="card mb-3 log-card">
-                        <div class="card-header">
-                            <i class="fas fa-robot"></i> <strong>{{ log.project }}</strong> - <small class="text-muted">{{ log.entry_date.strftime('%d/%m/%Y') }}</small>
-                        </div>
-                        <div class="card-body">
-                            <p><strong><i class="fas fa-tasks"></i> Tarefas:</strong></p>
-                            <p class="log-content">{{ log.tasks_completed }}</p>
-                            
-                            {% if log.observations %}<p><strong><i class="fas fa-lightbulb"></i> Observações:</strong></p><p class="log-content">{{ log.observations }}</p>{% endif %}
-                            
-                            <p><strong><i class="fas fa-arrow-right"></i> Próximos Passos:</strong></p>
-                            <p class="log-content">{{ log.next_steps }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-center text-muted mt-5">Nenhum registro encontrado para este período.</p>
-                {% endif %}
+            <div class="col-md-6 mb-3">
+                {{ form.project.label(class="form-label") }}
+                {{ form.project(class="form-control" + (" is-invalid" if form.project.errors else "")) }}
+                <div class="invalid-feedback">{% for error in form.project.errors %}<span>{{ error }}</span>{% endfor %}</div>
             </div>
         </div>
-    </div>
-{% endblock %}
+        <div class="mb-3">
+            {{ form.tasks_completed.label(class="form-label") }}
+            {{ form.tasks_completed(class="form-control" + (" is-invalid" if form.tasks_completed.errors else "")) }}
+            <div class="invalid-feedback">{% for error in form.tasks_completed.errors %}<span>{{ error }}</span>{% endfor %}</div>
+        </div>
+        <div class="mb-3">
+            {{ form.observations.label(class="form-label") }}
+            {{ form.observations(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.next_steps.label(class="form-label") }}
+            {{ form.next_steps(class="form-control" + (" is-invalid" if form.next_steps.errors else "")) }}
+            <div class="invalid-feedback">{% for error in form.next_steps.errors %}<span>{{ error }}</span>{% endfor %}</div>
+        </div>
+        
+        <p>{{ form.submit(class="btn btn-success") }}</p>
+    </form>
+</div>
 
+<div class="content-card mb-4">
+    <h3><i class="fas fa-calendar-check"></i> Meu Calendário de Atividades</h3>
+    
+    <div class="d-flex justify-content-between align-items-center my-3">
+        <a href="{{ url_for('main.index', ano=prev_month.ano, mes=prev_month.mes) }}" class="btn btn-outline-secondary">
+            &laquo; Anterior
+        </a>
+        <h4>{{ current_month_name }}</h4>
+        <a href="{{ url_for('main.index', ano=next_month.ano, mes=next_month.mes) }}" class="btn btn-outline-secondary">
+            Próximo &raquo;
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="table activity-grid">
+            <thead class="table-light">
+                <tr>
+                    <th class="student-name">Bolsista</th>
+                    {% for day_info in days_header %}
+                        <th class="{% if day_info.is_weekend %}weekend-col{% endif %}">{{ day_info.day }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="student-name">{{ current_user.username }}</td>
+                    {% for day_status in days_status %}
+                        <td class="{% if day_status.is_weekend %}weekend-col{% endif %}">
+                            {% if day_status.show_icon %}
+                                {% if day_status.icon_type == 'check' %}
+                                    <i class="fas fa-check-circle text-success" title="Registo feito"></i>
+                                {% elif day_status.icon_type == 'times' %}
+                                    <i class="fas fa-times-circle text-danger" title="Registo em falta"></i>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="content-card">
+    <h3><i class="fas fa-history"></i> Registos Detalhados de: {{ current_month_name }}</h3>
+    <hr>
+    {% if logs_to_display %}
+        {% for log in logs_to_display %}
+            <div class="log-item"> <div class="log-summary d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#log-details-{{ log.id }}" aria-expanded="false">
+                    <div>
+                        <strong class="text-primary">{{ log.entry_date.strftime('%d/%m/%Y') }}</strong>
+                        <span class="ms-3">{{ log.project }}</span>
+                        {% if log.observations %}<i class="fas fa-exclamation-triangle text-warning ms-2" title="Possui observações"></i>{% endif %}
+                    </div>
+                    <button class="btn btn-sm btn-light">
+                        Ver Detalhes <i class="fas fa-chevron-down chevron-icon"></i>
+                    </button>
+                </div>
+                <div class="collapse" id="log-details-{{ log.id }}">
+                    <div class="log-details">
+                        <p><strong><i class="fas fa-tasks text-primary"></i> Tarefas Realizadas:</strong></p>
+                        <p class="log-content">{{ log.tasks_completed }}</p>
+                        {% if log.observations %}
+                            <p><strong><i class="fas fa-lightbulb text-primary"></i> Observações:</strong></p>
+                            <p class="log-content">{{ log.observations }}</p>
+                        {% endif %}
+                        <p><strong><i class="fas fa-arrow-right text-primary"></i> Próximos Passos:</strong></p>
+                        <p class="log-content">{{ log.next_steps }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-center text-muted mt-3">Nenhum registo encontrado para este período.</p>
+    {% endif %}
+</div>
+
+<style>
+    .log-item { border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; }
+    .log-summary { background-color: #fff; padding: 0.75rem 1.25rem; cursor: pointer; transition: background-color 0.2s; }
+    .log-summary:hover { background-color: #f8f9fa; }
+    .log-details { background-color: #f8f9fa; padding: 1.25rem; border-top: 1px solid #dee2e6; }
+    .log-summary[aria-expanded="true"] .chevron-icon { transform: rotate(180deg); }
+    .chevron-icon { transition: transform 0.2s ease-in-out; }
+</style>
+
+{% endblock %}
