@@ -5,6 +5,8 @@ services:
     restart: always
     expose:
       - "5000"
+    environment:
+      - PYTHONUNBUFFERED=1
     env_file:
       - .env
     depends_on:
