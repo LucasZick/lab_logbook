@@ -1,5 +1,6 @@
 import os
 import secrets
+import sys
 from PIL import Image
 import itertools
 from datetime import date, timedelta
@@ -78,27 +79,33 @@ def user_profile(username):
 @login_required
 def edit_profile():
     form = EditProfileForm(current_user.username)
+    
     if form.validate_on_submit():
-        # ... (salvar imagem se houver) ...
+        # 1. Lógica de Imagem (se o usuário enviou uma nova foto)
+        if form.picture.data:
+            picture_file = save_picture(form.picture.data)
+            current_user.image_file = picture_file
         
-        # Guardar dados
+        # 2. Guardar dados de texto (incluindo o novo campo skills)
         current_user.username = form.username.data
         current_user.course = form.course.data
         current_user.bio = form.bio.data
-        current_user.skills = form.skills.data # <--- ADICIONAR ESTA LINHA
+        current_user.skills = form.skills.data # <--- Campo Skills adicionado
         current_user.lattes_link = form.lattes_link.data
         current_user.linkedin_link = form.linkedin_link.data
         current_user.github_link = form.github_link.data
         
+        # 3. Commit no banco
         db.session.commit()
         flash('O seu perfil foi atualizado!', 'success')
         return redirect(url_for('main.user_profile', username=current_user.username))
     
     elif request.method == 'GET':
+        # Preenche o formulário com os dados atuais do banco
         form.username.data = current_user.username
         form.course.data = current_user.course
         form.bio.data = current_user.bio
-        form.skills.data = current_user.skills # <--- ADICIONAR ESTA LINHA
+        form.skills.data = current_user.skills # <--- Campo Skills carregado
         form.lattes_link.data = current_user.lattes_link
         form.linkedin_link.data = current_user.linkedin_link
         form.github_link.data = current_user.github_link
