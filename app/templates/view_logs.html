@@ -29,15 +29,21 @@
         /* Rotaciona o ícone de seta quando expandido */
         .log-summary[aria-expanded="true"] .chevron-icon {
             transform: rotate(180deg);
-        }
+        }   
         .chevron-icon {
             transition: transform 0.2s ease-in-out;
         }
     </style>
 
     <div class="content-card">
-        <h3><i class="fas fa-user-graduate"></i> Diário de Bordo de: <strong>{{ student.username }}</strong></h3>
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary mt-2"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
+        <div class="d-flex align-items-center mb-3">
+            <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" class="rounded-circle me-3" width="60" height="60" style="object-fit: cover; border: 2px solid #0d6efd;">
+            <div>
+                <h3 class="mb-0">Diário de Bordo: <strong>{{ student.username }}</strong></h3>
+                {% if student.course %}<small class="text-muted">{{ student.course }}</small>{% endif %}
+            </div>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary ms-auto"><i class="fas fa-arrow-left"></i> Voltar</a>
+        </div>
         <hr>
         <div class="row mt-4">
             <!-- Coluna da Esquerda: Navegação dos Meses -->

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-card">
+    <div class="d-flex align-items-center mb-4">
+        <img src="{{ image_file }}" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
+        <h3>Editar Perfil</h3>
+    </div>
+    <hr>
+    <form action="" method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control") }}
+                {% for error in form.username.errors %}
+                <span class="text-danger">[{{ error }}]</span>
+                {% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+                {{ form.picture.label(class="form-label") }}
+                {{ form.picture(class="form-control") }}
+                {% for error in form.picture.errors %}
+                <span class="text-danger">[{{ error }}]</span>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            {{ form.course.label(class="form-label") }}
+            {{ form.course(class="form-control") }}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.bio.label(class="form-label") }}
+            {{ form.bio(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.skills.label(class="form-label") }}
+            {{ form.skills(class="form-control", id="skills_input") }}
+            <div class="form-text text-muted">Digite uma habilidade e pressione Enter.</div>
+        </div>
+        
+        <h5 class="mt-4 text-muted">Links Profissionais</h5>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                {{ form.lattes_link.label(class="form-label") }}
+                {{ form.lattes_link(class="form-control") }}
+            </div>
+            <div class="col-md-4 mb-3">
+                {{ form.github_link.label(class="form-label") }}
+                {{ form.github_link(class="form-control") }}
+            </div>
+            <div class="col-md-4 mb-3">
+                {{ form.linkedin_link.label(class="form-label") }}
+                {{ form.linkedin_link(class="form-control") }}
+            </div>
+        </div>
+        
+        <div class="mt-4 d-flex justify-content-between align-items-center">
+            <div>
+                {{ form.submit(class="btn btn-success") }}
+                <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+            </div>
+            
+            <a href="{{ url_for('main.change_password') }}" class="btn btn-warning text-dark">
+                <i class="fas fa-key"></i> Alterar Senha
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+
+<script>
+    var input = document.querySelector('#skills_input');
+    
+    // Inicializa o Tagify
+    var tagify = new Tagify(input, {
+        originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(',')
+    });
+</script>
+{% endblock %}

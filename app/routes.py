@@ -1,16 +1,20 @@
+import os
+import secrets
+from PIL import Image
 import itertools
-import google.generativeai as genai
 from datetime import date, timedelta
 import calendar
-from flask import current_app, jsonify, render_template, flash, redirect, url_for, request, Blueprint, abort
-from sqlalchemy import or_
+from flask import render_template, flash, redirect, url_for, request, Blueprint, abort, current_app
 from app import db
-from app.forms import LoginForm, RegistrationForm, LogEntryForm
+# Importar o novo formulário
+from app.forms import ChangePasswordForm, LoginForm, RegistrationForm, LogEntryForm, EditProfileForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, LogEntry
 from urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from functools import wraps
+import google.generativeai as genai
 import markdown
 
 bp = Blueprint('main', __name__)
@@ -19,9 +23,72 @@ def professor_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_user.role != 'professor':
-            abort(403) # Erro de Acesso Proibido
+            abort(403)
         return f(*args, **kwargs)
     return decorated_function
+
+# --- FUNÇÃO AUXILIAR PARA SALVAR FOTO ---
+def save_picture(form_picture):
+    # 1. Gera nome aleatório para evitar conflitos
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    
+    # 2. Define o caminho completo (pasta static/profile_pics)
+    picture_path = os.path.join(current_app.root_path, 'static/profile_pics', picture_fn)
+
+    # 3. Redimensiona a imagem para 150x150 (poupa espaço)
+    output_size = (150, 150)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    
+    # 4. Salva
+    i.save(picture_path)
+
+    return picture_fn
+
+# --- ROTAS DE PERFIL ---
+
+@bp.route('/user/<username>')
+@login_required
+def user_profile(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    total_logs = user.logs.count()
+    # Define a imagem. Se for default, busca a padrão, senão busca a do usuário
+    image_file = url_for('static', filename='profile_pics/' + user.image_file)
+    return render_template('user_profile.html', user=user, total_logs=total_logs, image_file=image_file)
+
+@bp.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm(current_user.username)
+    if form.validate_on_submit():
+        # ... (salvar imagem se houver) ...
+        
+        # Guardar dados
+        current_user.username = form.username.data
+        current_user.course = form.course.data
+        current_user.bio = form.bio.data
+        current_user.skills = form.skills.data # <--- ADICIONAR ESTA LINHA
+        current_user.lattes_link = form.lattes_link.data
+        current_user.linkedin_link = form.linkedin_link.data
+        current_user.github_link = form.github_link.data
+        
+        db.session.commit()
+        flash('O seu perfil foi atualizado!', 'success')
+        return redirect(url_for('main.user_profile', username=current_user.username))
+    
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.course.data = current_user.course
+        form.bio.data = current_user.bio
+        form.skills.data = current_user.skills # <--- ADICIONAR ESTA LINHA
+        form.lattes_link.data = current_user.lattes_link
+        form.linkedin_link.data = current_user.linkedin_link
+        form.github_link.data = current_user.github_link
+        
+    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+    return render_template('edit_profile.html', title='Editar Perfil', form=form, image_file=image_file)
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
@@ -484,3 +551,22 @@ def generate_report():
                            report_html=report_html,
                            start_date=start_period,
                            end_date=end_period)
+
+@bp.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        # 1. Verifica se a senha antiga está correta
+        if not current_user.check_password(form.old_password.data):
+            flash('A senha atual está incorreta.', 'danger')
+            return redirect(url_for('main.change_password'))
+        
+        # 2. Define a nova senha
+        current_user.set_password(form.new_password.data)
+        db.session.commit()
+        
+        flash('Sua senha foi alterada com sucesso!', 'success')
+        return redirect(url_for('main.user_profile', username=current_user.username))
+        
+    return render_template('change_password.html', title='Alterar Senha', form=form)

@@ -22,3 +22,5 @@ gunicorn
 psycopg2-binary
 
 email_validator
+
+Pillow

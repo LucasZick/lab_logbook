@@ -83,7 +83,13 @@
         <ul class="list-group">
             {% for user in pending_users %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span><strong>{{ user.username }}</strong> <small class="text-muted">({{ user.email }})</small></span>
+                <div class="d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
+                    <div>
+                        <strong>{{ user.username }}</strong> <br>
+                        <small class="text-muted">{{ user.email }}</small>
+                    </div>
+                </div>
                 <div class="action-buttons">
                     <a href="{{ url_for('main.approve_user', user_id=user.id) }}" class="btn btn-sm btn-success"><i class="fas fa-check"></i> Aprovar</a>
                     <a href="{{ url_for('main.reject_user', user_id=user.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza?');"><i class="fas fa-times"></i> Rejeitar</a>
@@ -100,9 +106,16 @@
     <h4><i class="fas fa-users"></i> Bolsistas Ativos</h4>
     {% if active_bolsistas %}
         <ul class="list-group">
-            {% for bolsista in active_bolsistas %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span><strong>{{ bolsista.username }}</strong></span>
+            {% for bolsista in active_bolsistas %} <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='profile_pics/' + bolsista.image_file) }}" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
+                    <div>
+                        <strong>{{ bolsista.username }}</strong>
+                        {% if bolsista.course %}
+                            <br><small class="text-muted">{{ bolsista.course }}</small>
+                        {% endif %}
+                    </div>
+                </div>
                 <div class="action-buttons">
                     <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="btn btn-sm btn-primary"><i class="fas fa-eye"></i> Ver Diário</a>
                     <a href="{{ url_for('main.deactivate_user', user_id=bolsista.id) }}" class="btn btn-sm btn-warning" onclick="return confirm('Tem certeza?');"><i class="fas fa-user-slash"></i> Desativar</a>
@@ -121,7 +134,15 @@
         <ul class="list-group">
             {% for bolsista in inactive_bolsistas %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span><strong>{{ bolsista.username }}</strong></span>
+                <div class="d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='profile_pics/' + bolsista.image_file) }}" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
+                    <div>
+                        <strong>{{ bolsista.username }}</strong>
+                        {% if bolsista.course %}
+                            <br><small class="text-muted">{{ bolsista.course }}</small>
+                        {% endif %}
+                    </div>
+                </div>
                 <div class="action-buttons">
                     <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i> Ver Histórico</a>
                     <a href="{{ url_for('main.activate_user', user_id=bolsista.id) }}" class="btn btn-sm btn-info" onclick="return confirm('Tem certeza?');"><i class="fas fa-user-check"></i> Reativar</a>

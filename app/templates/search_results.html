@@ -32,11 +32,12 @@
         <p class="text-muted">{{ results|length }} registro(s) encontrado(s).</p>
         {% for log in results %}
         <div class="card mb-3 search-result-card">
-            <div class="card-header bg-light d-flex justify-content-between">
-                <span>
-                    <i class="fas fa-user"></i> <strong>{{ log.author.username }}</strong>
-                </span>
-                <span>
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="rounded-circle me-2" width="30" height="30" style="object-fit: cover;">
+                    <strong>{{ log.author.username }}</strong>
+                </div>
+                <span class="text-muted small">
                     <i class="fas fa-calendar-day"></i> {{ log.entry_date.strftime('%d/%m/%Y') }}
                 </span>
             </div>
