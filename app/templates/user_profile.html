@@ -1,58 +1,220 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="content-card">
-    <div class="d-flex align-items-start">
-        <div class="me-4 text-center">
-            <img src="{{ image_file }}" class="rounded-circle account-img" style="width: 150px; height: 150px; object-fit: cover;">
-            {% if user == current_user %}
-                <div class="mt-3">
-                    <a href="{{ url_for('main.edit_profile') }}" class="btn btn-sm btn-outline-primary">Editar Perfil</a>
-                </div>
-            {% endif %}
-        </div>
-        
-        <div class="flex-grow-1">
-            <h2>{{ user.username }}</h2>
-            <p class="text-muted mb-1">{{ user.email }}</p>
-            <span class="badge bg-primary">{{ user.role|capitalize }}</span>
-            
-            {% if user.course %}
-                <p class="mt-3"><strong><i class="fas fa-graduation-cap"></i> Curso:</strong> {{ user.course }}</p>
-            {% endif %}
-            
-            {% if user.bio %}
-                <p class="mt-3"><strong>Sobre:</strong><br>{{ user.bio }}</p>
-            {% endif %}
+<style>
+    /* --- Estilos Exclusivos do Perfil --- */
+    
+    /* Cartão de Identidade (Esquerda) */
+    .profile-card {
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* "Capa" colorida no topo do cartão */
+    .profile-header-bg {
+        height: 100px;
+        background: linear-gradient(135deg, #003319 0%, #01552b 100%);
+        margin: -2rem -2rem 0 -2rem; /* Negativo para encostar nas bordas */
+        margin-bottom: 3rem; /* Espaço para a foto subir */
+    }
 
-            {% if user.skills %}
-                <div class="mt-3">
-                    <strong>Habilidades:</strong><br>
-                    {% for skill in user.skills.split(',') %}
-                        {% if skill|trim != '' %} <span class="badge rounded-pill bg-info text-dark me-1 mb-1">{{ skill }}</span>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            {% endif %}
+    /* A Foto de Perfil "Flutuante" */
+    .profile-avatar-container {
+        position: relative;
+        margin-top: -80px; /* Puxa a foto para cima da capa */
+        display: inline-block;
+    }
+    .profile-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 5px solid #ffffff; /* Borda branca grossa para separar do fundo */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        object-fit: cover;
+        background-color: #fff;
+    }
+    
+    /* Badge de Função */
+    .role-badge {
+        margin-top: 10px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 50rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Links Sociais */
+    .social-btn {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #f3f4f6;
+        color: #4b5563;
+        transition: all 0.2s;
+        margin: 0 5px;
+        text-decoration: none;
+    }
+    .social-btn:hover {
+        background-color: #01552b;
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    /* Cartões de Estatísticas */
+    .stat-box {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s;
+    }
+    .stat-box:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
+    .stat-icon-wrapper {
+        width: 50px; height: 50px;
+        border-radius: 12px;
+        background: rgba(1, 85, 43, 0.1);
+        color: #01552b;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    /* Seções de Detalhes */
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+    .detail-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #9ca3af;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+        letter-spacing: 0.05em;
+    }
+</style>
+
+<div class="row">
+    
+    <div class="col-lg-4 mb-4">
+        <div class="content-card profile-card h-100">
+            <div class="profile-header-bg"></div>
             
-            <div class="mt-4">
-                {% if user.lattes_link %}
-                    <a href="{{ user.lattes_link }}" target="_blank" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-scroll"></i> Lattes</a>
-                {% endif %}
+            <div class="profile-avatar-container">
+                <img src="{{ image_file }}" class="profile-avatar" alt="Foto de Perfil">
+            </div>
+
+            <h3 class="fw-bold text-dark mt-2 mb-1">{{ user.username }}</h3>
+            <p class="text-muted mb-3">{{ user.email }}</p>
+            
+            <span class="badge role-badge {% if user.role == 'professor' %}badge-soft-primary{% else %}badge-soft-success{% endif %}">
+                {{ user.role }}
+            </span>
+
+            <hr class="my-4">
+
+            <div class="d-flex justify-content-center mb-4">
                 {% if user.github_link %}
-                    <a href="{{ user.github_link }}" target="_blank" class="btn btn-sm btn-outline-dark me-2"><i class="fab fa-github"></i> GitHub</a>
+                    <a href="{{ user.github_link }}" target="_blank" class="social-btn" title="GitHub"><i class="fab fa-github"></i></a>
                 {% endif %}
                 {% if user.linkedin_link %}
-                    <a href="{{ user.linkedin_link }}" target="_blank" class="btn btn-sm btn-outline-primary me-2"><i class="fab fa-linkedin"></i> LinkedIn</a>
+                    <a href="{{ user.linkedin_link }}" target="_blank" class="social-btn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                {% endif %}
+                {% if user.lattes_link %}
+                    <a href="{{ user.lattes_link }}" target="_blank" class="social-btn" title="Lattes"><i class="fas fa-scroll"></i></a>
+                {% endif %}
+                
+                {% if not user.github_link and not user.linkedin_link and not user.lattes_link %}
+                    <p class="text-muted small fst-italic">Sem redes sociais cadastradas.</p>
                 {% endif %}
             </div>
+
+            {% if user == current_user %}
+                <a href="{{ url_for('main.edit_profile') }}" class="btn btn-outline-primary w-100 rounded-pill">
+                    <i class="fas fa-user-edit me-2"></i> Editar Perfil
+                </a>
+            {% endif %}
         </div>
+    </div>
+
+    <div class="col-lg-8">
         
-        <div class="card bg-light ms-4" style="min-width: 200px;">
-            <div class="card-body text-center">
-                <h3 class="display-6 fw-bold">{{ total_logs }}</h3>
-                <p class="text-muted mb-0">Registos Totais</p>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">{{ total_logs }}</h3>
+                        <span class="text-muted small">Registros Totais</span>
+                    </div>
+                </div>
             </div>
+            <div class="col-md-6">
+                <div class="stat-box">
+                    <div class="stat-icon-wrapper text-warning bg-warning bg-opacity-10">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">Nível 1</h3>
+                        <span class="text-muted small">Pesquisador Iniciante</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            
+            <div class="detail-section">
+                <h6 class="detail-title"><i class="fas fa-user me-2"></i> Sobre</h6>
+                {% if user.bio %}
+                    <p class="text-dark" style="white-space: pre-line;">{{ user.bio }}</p>
+                {% else %}
+                    <p class="text-muted fst-italic">Nenhuma biografia adicionada ainda.</p>
+                {% endif %}
+            </div>
+
+            <hr class="my-4">
+
+            <div class="detail-section">
+                <h6 class="detail-title"><i class="fas fa-graduation-cap me-2"></i> Informações Académicas</h6>
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="mb-1 fw-bold text-dark">Curso / Vínculo</p>
+                        <p class="text-muted">{{ user.course if user.course else 'Não informado' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="detail-section mb-0">
+                <h6 class="detail-title"><i class="fas fa-tools me-2"></i> Competências & Habilidades</h6>
+                {% if user.skills %}
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for skill in user.skills.split(',') %}
+                            {% if skill|trim != '' %}
+                                <span class="badge badge-soft-info rounded-pill px-3 py-2" style="font-size: 0.9rem;">
+                                    {{ skill }}
+                                </span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted fst-italic">Nenhuma habilidade cadastrada.</p>
+                {% endif %}
+            </div>
+
         </div>
     </div>
 </div>

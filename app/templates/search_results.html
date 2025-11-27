@@ -2,66 +2,177 @@
 
 {% block content %}
 <style>
-    .search-result-card {
-        border-left: 5px solid #0d6efd;
+    /* --- Estilos da Página de Busca --- */
+    
+    /* Barra de Busca no Topo */
+    .search-header-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        margin-bottom: 2rem;
+        border-bottom: 3px solid #01552b;
     }
-    .log-content { 
-        white-space: pre-wrap; 
-        word-wrap: break-word; 
+
+    /* Cartão de Resultado */
+    .result-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #f3f4f6;
+        transition: all 0.2s ease-in-out;
+        position: relative;
     }
+    
+    .result-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        border-color: #e5e7eb;
+    }
+
+    /* Cabeçalho do Cartão (Autor e Data) */
+    .result-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.8rem;
+        border-bottom: 1px solid #f9fafb;
+    }
+
+    /* Título do Projeto */
+    .result-project {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    /* Conteúdo do Texto */
+    .result-content {
+        color: #4b5563;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+    }
+    
+    .result-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #9ca3af;
+        margin-right: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    /* Estilo do Termo Destacado (Mark) */
     mark {
-        background-color: #ffc107;
-        padding: 0.2em;
-        border-radius: 3px;
+        background-color: rgba(255, 193, 7, 0.25); /* Amarelo suave */
+        color: #b45309; /* Texto laranja escuro para contraste */
+        padding: 0 4px;
+        border-radius: 4px;
+        font-weight: 600;
+        border-bottom: 2px solid rgba(255, 193, 7, 0.5);
+    }
+    
+    /* Badge de Data */
+    .date-badge {
+        background-color: #f3f4f6;
+        color: #6b7280;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
     }
 </style>
 
-<div class="content-card">
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary mb-3"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
-    
-    {% if query %}
-        <h3><i class="fas fa-search"></i> Resultados da Busca por: <mark>"{{ query }}"</mark></h3>
-    {% else %}
-        <h3><i class="fas fa-search"></i> Busca Global</h3>
-        <p class="text-muted">Por favor, digite um termo na barra de busca do painel.</p>
-    {% endif %}
+<div class="search-header-card">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h3 class="fw-bold mb-0 text-dark">
+                <i class="fas fa-search text-primary me-2"></i> Resultados da Busca
+            </h3>
+            {% if query %}
+                <p class="text-muted mb-0 mt-1">
+                    A mostrar resultados para: <span class="badge badge-soft-primary fs-6">{{ query }}</span>
+                </p>
+            {% else %}
+                <p class="text-muted mb-0 mt-1">Digite algo para pesquisar no arquivo.</p>
+            {% endif %}
+        </div>
+        <div class="col-md-6 mt-3 mt-md-0">
+            <form action="{{ url_for('main.search') }}" method="get" class="d-flex">
+                <input class="form-control me-2" type="search" name="q" placeholder="Pesquisar novamente..." value="{{ query }}">
+                <button class="btn btn-outline-primary" type="submit">Buscar</button>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary ms-2" title="Voltar ao Painel"><i class="fas fa-times"></i></a>
+            </form>
+        </div>
+    </div>
+</div>
 
-    <hr>
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        
+        {% if results %}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <small class="text-muted fw-bold text-uppercase">{{ results|length }} registros encontrados</small>
+            </div>
 
-    {% if results %}
-        <p class="text-muted">{{ results|length }} registro(s) encontrado(s).</p>
-        {% for log in results %}
-        <div class="card mb-3 search-result-card">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="rounded-circle me-2" width="30" height="30" style="object-fit: cover;">
-                    <strong>{{ log.author.username }}</strong>
+            {% for log in results %}
+            <div class="result-card animate__animated animate__fadeInUp">
+                
+                <div class="result-meta">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="rounded-circle me-2 border" width="32" height="32" style="object-fit: cover;">
+                        <span class="fw-bold text-dark">{{ log.author.username }}</span>
+                    </div>
+                    <div class="date-badge">
+                        <i class="far fa-calendar-alt me-1"></i> {{ log.entry_date.strftime('%d/%m/%Y') }}
+                    </div>
                 </div>
-                <span class="text-muted small">
-                    <i class="fas fa-calendar-day"></i> {{ log.entry_date.strftime('%d/%m/%Y') }}
-                </span>
+
+                <div class="result-project">
+                    <i class="fas fa-project-diagram text-muted me-2" style="font-size: 0.9rem;"></i>
+                    {{ log.project | replace(query, '<mark>' + query + '</mark>') | safe }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        <span class="result-label"><i class="fas fa-tasks"></i> TAREFAS</span>
+                        <p class="result-content">{{ log.tasks_completed | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
+                    </div>
+                    
+                    {% if log.observations %}
+                    <div class="col-md-12 mb-2">
+                        <span class="result-label text-warning"><i class="fas fa-lightbulb"></i> OBSERVAÇÕES</span>
+                        <div class="p-2 bg-light rounded border-start border-warning border-3">
+                            <p class="result-content mb-0">{{ log.observations | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-12">
+                        <span class="result-label text-info"><i class="fas fa-arrow-right"></i> PRÓXIMOS PASSOS</span>
+                        <p class="result-content mb-0 text-muted">{{ log.next_steps | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
+                    </div>
+                </div>
+
             </div>
-            <div class="card-body">
-                <h5 class="card-title"><strong>Projeto:</strong> {{ log.project | replace(query, '<mark>' + query + '</mark>') | safe }}</h5>
-                
-                <p class="mt-3"><strong><i class="fas fa-tasks"></i> Tarefas Realizadas:</strong></p>
-                <p class="log-content">{{ log.tasks_completed | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
-                
-                {% if log.observations %}
-                    <p><strong><i class="fas fa-lightbulb"></i> Observações:</strong></p>
-                    <p class="log-content">{{ log.observations | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
-                {% endif %}
-                
-                <p><strong><i class="fas fa-arrow-right"></i> Próximos Passos:</strong></p>
-                <p class="log-content">{{ log.next_steps | replace(query, '<mark>' + query + '</mark>') | safe }}</p>
+            {% endfor %}
+
+        {% elif query %}
+            
+            <div class="empty-state mt-5">
+                <i class="fas fa-search"></i>
+                <h5>Nenhum resultado encontrado</h5>
+                <p>Não encontrámos nada nos diários para o termo <strong>"{{ query }}"</strong>.</p>
+                <p class="small mt-1 text-muted">Tente palavras-chave mais curtas (ex: "ROS" em vez de "Configuração do ROS").</p>
             </div>
-        </div>
-        {% endfor %}
-    {% elif query %}
-        <div class="text-center mt-5">
-            <p class="lead">Nenhum resultado encontrado para o termo <strong>"{{ query }}"</strong>.</p>
-            <p class="text-muted">Tente usar palavras-chave diferentes.</p>
-        </div>
-    {% endif %}
+
+        {% endif %}
+        
+    </div>
 </div>
 {% endblock %}

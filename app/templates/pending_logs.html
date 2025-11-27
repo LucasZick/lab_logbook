@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% set dias_semana = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'] %}
+{% set meses_abrev = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'] %}
+
+<style>
+    /* Design do Cartão de Pendência */
+    .pending-item {
+        background: #fff;
+        border: 1px solid #f3f4f6;
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .pending-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        border-color: #e5e7eb;
+    }
+
+    /* O "Quadrado" do Calendário */
+    .date-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        background-color: #fee2e2; /* Vermelho muito suave */
+        color: #991b1b; /* Vermelho escuro */
+        border-radius: 10px;
+        margin-right: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .date-box .day {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    
+    .date-box .month {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-top: 2px;
+    }
+
+    .pending-info h5 {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 600;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Pendências Recentes</h3>
+                <p class="text-muted mb-0">
+                    A verificar dias úteis sem registro nos <strong class="text-primary">últimos 30 dias</strong>.
+                </p>
+            </div>
+            {% if missing_dates %}
+                <span class="badge rounded-pill badge-soft-danger px-3 py-2">
+                    {{ missing_dates|length }} dias em falta (30 dias)
+                </span>
+            {% else %}
+                <span class="badge rounded-pill badge-soft-success px-3 py-2">
+                    Tudo em dia!
+                </span>
+            {% endif %}
+        </div>
+
+        {% if missing_dates %}
+            
+            <div class="pending-list">
+                {% for missing_date in missing_dates %}
+                <div class="pending-item">
+                    <div class="d-flex align-items-center">
+                        <div class="date-box">
+                            <span class="day">{{ missing_date.day }}</span>
+                            <span class="month">{{ meses_abrev[missing_date.month] }}</span>
+                        </div>
+                        
+                        <div class="pending-info">
+                            <h5>{{ dias_semana[missing_date.weekday()] }}</h5>
+                            <small class="text-muted">Registro de atividades em falta</small>
+                        </div>
+                    </div>
+                    
+                    <a href="{{ url_for('main.index', fill_date=missing_date) }}" class="btn btn-sm btn-primary px-3 rounded-pill">
+                        Resolver <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            
+            <div class="content-card text-center py-5">
+                <div class="mb-4">
+                    <div style="width: 80px; height: 80px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-check fa-2x" style="color: #166534;"></i>
+                    </div>
+                </div>
+                <h4 class="fw-bold">Tudo Limpo!</h4>
+                <p class="text-muted">Não encontrámos pendências no período de verificação (últimos 30 dias).</p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary mt-2">Voltar ao Painel</a>
+            </div>
+
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}

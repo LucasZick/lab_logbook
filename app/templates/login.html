@@ -1,22 +1,181 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Entrar</h1>
-    <form action="" method="post" novalidate>
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            {{ form.username.label(class="form-label") }}
-            {{ form.username(class="form-control", size=32) }}
+<style>
+    /* --- TRUQUE PARA LIMPAR A TELA --- */
+    /* Esconde a Navbar e o Footer que vêm do base.html */
+    nav.navbar, footer {
+        display: none !important;
+    }
+    
+    /* Remove as margens padrão do container principal */
+    body, html {
+        height: 100%;
+        overflow-x: hidden;
+        background-color: #fff;
+    }
+    main.container {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        height: 100vh;
+    }
+    /* -------------------------------- */
+
+    .login-row {
+        height: 100vh;
+        margin: 0;
+    }
+
+    /* --- LADO ESQUERDO (Branding) --- */
+    .brand-col {
+        /* Seu verde institucional */
+        background: linear-gradient(135deg, #003319 0%, #01552b 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Decoração de fundo */
+    .brand-col::before {
+        content: ''; position: absolute; top: -10%; right: -10%; width: 300px; height: 300px;
+        background: rgba(255,255,255,0.05); border-radius: 50%;
+    }
+    .brand-col::after {
+        content: ''; position: absolute; bottom: 10%; left: -5%; width: 200px; height: 200px;
+        background: rgba(255,255,255,0.05); border-radius: 50%;
+    }
+
+    .brand-content { position: relative; z-index: 2; max-width: 500px; }
+
+    /* --- LADO DIREITO (Formulário) --- */
+    .form-col {
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem; background-color: #ffffff; position: relative;
+    }
+
+    /* Área de Alertas (Reposicionada para ficar flutuando no topo direito) */
+    #flash-messages-container {
+        position: absolute; top: 20px; right: 20px; width: 350px; z-index: 1000;
+    }
+
+    .login-box { width: 100%; max-width: 400px; padding: 1rem; }
+
+    /* Estilos dos Inputs */
+    .form-floating > .form-control {
+        border: 2px solid #f3f4f6; border-radius: 12px; height: 3.5rem;
+    }
+    .form-floating > .form-control:focus {
+        border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
+    }
+    .form-floating > label { padding-left: 1rem; color: #6b7280; }
+    
+    /* Botão */
+    .btn-login {
+        background-color: #01552b; color: white; font-weight: 600; padding: 0.9rem;
+        border-radius: 12px; font-size: 1rem; width: 100%; border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-login:hover {
+        background-color: #003319; transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(1, 85, 43, 0.2); color: white;
+    }
+
+    .toggle-password {
+        position: absolute; top: 50%; right: 15px; transform: translateY(-50%);
+        cursor: pointer; color: #6b7280; z-index: 10;
+    }
+    
+    .brand-link { color: #01552b; text-decoration: none; font-weight: bold; }
+    .brand-link:hover { text-decoration: underline; color: #003319; }
+
+    /* Animação */
+    .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="row login-row g-0">
+    
+    <div class="col-lg-6 d-none d-lg-flex brand-col">
+        <div class="brand-content fade-in-up">
+            <i class="fas fa-book-reader fa-3x mb-4" style="opacity: 0.9;"></i>
+            <h1 class="display-5 fw-bold mb-3">Diário de Bordo Digital.</h1>
+            <p class="lead" style="opacity: 0.9; font-size: 1.1rem;">
+                Plataforma centralizada para gestão de atividades e acompanhamento de progresso de laboratórios.
+            </p>
         </div>
-        <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control", size=32) }}
+    </div>
+
+    <div class="col-lg-6 form-col">
+        <div class="login-box fade-in-up" style="animation-delay: 0.1s;">
+            
+            <div class="d-lg-none text-center mb-4">
+                <i class="fas fa-robot fa-3x" style="color: #01552b;"></i>
+            </div>
+
+            <h2 class="fw-bold mb-2" style="color: #1f2937;">Bem-vindo</h2>
+            <p class="text-muted mb-4">Insira as suas credenciais para entrar.</p>
+
+            <form action="" method="post" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="form-floating mb-3">
+                    {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
+                    <label for="username">Nome de Usuário</label>
+                    {% for error in form.username.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="password-wrapper mb-3 position-relative">
+                    <div class="form-floating">
+                        {{ form.password(class="form-control", id="password", placeholder="Senha") }}
+                        <label for="password">Senha</label>
+                        <i class="far fa-eye toggle-password" id="togglePassword" onclick="togglePass()"></i>
+                    </div>
+                    {% for error in form.password.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        {{ form.remember_me(class="form-check-input") }}
+                        <label class="form-check-label text-muted small" for="remember_me">Lembrar-me</label>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-login", value="Acessar") }}
+                </div>
+            </form>
+
+            <div class="text-center mt-5">
+                <p class="text-muted small">Não tem conta? 
+                    <a href="{{ url_for('main.register') }}" class="brand-link">Solicitar Acesso</a>
+                </p>
+            </div>
         </div>
-        <div class="mb-3 form-check">
-            {{ form.remember_me(class="form-check-input") }}
-            {{ form.remember_me.label(class="form-check-label") }}
-        </div>
-        <p>{{ form.submit(class="btn btn-primary") }}</p>
-    </form>
-    <p>Novo Usuário? <a href="{{ url_for('main.register') }}">Clique para registrar!</a></p>
+    </div>
+</div>
+
+<script>
+    function togglePass() {
+        const passwordInput = document.getElementById('password');
+        const icon = document.getElementById('togglePassword');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
 {% endblock %}

@@ -1,111 +1,244 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <style>
-        .list-group-item.active { background-color: #2c3e50; border-color: #2c3e50; }
-        .log-content { white-space: pre-wrap; word-wrap: break-word; }
-        
-        /* --- Estilos da Nova Lista Expansível --- */
-        .log-item {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            overflow: hidden; /* Garante que os cantos fiquem arredondados */
-        }
-        .log-summary {
-            background-color: #fff;
-            padding: 0.75rem 1.25rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .log-summary:hover {
-            background-color: #f8f9fa;
-        }
-        .log-details {
-            background-color: #f8f9fa;
-            padding: 1.25rem;
-            border-top: 1px solid #dee2e6;
-        }
-        /* Rotaciona o ícone de seta quando expandido */
-        .log-summary[aria-expanded="true"] .chevron-icon {
-            transform: rotate(180deg);
-        }   
-        .chevron-icon {
-            transition: transform 0.2s ease-in-out;
-        }
-    </style>
 
-    <div class="content-card">
-        <div class="d-flex align-items-center mb-3">
-            <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" class="rounded-circle me-3" width="60" height="60" style="object-fit: cover; border: 2px solid #0d6efd;">
+{% set dias_semana = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'] %}
+
+<style>
+    /* --- 1. Navegação Lateral (Meses) --- */
+    .nav-months {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .nav-month-link {
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        color: #4b5563;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .nav-month-link:hover {
+        background-color: #fff;
+        color: #01552b;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .nav-month-link.active {
+        background-color: #01552b;
+        color: white;
+        box-shadow: 0 4px 6px rgba(1, 85, 43, 0.2);
+    }
+    .nav-month-link.active:hover {
+        color: white;
+    }
+
+    /* --- 2. Item de Log (O Cartão) --- */
+    .log-item {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+        overflow: hidden;
+    }
+    .log-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Cabeçalho do Log (Resumo) */
+    .log-summary {
+        padding: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        background: white;
+    }
+
+    /* O "Quadrado" da Data */
+    .date-badge-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        background-color: #f3f4f6;
+        color: #374151;
+        border-radius: 8px;
+        margin-right: 1rem;
+        border: 1px solid #e5e7eb;
+        flex-shrink: 0;
+    }
+    .date-badge-box .day { font-size: 1.2rem; font-weight: 700; line-height: 1; }
+    .date-badge-box .month { font-size: 0.65rem; text-transform: uppercase; font-weight: 600; margin-top: 2px; }
+    
+    .log-item:hover .date-badge-box {
+        background-color: #e6f4ea;
+        color: #01552b;
+        border-color: #01552b;
+    }
+
+    /* Títulos e Texto */
+    .project-title { font-weight: 600; color: #111827; font-size: 1.05rem; margin-bottom: 0.1rem; }
+    .meta-text { font-size: 0.85rem; color: #6b7280; }
+
+    /* Seta de Expandir */
+    .chevron-box {
+        margin-left: auto;
+        color: #9ca3af;
+        transition: transform 0.3s ease;
+    }
+    .log-summary[aria-expanded="true"] .chevron-box { transform: rotate(180deg); color: #01552b; }
+
+    /* --- 3. Detalhes Expandidos --- */
+    .log-details {
+        background-color: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        padding: 1.5rem;
+    }
+    
+    .detail-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .detail-content {
+        color: #374151;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+        line-height: 1.6;
+    }
+
+    /* Box de Observação */
+    .obs-box {
+        background-color: #fffbeb;
+        border-left: 3px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+    }
+</style>
+
+<div class="content-card">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" class="rounded-circle me-3 shadow-sm" width="64" height="64" style="object-fit: cover; border: 3px solid white; outline: 1px solid #e5e7eb;">
             <div>
-                <h3 class="mb-0">Diário de Bordo: <strong>{{ student.username }}</strong></h3>
-                {% if student.course %}<small class="text-muted">{{ student.course }}</small>{% endif %}
-            </div>
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary ms-auto"><i class="fas fa-arrow-left"></i> Voltar</a>
-        </div>
-        <hr>
-        <div class="row mt-4">
-            <!-- Coluna da Esquerda: Navegação dos Meses -->
-            <div class="col-md-3">
-                {% if available_months %}
-                <div class="list-group">
-                    {% for month_data in available_months %}
-                        <a href="{{ url_for('main.view_logs', student_id=student.id, ano=month_data.year, mes=month_data.month) }}" 
-                           class="list-group-item list-group-item-action {% if month_data.name == current_month_name %}active{% endif %}">
-                           {{ month_data.name }}
-                        </a>
-                    {% endfor %}
+                <h3 class="mb-0 fw-bold text-dark">{{ student.username }}</h3>
+                <div class="text-muted small">
+                    {% if student.course %}{{ student.course }}{% else %}Bolsista{% endif %}
                 </div>
-                {% endif %}
+            </div>
+        </div>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-2"></i> Voltar
+        </a>
+    </div>
+
+    <hr class="mb-4">
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="text-uppercase text-muted small fw-bold mb-0">Períodos</h6>
+            </div>
+            
+            {% if available_months %}
+            <div class="nav-months">
+                {% for month_data in available_months %}
+                    <a href="{{ url_for('main.view_logs', student_id=student.id, ano=month_data.year, mes=month_data.month) }}" 
+                       class="nav-month-link {% if month_data.name == current_month_name %}active{% endif %}">
+                       <span>{{ month_data.name }}</span>
+                       <i class="fas fa-chevron-right small opacity-50"></i>
+                    </a>
+                {% endfor %}
+            </div>
+            {% else %}
+                <p class="text-muted small">Sem histórico disponível.</p>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">Registros de {{ current_month_name }}</h5>
+                <span class="badge bg-light text-dark border">{{ logs_to_display|length }} registros</span>
             </div>
 
-            <!-- Coluna da Direita: LISTA COMPACTA EXPANSÍVEL -->
-            <div class="col-md-9">
-                <h4>Exibindo registros de: {{ current_month_name }}</h4>
-                <hr>
-                {% if logs_to_display %}
-                    <div class="d-grid gap-2">
-                        {% for log in logs_to_display %}
-                        <div class="log-item">
-                            <!-- A LINHA RESUMIDA E CLICÁVEL -->
-                            <div class="log-summary d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#log-details-{{ log.id }}" aria-expanded="false">
+            {% if logs_to_display %}
+                <div class="log-list">
+                    {% for log in logs_to_display %}
+                    <div class="log-item">
+                        
+                        <div class="log-summary" data-bs-toggle="collapse" data-bs-target="#log-{{ log.id }}">
+                            <div class="date-badge-box">
+                                <span class="day">{{ log.entry_date.day }}</span>
+                                <span class="month">{{ log.entry_date.strftime('%b') }}</span>
+                            </div>
+
+                            <div class="flex-grow-1">
+                                <div class="project-title">{{ log.project }}</div>
                                 <div class="d-flex align-items-center">
-                                    <strong class="text-primary">{{ log.entry_date.strftime('%d/%m/%Y') }}</strong>
-                                    <span class="ms-3">{{ log.project }}</span>
+                                    <span class="meta-text me-3">
+                                        <i class="far fa-clock me-1"></i> {{ dias_semana[log.entry_date.weekday()] }}
+                                    </span>
                                     
-                                    <!-- PONTO DE AVISO ADICIONADO -->
                                     {% if log.observations %}
-                                        <i class="fas fa-exclamation-triangle text-warning ms-2" title="Possui observações"></i>
+                                        <span class="badge badge-soft-warning" style="font-size: 0.7rem;">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> Obs
+                                        </span>
                                     {% endif %}
                                 </div>
-                                <button class="btn btn-sm btn-light">
-                                    Ver Detalhes <i class="fas fa-chevron-down chevron-icon"></i>
-                                </button>
                             </div>
-                            <!-- O CONTEÚDO DETALHADO E OCULTO -->
-                            <div class="collapse" id="log-details-{{ log.id }}">
-                                <div class="log-details">
-                                    <p><strong><i class="fas fa-tasks text-primary"></i> Tarefas Realizadas:</strong></p>
-                                    <p class="log-content">{{ log.tasks_completed }}</p>
-                                    
+
+                            <div class="chevron-box">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+
+                        <div class="collapse" id="log-{{ log.id }}">
+                            <div class="log-details">
+                                <div class="row">
+                                    <div class="col-md-12 mb-4">
+                                        <span class="detail-label"><i class="fas fa-check-circle me-1"></i> Tarefas Realizadas</span>
+                                        <div class="detail-content">{{ log.tasks_completed }}</div>
+                                    </div>
+
                                     {% if log.observations %}
-                                        <p><strong><i class="fas fa-lightbulb text-primary"></i> Observações:</strong></p>
-                                        <p class="log-content">{{ log.observations }}</p>
+                                    <div class="col-md-12 mb-4">
+                                        <span class="detail-label text-warning"><i class="fas fa-lightbulb me-1"></i> Observações & Resultados</span>
+                                        <div class="detail-content obs-box">{{ log.observations }}</div>
+                                    </div>
                                     {% endif %}
-                                    
-                                    <p><strong><i class="fas fa-arrow-right text-primary"></i> Próximos Passos:</strong></p>
-                                    <p class="log-content">{{ log.next_steps }}</p>
+
+                                    <div class="col-md-12">
+                                        <span class="detail-label"><i class="fas fa-arrow-right me-1"></i> Próximos Passos</span>
+                                        <div class="detail-content text-muted">{{ log.next_steps }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        {% endfor %}
+
                     </div>
-                {% else %}
-                    <p class="text-center text-muted mt-5">Nenhum registro encontrado para este período.</p>
-                {% endif %}
-            </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-wind"></i>
+                    <h5>Mês vazio</h5>
+                    <p>Não existem registros para o período selecionado.</p>
+                </div>
+            {% endif %}
         </div>
     </div>
+</div>
 {% endblock %}
-

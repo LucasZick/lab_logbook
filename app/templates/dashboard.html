@@ -2,216 +2,268 @@
 
 {% block content %}
 <style>
-    .action-buttons .btn { margin-left: 0.5rem; }
-    .flatpickr-input {
-        background-color: #fff; /* Garante fundo branco como outros inputs */
+    /* Estilos Específicos do Dashboard */
+    .stat-card {
+        border-left: 4px solid;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); }
+    .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .action-header {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .avatar-sm { width: 32px; height: 32px; object-fit: cover; }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(1, 85, 43, 0.03); /* Verde muito suave no hover */
     }
 </style>
 
-<div class="content-card mb-4">
-    <h3><i class="fas fa-tachometer-alt"></i> Painel do Professor</h3>
-    <p class="text-muted">Gerencie as solicitações de registro e o status dos bolsistas.</p>
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold text-dark">
+            Olá, <span style="color: #01552b;">{{ current_user.username }}</span>!
+        </h2>
+        <p class="text-muted">Aqui está o panorama do laboratório hoje.</p>
+    </div>
     
-    <hr>
-    <form action="{{ url_for('main.search') }}" method="get" class="d-flex mt-3">
-        <input class="form-control me-2" type="search" name="q" placeholder="Buscar em todos os diários..." aria-label="Search" value="{{ request.args.get('q', '') }}">
-        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Buscar</button>
-    </form>
-</div>
-
-
-<div class="content-card mb-4">
-    <h4><i class="fas fa-brain"></i> Análise de Desempenho com IA</h4>
-    <p class="text-muted">Gere relatórios semanais ou mensais com base nos registos dos bolsistas ativos.</p>
-    <hr>
-    
-    <div class="row">
-
-        <!-- Coluna da Esquerda: Relatório Semanal -->
-        <div class="col-md-6 border-end">
-            <h5 class="text-center">Relatório Semanal</h5>
-            <p class="text-muted text-center small">Selecione um dia qualquer. O relatório incluirá a semana inteira (Seg-Dom) desse dia.</p>
-            
-            <form action="{{ url_for('main.generate_report') }}" method="get" id="form-weekly-report">
-                <div class="mb-3">
-                    <label for="report_date_week" class="form-label">Data de Referência:</label>
-                    <input type="date" class="form-control" id="report_date_week" name="selected_date" value="{{ today_date }}">
-                </div>
-                <button type="submit" class="btn btn-info w-100" id="btn-weekly-report">
-                    <i class="fas fa-calendar-week"></i> Gerar Relatório Semanal
-                </button>
-            </form>
-        </div>
-
-        <!-- Coluna da Direita: Relatório Mensal -->
-        <div class="col-md-6">
-            <h5 class="text-center">Relatório Mensal</h5>
-            <p class="text-muted text-center small">Selecione o mês e o ano desejados para a análise completa do período.</p>
-            
-            <form action="{{ url_for('main.generate_report') }}" method="get" id="form-monthly-report">
-                <input type="hidden" name="report_type" value="month">
-                <div class="row g-2">
-                    <div class="col-sm-7">
-                        <label for="month_num" class="form-label">Mês:</label>
-                        <select class="form-select" id="month_num" name="month_num">
-                            {% for num, nome in meses.items() %}
-                                <option value="{{ num }}" {% if num == current_month_num %}selected{% endif %}>{{ nome }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-sm-5">
-                        <label for="year_select" class="form-label">Ano:</label>
-                        <select class="form-select" id="year_select" name="year">
-                            {% for y in available_years %}
-                                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-success w-100 mt-3" id="btn-monthly-report">
-                    <i class="fas fa-chart-line"></i> Gerar Relatório Mensal
-                </button>
-            </form>
-        </div>
-        
+    <div class="col-md-4">
+        <form action="{{ url_for('main.search') }}" method="get">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0" type="search" name="q" placeholder="Pesquisar em todos os diários..." value="{{ request.args.get('q', '') }}">
+                <button class="btn btn-primary" type="submit">Buscar</button>
+            </div>
+        </form>
     </div>
 </div>
 
-<div class="content-card mb-4">
-    <h4><i class="fas fa-user-clock"></i> Solicitações de Registro Pendentes</h4>
-    {% if pending_users %}
-        <ul class="list-group">
-            {% for user in pending_users %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
-                    <div>
-                        <strong>{{ user.username }}</strong> <br>
-                        <small class="text-muted">{{ user.email }}</small>
-                    </div>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="content-card p-3 mb-3 stat-card" style="border-color: #22c55e;">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                    <i class="fas fa-users"></i>
                 </div>
-                <div class="action-buttons">
-                    <a href="{{ url_for('main.approve_user', user_id=user.id) }}" class="btn btn-sm btn-success"><i class="fas fa-check"></i> Aprovar</a>
-                    <a href="{{ url_for('main.reject_user', user_id=user.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza?');"><i class="fas fa-times"></i> Rejeitar</a>
+                <div>
+                    <h6 class="text-muted mb-0">Bolsistas Ativos</h6>
+                    <h3 class="fw-bold mb-0">{{ active_bolsistas|length }}</h3>
                 </div>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="text-muted">Nenhuma solicitação pendente.</p>
-    {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="content-card p-3 mb-3 stat-card" style="border-color: #f59e0b;">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Solicitações Pendentes</h6>
+                    <h3 class="fw-bold mb-0">{{ pending_users|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="content-card p-3 mb-3 stat-card" style="border-color: #64748b;">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary me-3">
+                    <i class="fas fa-user-lock"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Bolsistas Inativos</h6>
+                    <h3 class="fw-bold mb-0">{{ inactive_bolsistas|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="content-card mb-4">
-    <h4><i class="fas fa-users"></i> Bolsistas Ativos</h4>
-    {% if active_bolsistas %}
-        <ul class="list-group">
-            {% for bolsista in active_bolsistas %} <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="{{ url_for('static', filename='profile_pics/' + bolsista.image_file) }}" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
-                    <div>
-                        <strong>{{ bolsista.username }}</strong>
-                        {% if bolsista.course %}
-                            <br><small class="text-muted">{{ bolsista.course }}</small>
-                        {% endif %}
-                    </div>
+<div class="row">
+    
+    <div class="col-lg-8">
+        <div class="content-card mb-4">
+            <div class="d-flex align-items-center mb-3">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3" style="width: 40px; height: 40px; font-size: 1.2rem;">
+                    <i class="fas fa-robot"></i>
                 </div>
-                <div class="action-buttons">
-                    <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="btn btn-sm btn-primary"><i class="fas fa-eye"></i> Ver Diário</a>
-                    <a href="{{ url_for('main.deactivate_user', user_id=bolsista.id) }}" class="btn btn-sm btn-warning" onclick="return confirm('Tem certeza?');"><i class="fas fa-user-slash"></i> Desativar</a>
+                <h4 class="mb-0">Gerador de Relatórios IA</h4>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6 border-end">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Análise Semanal</h6>
+                    <form action="{{ url_for('main.generate_report') }}" method="get" id="form-weekly-report">
+                        <div class="mb-3">
+                            <label class="form-label small">Selecione um dia de referência</label>
+                            <input type="date" class="form-control" name="selected_date" value="{{ today_date }}">
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary w-100" id="btn-weekly-report">
+                            <i class="fas fa-magic me-2"></i> Gerar Relatório da Semana
+                        </button>
+                    </form>
                 </div>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="text-muted">Nenhum bolsista ativo no momento.</p>
-    {% endif %}
-</div>
 
-<div class="content-card">
-    <h4><i class="fas fa-user-lock"></i> Bolsistas Inativos</h4>
-    {% if inactive_bolsistas %}
-        <ul class="list-group">
-            {% for bolsista in inactive_bolsistas %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <img src="{{ url_for('static', filename='profile_pics/' + bolsista.image_file) }}" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
-                    <div>
-                        <strong>{{ bolsista.username }}</strong>
-                        {% if bolsista.course %}
-                            <br><small class="text-muted">{{ bolsista.course }}</small>
-                        {% endif %}
+                <div class="col-md-6">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Análise Mensal</h6>
+                    <form action="{{ url_for('main.generate_report') }}" method="get" id="form-monthly-report">
+                        <input type="hidden" name="report_type" value="month">
+                        <div class="row g-2 mb-3">
+                            <label class="form-label small">Selecione o mês</label>
+                            <div class="col-8">
+                                <select class="form-select" name="month_num">
+                                    {% for num, nome in meses.items() %}
+                                        <option value="{{ num }}" {% if num == current_month_num %}selected{% endif %}>{{ nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select" name="year">
+                                    {% for y in available_years %}
+                                        <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-success w-100" id="btn-monthly-report">
+                            <i class="fas fa-chart-pie me-2"></i> Gerar Relatório do Mês
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h4 class="mb-4">Equipa Ativa</h4>
+            
+            {% if active_bolsistas %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Curso</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bolsista in active_bolsistas %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename='profile_pics/' + bolsista.image_file) }}" class="avatar-sm rounded-circle me-2">
+                                        <span class="fw-bold">{{ bolsista.username }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-muted small">{{ bolsista.course or '-' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="btn btn-sm btn-light text-primary" title="Ver Diário">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('main.deactivate_user', user_id=bolsista.id) }}" class="btn btn-sm btn-light text-warning" onclick="return confirm('Desativar?');" title="Desativar">
+                                        <i class="fas fa-pause"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state py-4">
+                    <i class="fas fa-users text-muted mb-2" style="font-size: 2rem;"></i>
+                    <p class="text-muted mb-0">Sem bolsistas ativos.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        
+        {% if pending_users %}
+        <div class="content-card mb-4 border-warning">
+            <h5 class="text-warning mb-3"><i class="fas fa-bell me-2"></i> Pendentes</h5>
+            <ul class="list-group list-group-flush">
+                {% for user in pending_users %}
+                <li class="list-group-item px-0 border-0">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="avatar-sm rounded-circle me-2">
+                            <div style="line-height: 1.2;">
+                                <small class="d-block fw-bold">{{ user.username }}</small>
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ user.email }}</small>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('main.approve_user', user_id=user.id) }}" class="btn btn-sm btn-success py-0 px-2"><i class="fas fa-check"></i></a>
+                            <a href="{{ url_for('main.reject_user', user_id=user.id) }}" class="btn btn-sm btn-danger py-0 px-2" onclick="return confirm('Rejeitar?');"><i class="fas fa-times"></i></a>
+                        </div>
                     </div>
-                </div>
-                <div class="action-buttons">
-                    <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i> Ver Histórico</a>
-                    <a href="{{ url_for('main.activate_user', user_id=bolsista.id) }}" class="btn btn-sm btn-info" onclick="return confirm('Tem certeza?');"><i class="fas fa-user-check"></i> Reativar</a>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="text-muted">Nenhum bolsista inativo.</p>
-    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#inactiveList" style="cursor: pointer;">
+                <h5 class="mb-0 text-muted"><i class="fas fa-archive me-2"></i> Arquivo / Inativos</h5>
+                <i class="fas fa-chevron-down text-muted"></i>
+            </div>
+            
+            <div class="collapse mt-3" id="inactiveList">
+                {% if inactive_bolsistas %}
+                    <ul class="list-group list-group-flush">
+                        {% for bolsista in inactive_bolsistas %}
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">{{ bolsista.username }}</span>
+                            <div>
+                                <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="text-secondary me-2"><i class="fas fa-history"></i></a>
+                                <a href="{{ url_for('main.activate_user', user_id=bolsista.id) }}" class="text-success" onclick="return confirm('Reativar?');"><i class="fas fa-undo"></i></a>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted small mb-0 mt-2">Nenhum registro.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{{ super() }} <!-- Inclui scripts do base.html, se houver -->
-
-<!-- SCRIPT DE LOADING (CORREÇÃO FINAL E ROBUSTA) -->
+{{ super() }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // --- LÓGICA PARA O BOTÃO SEMANAL ---
-        const weeklyButton = document.getElementById('btn-weekly-report');
-        if (weeklyButton) {
-            // 1. Ouvir o 'click' do BOTÃO
-            weeklyButton.addEventListener('click', function(event) {
-                // 2. Impedir a submissão padrão imediata
-                event.preventDefault(); 
-                
-                // 3. Mudar o botão para 'loading'
-                this.disabled = true; // 'this' é o botão
-                this.innerHTML = `
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    A gerar...
-                `;
-
-                // 4. Encontrar o formulário a que este botão pertence
-                const form = this.closest('form'); 
-
-                // 5. Agendar a submissão real para daqui a 50ms
-                setTimeout(() => {
-                    form.submit(); // Submete o formulário
-                }, 50); 
-            });
-        }
-
-        // --- LÓGICA PARA O BOTÃO MENSAL ---
-        const monthlyButton = document.getElementById('btn-monthly-report');
-        if (monthlyButton) {
-            // 1. Ouvir o 'click' do BOTÃO
-            monthlyButton.addEventListener('click', function(event) {
-                // 2. Impedir a submissão padrão imediata
-                event.preventDefault();
-
-                // 3. Mudar o botão para 'loading'
-                this.disabled = true; // 'this' é o botão
-                this.innerHTML = `
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    A gerar...
-                `;
-                
-                // 4. Encontrar o formulário a que este botão pertence
-                const form = this.closest('form');
-
-                // 5. Agendar a submissão real para daqui a 50ms
-                setTimeout(() => {
-                    form.submit();
-                }, 1000);
-            });
-        }
+        const handleLoading = (btnId, formId) => {
+            const btn = document.getElementById(btnId);
+            const form = document.getElementById(formId);
+            if (btn && form) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    btn.disabled = true;
+                    const originalContent = btn.innerHTML;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>A processar...';
+                    setTimeout(() => form.submit(), 50);
+                });
+            }
+        };
+        handleLoading('btn-weekly-report', 'form-weekly-report');
+        handleLoading('btn-monthly-report', 'form-monthly-report');
     });
 </script>
 {% endblock %}

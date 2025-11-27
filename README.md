@@ -10,13 +10,13 @@ Aplicação web desenvolvida para a gestão de atividades diárias em laboratór
 ## ✨ Funcionalidades Principais
 
 - **Sistema de Papéis:** Distinção entre **Professores** (administradores) e **Bolsistas** (utilizadores padrão).
-- **Gestão de Utilizadores:** Fluxo completo de registo, com aprovação/rejeição de novas contas por professores.
+- **Gestão de Utilizadores:** Fluxo completo de registro, com aprovação/rejeição de novas contas por professores.
 - **Contas Ativas/Inativas:** Professores podem ativar e desativar contas de bolsistas conforme a necessidade.
-- **Registo Diário:** Formulário simples e validado para que os bolsistas insiram as suas atividades.
+- **Registro Diário:** Formulário simples e validado para que os bolsistas insiram as suas atividades.
 - **Painel do Professor:** Uma visão centralizada para gerir utilizadores e aceder aos relatórios.
-- **Visualização de Diários:** Interface de linha do tempo para que os professores analisem os registos de cada bolsista de forma limpa e cronológica.
-- **Grade de Atividades (Calendário):** Uma visão geral do mês que mostra quais bolsistas fizeram os seus registos em cada dia, destacando os fins de semana.
-- **Busca Global:** Ferramenta de pesquisa poderosa para que professores encontrem informações em todos os registos de todos os bolsistas.
+- **Visualização de Diários:** Interface de linha do tempo para que os professores analisem os registros de cada bolsista de forma limpa e cronológica.
+- **Grade de Atividades (Calendário):** Uma visão geral do mês que mostra quais bolsistas fizeram os seus registros em cada dia, destacando os fins de semana.
+- **Busca Global:** Ferramenta de pesquisa poderosa para que professores encontrem informações em todos os registros de todos os bolsistas.
 - **Relatórios com IA:** Geração automática de relatórios semanais que resumem o progresso, identificam gargalos e sugerem tópicos para reuniões, utilizando a API do Google Gemini.
 - **Envio Automático de E-mails:** O relatório semanal é enviado automaticamente por e-mail para todos os professores no final da semana.
 
@@ -76,7 +76,7 @@ Aplicação web desenvolvida para a gestão de atividades diárias em laboratór
     ```bash
     flask create-professor <username> <email> <password>
     ```
-2.  Aceda a `http://127.0.0.1:5000` e faça login com a conta de professor.
+2.  Acesse `http://127.0.0.1:5000` e faça login com a conta de professor.
 3.  Peça aos bolsistas para se registarem. As solicitações aparecerão no seu painel para aprovação.
 
 ## 🐳 Implantação com Docker

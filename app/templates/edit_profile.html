@@ -1,75 +1,166 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="content-card">
-    <div class="d-flex align-items-center mb-4">
-        <img src="{{ image_file }}" class="rounded-circle me-3" style="width: 80px; height: 80px; object-fit: cover;">
-        <h3>Editar Perfil</h3>
-    </div>
-    <hr>
-    <form action="" method="post" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                {{ form.username.label(class="form-label") }}
-                {{ form.username(class="form-control") }}
-                {% for error in form.username.errors %}
-                <span class="text-danger">[{{ error }}]</span>
-                {% endfor %}
-            </div>
-            <div class="col-md-6 mb-3">
-                {{ form.picture.label(class="form-label") }}
-                {{ form.picture(class="form-control") }}
-                {% for error in form.picture.errors %}
-                <span class="text-danger">[{{ error }}]</span>
-                {% endfor %}
-            </div>
-        </div>
-        
-        <div class="mb-3">
-            {{ form.course.label(class="form-label") }}
-            {{ form.course(class="form-control") }}
-        </div>
-        
-        <div class="mb-3">
-            {{ form.bio.label(class="form-label") }}
-            {{ form.bio(class="form-control") }}
-        </div>
+<style>
+    /* Customização do Tagify para a marca */
+    .tagify {
+        --tags-border-color: #dee2e6;
+        --tags-hover-border-color: #01552b;
+        --tags-focus-border-color: #01552b;
+        --tag-bg: #e6f4ea; /* Fundo verde muito claro */
+        --tag-text-color: #01552b; /* Texto verde marca */
+        --tag-remove-btn-color: #01552b;
+        border-radius: 8px;
+    }
+    
+    /* Ajuste para Floating Labels ficarem bonitos */
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: #01552b;
+        font-weight: 600;
+    }
+    .form-control:focus {
+        border-color: #01552b;
+        box-shadow: 0 0 0 0.25rem rgba(1, 85, 43, 0.15);
+    }
 
-        <div class="mb-3">
-            {{ form.skills.label(class="form-label") }}
-            {{ form.skills(class="form-control", id="skills_input") }}
-            <div class="form-text text-muted">Digite uma habilidade e pressione Enter.</div>
-        </div>
+    /* Área da Foto */
+    .edit-avatar-wrapper {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+    }
+    .edit-avatar {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #9ca3af;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #f3f4f6;
+        padding-bottom: 0.5rem;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
         
-        <h5 class="mt-4 text-muted">Links Profissionais</h5>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                {{ form.lattes_link.label(class="form-label") }}
-                {{ form.lattes_link(class="form-control") }}
-            </div>
-            <div class="col-md-4 mb-3">
-                {{ form.github_link.label(class="form-label") }}
-                {{ form.github_link(class="form-control") }}
-            </div>
-            <div class="col-md-4 mb-3">
-                {{ form.linkedin_link.label(class="form-label") }}
-                {{ form.linkedin_link(class="form-control") }}
-            </div>
-        </div>
-        
-        <div class="mt-4 d-flex justify-content-between align-items-center">
-            <div>
-                {{ form.submit(class="btn btn-success") }}
-                <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
-            </div>
-            
-            <a href="{{ url_for('main.change_password') }}" class="btn btn-warning text-dark">
-                <i class="fas fa-key"></i> Alterar Senha
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold text-dark mb-0">Configurações de Perfil</h3>
+            <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Voltar ao Perfil
             </a>
         </div>
-    </form>
+
+        <form action="" method="post" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="row">
+                
+                <div class="col-md-4 mb-4">
+                    <div class="content-card h-100 text-center">
+                        <div class="section-title text-start">Imagem & Segurança</div>
+                        
+                        <div class="edit-avatar-wrapper">
+                            <img src="{{ image_file }}" class="edit-avatar" alt="Foto de Perfil">
+                        </div>
+
+                        <div class="mb-4 text-start">
+                            <label class="form-label small fw-bold text-muted">Alterar Foto</label>
+                            {{ form.picture(class="form-control form-control-sm") }}
+                            {% for error in form.picture.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text small">Recomendado: JPG ou PNG.</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-grid">
+                            <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-warning text-dark">
+                                <i class="fas fa-key me-2"></i> Alterar Senha
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="content-card h-100">
+                        
+                        <div class="section-title"><i class="fas fa-user-edit me-2"></i> Informações Pessoais</div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.username(class="form-control", id="username", placeholder="Username") }}
+                                    <label for="username">Nome de Usuário</label>
+                                </div>
+                                {% for error in form.username.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.course(class="form-control", id="course", placeholder="Curso") }}
+                                    <label for="course">Curso / Vínculo</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    {{ form.bio(class="form-control", id="bio", placeholder="Bio", style="height: 100px") }}
+                                    <label for="bio">Sobre Mim (Bio)</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-title"><i class="fas fa-tools me-2"></i> Competências</div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">Habilidades Técnicas</label>
+                            {{ form.skills(class="form-control", id="skills_input") }}
+                            <div class="form-text">Digite uma habilidade e pressione <strong>Enter</strong> para adicionar.</div>
+                        </div>
+
+                        <div class="section-title"><i class="fas fa-globe me-2"></i> Presença Digital</div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    {{ form.lattes_link(class="form-control", id="lattes", placeholder="Lattes") }}
+                                    <label for="lattes"><i class="fas fa-scroll me-1"></i> Lattes</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    {{ form.github_link(class="form-control", id="github", placeholder="GitHub") }}
+                                    <label for="github"><i class="fab fa-github me-1"></i> GitHub</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    {{ form.linkedin_link(class="form-control", id="linkedin", placeholder="LinkedIn") }}
+                                    <label for="linkedin"><i class="fab fa-linkedin me-1"></i> LinkedIn</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-5 pt-3 border-top">
+                            <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-light border">Cancelar</a>
+                            {{ form.submit(class="btn btn-success px-4 fw-bold") }}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
@@ -81,9 +172,15 @@
 <script>
     var input = document.querySelector('#skills_input');
     
-    // Inicializa o Tagify
+    // Inicializa o Tagify com configurações visuais
     var tagify = new Tagify(input, {
-        originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(',')
+        originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(','),
+        dropdown: {
+            maxItems: 20,           
+            classname: "tags-look", 
+            enabled: 0,             
+            closeOnSelect: false    
+        }
     });
 </script>
 {% endblock %}

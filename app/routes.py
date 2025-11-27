@@ -73,7 +73,7 @@ def user_profile(username):
     total_logs = user.logs.count()
     # Define a imagem. Se for default, busca a padrão, senão busca a do usuário
     image_file = url_for('static', filename='profile_pics/' + user.image_file)
-    return render_template('user_profile.html', user=user, total_logs=total_logs, image_file=image_file)
+    return render_template('user_profile.html', title=username, user=user, total_logs=total_logs, image_file=image_file)
 
 @bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -113,6 +113,51 @@ def edit_profile():
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('edit_profile.html', title='Editar Perfil', form=form, image_file=image_file)
 
+def get_missing_dates(user, days_back=30):
+    """
+    Retorna uma lista de dias úteis (Seg-Sex) nos últimos 'days_back' dias
+    onde o usuário NÃO fez nenhum registro.
+    """
+    today = date.today()
+    
+    # 1. Busca todos os logs do usuário nesse período para comparar
+    start_range = today - timedelta(days=days_back)
+    logs = LogEntry.query.filter_by(author=user).filter(
+        LogEntry.entry_date >= start_range,
+        LogEntry.entry_date < today # Não cobra o dia de hoje ainda
+    ).all()
+    
+    # Cria um conjunto (set) de datas que JÁ têm log (para busca rápida)
+    logged_dates = {log.entry_date for log in logs}
+    missing_dates = []
+
+    # 2. Varre dia a dia para trás
+    for i in range(1, days_back + 1):
+        check_date = today - timedelta(days=i)
+        
+        # Se é fim de semana (Sáb=5, Dom=6), ignora
+        if check_date.weekday() >= 5:
+            continue
+            
+        # Se NÃO está na lista de logs feitos, é uma pendência
+        if check_date not in logged_dates:
+            missing_dates.append(check_date)
+    
+    # Retorna ordenado do mais recente para o mais antigo
+    return missing_dates
+
+
+# --- NOVA ROTA: PÁGINA DE PENDÊNCIAS ---
+@bp.route('/pending')
+@login_required
+def pending_logs():
+    if current_user.role != 'bolsista':
+        return redirect(url_for('main.dashboard'))
+        
+    missing = get_missing_dates(current_user)
+    
+    return render_template('pending_logs.html', title='Pendências', missing_dates=missing)
+
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
 @login_required
@@ -121,6 +166,15 @@ def index():
         return redirect(url_for('main.dashboard'))
 
     form = LogEntryForm()
+
+    if request.method == 'GET' and request.args.get('fill_date'):
+        try:
+            fill_date = date.fromisoformat(request.args.get('fill_date'))
+            form.entry_date.data = fill_date
+            flash(f'Data selecionada para preenchimento: {fill_date.strftime("%d/%m/%Y")}', 'info')
+        except ValueError:
+            pass
+
     if form.validate_on_submit():
         log_entry = LogEntry(
             entry_date=form.entry_date.data,
@@ -142,7 +196,7 @@ def index():
 
     # --- LÓGICA DA PÁGINA (GET) ---
 
-    # 1. LÓGICA DO "REGISTO DE HOJE"
+    # 1. LÓGICA DO "REGISTRO DE HOJE"
     today = date.today()
     has_log_today = LogEntry.query.filter_by(
         author=current_user,
@@ -159,7 +213,7 @@ def index():
     prev_month_date = current_date - timedelta(days=1)
     next_month_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
     
-    # 4. Busca os registos do utilizador para o mês/ano selecionado
+    # 4. Busca os registros do utilizador para o mês/ano selecionado
     _, num_days_in_month = calendar.monthrange(year, month)
     start_date = date(year, month, 1)
     end_date = date(year, month, num_days_in_month)
@@ -511,7 +565,7 @@ def generate_report():
     ).order_by(User.username, LogEntry.entry_date).all()
     
     if not logs_period:
-        flash(f"Não há registos n{period_description} para gerar uma análise.", 'info')
+        flash(f"Não há registros n{period_description} para gerar uma análise.", 'info')
         return redirect(url_for('main.dashboard'))
 
     # ... (Formatação dos logs e prompt da IA)
@@ -528,7 +582,7 @@ def generate_report():
         prompt_analysis_type = "semanal"; prompt_focus = "ritmo de trabalho e projetos em foco"; prompt_suggestions_focus = "imediatos"
 
     master_prompt = f"""
-    Objetivo: Atue como um analisador de dados. Analise os registos de diário de bordo fornecidos para {period_description} e produza um relatório {prompt_analysis_type} em formato Markdown.
+    Objetivo: Atue como um analisador de dados. Analise os registros de diário de bordo fornecidos para {period_description} e produza um relatório {prompt_analysis_type} em formato Markdown.
 
     Instruções Estritas:
     1. Baseie a sua análise EXCLUSIVAMENTE nos dados fornecidos para este período.
@@ -541,11 +595,11 @@ def generate_report():
     (Um parágrafo conciso sobre {prompt_focus}, baseado nos dados.)
 
     ## Principais Avanços
-    - (Use um tópico para cada conquista ou progresso significativo extraído dos registos.)
+    - (Use um tópico para cada conquista ou progresso significativo extraído dos registros.)
     - (Se não houver avanços claros, indique "Nenhum avanço significativo reportado.")
 
     ## Gargalos e Pontos de Atenção
-    - (Use um tópico para cada problema, dificuldade ou bloqueio mencionado nos registos.)
+    - (Use um tópico para cada problema, dificuldade ou bloqueio mencionado nos registros.)
     - (Agrupe problemas semelhantes e identifique se algum parece ser recorrente.)
     - (Se não houver problemas, indique "Nenhum problema reportado.")
 

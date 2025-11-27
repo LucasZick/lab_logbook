@@ -1,37 +1,153 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Registrar</h1>
-    <form action="" method="post">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            {{ form.username.label(class="form-label") }}
-            {{ form.username(class="form-control", size=32) }}
-            {% for error in form.username.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+<style>
+    /* --- ESTILOS DE FULL SCREEN (Igual ao Login) --- */
+    nav.navbar, footer { display: none !important; }
+    
+    body, html {
+        height: 100%;
+        overflow-x: hidden;
+        background-color: #fff;
+    }
+    main.container {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        height: 100vh;
+    }
+
+    .login-row { height: 100vh; margin: 0; }
+
+    /* --- LADO ESQUERDO (Branding) --- */
+    .brand-col {
+        background: linear-gradient(135deg, #003319 0%, #01552b 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Decoração de fundo */
+    .brand-col::before {
+        content: ''; position: absolute; top: -10%; right: -10%; width: 300px; height: 300px;
+        background: rgba(255,255,255,0.05); border-radius: 50%;
+    }
+    .brand-col::after {
+        content: ''; position: absolute; bottom: 10%; left: -5%; width: 200px; height: 200px;
+        background: rgba(255,255,255,0.05); border-radius: 50%;
+    }
+
+    .brand-content { position: relative; z-index: 2; max-width: 500px; }
+
+    /* --- LADO DIREITO (Formulário) --- */
+    .form-col {
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem; background-color: #ffffff;
+        overflow-y: auto; /* Permite scroll se a tela for pequena verticalmente */
+    }
+
+    .login-box { width: 100%; max-width: 450px; padding: 1rem; }
+
+    /* Inputs Modernos */
+    .form-floating > .form-control {
+        border: 2px solid #f3f4f6; border-radius: 12px; height: 3.5rem;
+    }
+    .form-floating > .form-control:focus {
+        border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
+    }
+    .form-floating > label { padding-left: 1rem; color: #6b7280; }
+    
+    /* Botão */
+    .btn-register {
+        background-color: #01552b; color: white; font-weight: 600; padding: 0.9rem;
+        border-radius: 12px; font-size: 1rem; width: 100%; border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-register:hover {
+        background-color: #003319; transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(1, 85, 43, 0.2); color: white;
+    }
+
+    .brand-link { color: #01552b; text-decoration: none; font-weight: bold; }
+    .brand-link:hover { text-decoration: underline; color: #003319; }
+
+    /* Animação */
+    .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="row login-row g-0">
+    
+    <div class="col-lg-6 d-none d-lg-flex brand-col">
+        <div class="brand-content fade-in-up">
+            <i class="fas fa-rocket fa-3x mb-4" style="opacity: 0.9;"></i>
+            <h1 class="display-5 fw-bold mb-3">Junte-se à Equipe.</h1>
+            <p class="lead" style="opacity: 0.9; font-size: 1.1rem;">
+                Crie a sua conta para começar a registar as suas atividades e contribuir para os projetos de um laboratório.
+            </p>
         </div>
-        <div class="mb-3">
-            {{ form.email.label(class="form-label") }}
-            {{ form.email(class="form-control", size=64) }}
-            {% for error in form.email.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
+    </div>
+
+    <div class="col-lg-6 form-col">
+        <div class="login-box fade-in-up" style="animation-delay: 0.1s;">
+            
+            <div class="d-lg-none text-center mb-4">
+                <i class="fas fa-user-plus fa-3x" style="color: #01552b;"></i>
+            </div>
+
+            <h2 class="fw-bold mb-2" style="color: #1f2937;">Criar Conta</h2>
+            <p class="text-muted mb-4">Preencha os dados abaixo para solicitar acesso.</p>
+
+            <form action="" method="post" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="form-floating mb-3">
+                    {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
+                    <label for="username">Nome de Usuário</label>
+                    {% for error in form.username.errors %}
+                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-floating mb-3">
+                    {{ form.email(class="form-control", id="email", placeholder="nome@exemplo.com") }}
+                    <label for="email">Endereço de E-mail</label>
+                    {% for error in form.email.errors %}
+                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-floating mb-3">
+                    {{ form.password(class="form-control", id="password", placeholder="Senha") }}
+                    <label for="password">Senha</label>
+                    {% for error in form.password.errors %}
+                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-floating mb-4">
+                    {{ form.password2(class="form-control", id="password2", placeholder="Repetir Senha") }}
+                    <label for="password2">Confirmar Senha</label>
+                    {% for error in form.password2.errors %}
+                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-register", value="Registar-se") }}
+                </div>
+            </form>
+
+            <div class="text-center mt-4">
+                <p class="text-muted small">Já tem uma conta? 
+                    <a href="{{ url_for('main.login') }}" class="brand-link">Fazer Login</a>
+                </p>
+            </div>
         </div>
-        <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control", size=32) }}
-            {% for error in form.password.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div class="mb-3">
-            {{ form.password2.label(class="form-label") }}
-            {{ form.password2(class="form-control", size=32) }}
-            {% for error in form.password2.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <p>{{ form.submit(class="btn btn-primary") }}</p>
-    </form>
+    </div>
+</div>
 {% endblock %}

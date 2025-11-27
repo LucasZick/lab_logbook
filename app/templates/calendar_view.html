@@ -2,112 +2,184 @@
 
 {% block content %}
 <style>
-    /* Container com Rolagem Horizontal */
+    /* --- CONTAINER DA TABELA --- */
     .table-container {
-        overflow-x: auto;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
+        overflow: auto; /* Permite rolagem em ambos os eixos */
+        max-height: 80vh; /* Limita altura para permitir sticky header vertical */
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        background: white;
     }
     .activity-grid {
         margin-bottom: 0;
+        border-collapse: separate; /* Necessário para sticky headers funcionarem bem */
+        border-spacing: 0;
     }
 
-    /* Estilo geral das células e cabeçalhos */
+    /* --- CÉLULAS --- */
     .activity-grid th, .activity-grid td {
         text-align: center;
         vertical-align: middle;
-        padding: 0.75rem 0.5rem;
+        padding: 0.6rem 0.4rem;
         white-space: nowrap;
-        min-width: 45px;
+        min-width: 42px;
+        border-bottom: 1px solid #f3f4f6;
+        border-right: 1px solid #f9fafb;
     }
 
-    /* --- MELHORIA NA SEPARAÇÃO HORIZONTAL --- */
-    
-    /* 1. Adiciona uma borda inferior clara em cada linha */
-    .activity-grid tbody tr {
-        border-bottom: 1px solid #dee2e6; 
-    }
-    .activity-grid tbody tr:last-child {
-        border-bottom: none; /* Remove a borda da última linha */
+    /* --- CABEÇALHO FIXO (DIAS) --- */
+    .activity-grid thead th {
+        position: sticky;
+        top: 0;
+        background-color: #ffffff;
+        z-index: 10; /* Fica acima das células normais */
+        border-bottom: 2px solid #e5e7eb;
+        color: #6b7280;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
     }
 
-    /* 2. Mantém o "Zebra Striping" sutil para guiar o olho */
-    .activity-grid tbody tr:nth-of-type(odd) {
-        background-color: rgba(0, 0, 0, 0.02); /* Tom ainda mais sutil */
-    }
-
-    /* 3. Melhora o efeito de hover para destacar a linha inteira */
-    .activity-grid tbody tr:hover {
-        background-color: rgba(13, 110, 253, 0.1);
-        transition: background-color 0.15s ease-in-out;
-    }
-    
-    /* Coluna de Nomes Fixa (Sticky) */
-    .activity-grid thead th:first-child,
-    .activity-grid tbody td:first-child {
-        position: -webkit-sticky;
+    /* --- COLUNA DE NOMES FIXA (BOLSISTAS) --- */
+    .activity-grid .student-col {
         position: sticky;
         left: 0;
-        z-index: 2;
-        background-color: #fff;
-    }
-    /* Garante que o fundo da célula fixa também mude no hover */
-    .activity-grid tbody tr:hover td:first-child {
-        background-color: rgba(13, 110, 253, 0.1);
-    }
-    .activity-grid tbody td:first-child {
-        box-shadow: 5px 0 5px -5px rgba(0,0,0,0.1);
-    }
-    .activity-grid thead th:first-child {
-        z-index: 3;
-    }
-
-    /* Estilo da coluna de nomes */
-    .student-name {
+        z-index: 20; /* Fica acima das células normais e do cabeçalho de dias */
+        background-color: #ffffff;
         text-align: left !important;
-        font-weight: 500;
-        min-width: 180px;
+        min-width: 200px;
+        border-right: 2px solid #e5e7eb; /* Borda mais forte para separar */
+        padding-left: 1.5rem;
     }
 
-    /* Estilo dos fins de semana */
+    /* O Canto Superior Esquerdo (Interseção) */
+    .activity-grid thead th.student-col {
+        z-index: 30; /* O mais alto de todos */
+        background-color: #f8fafc; /* Cor ligeiramente diferente para destacar */
+    }
+
+    /* --- ESTILOS VISUAIS --- */
+    
+    /* Hover na linha */
+    .activity-grid tbody tr:hover td {
+        background-color: #f8fafc;
+    }
+    /* Mantém a cor branca na coluna fixa mesmo no hover, para não ficar estranho */
+    .activity-grid tbody tr:hover td.student-col {
+        background-color: #ffffff; 
+    }
+
+    /* Fins de Semana */
     .weekend-col {
-        background-color: #f0f2f5 !important;
+        background-color: #f9fafb !important; /* Cinza muito subtil */
+    }
+    .activity-grid thead th.weekend-col {
+        background-color: #f3f4f6; /* Cabeçalho do FDS um pouco mais escuro */
+        color: #9ca3af;
+    }
+
+    /* Avatares */
+    .table-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 10px;
+        border: 1px solid #e5e7eb;
+    }
+
+    /* Badges de Status (Quadrados) */
+    .status-badge {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        transition: transform 0.1s;
+    }
+    .status-badge:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Cores dos Badges */
+    .badge-check { background-color: #dcfce7; color: #166534; } /* Verde */
+    .badge-miss  { background-color: #fee2e2; color: #991b1b; } /* Vermelho */
+    
+    /* Navegação */
+    .nav-btn {
+        border: 1px solid #e5e7eb;
+        background: white;
+        color: #374151;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    .nav-btn:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+        color: #111827;
     }
 </style>
 
 <div class="content-card">
-    <h3><i class="fas fa-calendar-alt"></i> Grade de Atividades</h3>
-    
-    <div class="d-flex justify-content-between align-items-center my-3">
-        <a href="{{ url_for('main.calendar_view', ano=prev_month.ano, mes=prev_month.mes) }}" class="btn btn-outline-secondary">
-            &laquo; Anterior
-        </a>
-        <h4>{{ current_month_name }}</h4>
-        <a href="{{ url_for('main.calendar_view', ano=next_month.ano, mes=next_month.mes) }}" class="btn btn-outline-secondary">
-            Próximo &raquo;
-        </a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1"><i class="fas fa-calendar-alt text-primary me-2"></i> Grade de Atividades</h3>
+            <p class="text-muted mb-0 small">Visão geral de frequência dos bolsistas.</p>
+        </div>
+        
+        <div class="d-flex align-items-center bg-light rounded-pill p-1 border">
+            <a href="{{ url_for('main.calendar_view', ano=prev_month.ano, mes=prev_month.mes) }}" class="nav-btn border-0 rounded-pill py-1 px-3">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <span class="fw-bold mx-3 text-dark" style="min-width: 150px; text-align: center;">{{ current_month_name }}</span>
+            <a href="{{ url_for('main.calendar_view', ano=next_month.ano, mes=next_month.mes) }}" class="nav-btn border-0 rounded-pill py-1 px-3">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
     </div>
 
     <div class="table-container">
         <table class="table activity-grid">
-            <thead class="table-light">
+            <thead>
                 <tr>
-                    <th class="student-name">Bolsista</th>
+                    <th class="student-col">Bolsista</th>
+                    
                     {% for day_info in days_header %}
-                        <th class="{% if day_info.is_weekend %}weekend-col{% endif %}">{{ day_info.day }}</th>
+                        <th class="{% if day_info.is_weekend %}weekend-col{% endif %}">
+                            {{ day_info.day }}
+                        </th>
                     {% endfor %}
                 </tr>
             </thead>
             <tbody>
                 {% for student_data in grid_data %}
                 <tr>
-                    <td class="student-name">{{ student_data.student.username }}</td>
+                    <td class="student-col">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename='profile_pics/' + student_data.student.image_file) }}" class="table-avatar">
+                            <span class="text-dark fw-semibold small">{{ student_data.student.username }}</span>
+                        </div>
+                    </td>
+                    
                     {% for day_status in student_data.days %}
                         <td class="{% if day_status.is_weekend %}weekend-col{% endif %}">
                             {% if day_status.has_log %}
-                                <i class="fas fa-check-circle text-success" title="Registro feito"></i>
+                                <span class="status-badge badge-check" title="Registro feito">
+                                    <i class="fas fa-check"></i>
+                                </span>
                             {% elif not day_status.is_weekend %}
-                                <i class="fas fa-times-circle text-danger" title="Registro não feito"></i>
+                                <span class="status-badge badge-miss" title="Registro em falta">
+                                    <i class="fas fa-times"></i>
+                                </span>
                             {% endif %}
                         </td>
                     {% endfor %}
@@ -116,6 +188,14 @@
             </tbody>
         </table>
     </div>
+    
+    <div class="d-flex justify-content-end mt-3 gap-3">
+        <small class="d-flex align-items-center text-muted">
+            <span class="status-badge badge-check me-2" style="width: 20px; height: 20px; font-size: 0.6rem;"><i class="fas fa-check"></i></span> Presente
+        </small>
+        <small class="d-flex align-items-center text-muted">
+            <span class="status-badge badge-miss me-2" style="width: 20px; height: 20px; font-size: 0.6rem;"><i class="fas fa-times"></i></span> Pendente
+        </small>
+    </div>
 </div>
 {% endblock %}
-

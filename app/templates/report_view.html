@@ -2,54 +2,231 @@
 
 {% block content %}
 <style>
-    /* Estilos para o conteúdo renderizado a partir do Markdown */
-    .report-content {
+    /* --- FUNDO E ESTRUTURA --- */
+    body {
+        background-color: #f0f2f5;
+        /* Padrão sutil de fundo para dar textura */
+        background-image: radial-gradient(#01552b 0.5px, transparent 0.5px), radial-gradient(#01552b 0.5px, #f0f2f5 0.5px);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        background-color: #f3f4f6; /* Fallback */
+        opacity: 1;
+    }
+    
+    /* O "Papel" do Relatório */
+    .report-paper {
+        background: #fff;
+        max-width: 850px; /* Largura ideal para leitura (aprox. A4) */
+        margin: 0 auto;
+        padding: 4rem;
+        border-radius: 4px; /* Cantos pouco arredondados (estilo papel) */
+        box-shadow: 
+            0 1px 1px rgba(0,0,0,0.05), 
+            0 10px 30px rgba(0,0,0,0.05), 
+            0 20px 60px rgba(0, 60, 30, 0.1); /* Sombra verde muito suave */
+        position: relative;
+    }
+    
+    /* Faixa decorativa no topo */
+    .report-paper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #01552b, #10b981);
+        border-radius: 4px 4px 0 0;
+    }
+
+    /* --- CABEÇALHO DO DOCUMENTO --- */
+    .report-header {
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 2rem;
+        margin-bottom: 3rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .report-meta {
         font-family: 'Inter', sans-serif;
-        line-height: 1.7;
-        color: #343a40;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
     }
-    .report-content h1, 
-    .report-content h2, 
-    .report-content h3, 
-    .report-content h4 {
+
+    .report-title {
+        font-family: 'Inter', sans-serif;
+        font-weight: 800;
+        font-size: 2.2rem;
+        color: #111827;
+        line-height: 1.2;
+        margin: 0;
+        /* Gradiente de Texto Sutil */
+        background: -webkit-linear-gradient(45deg, #111827, #374151);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* --- CONTEÚDO MARKDOWN (TIPOGRAFIA EDITORIAL) --- */
+    .report-content {
+        font-family: 'Georgia', 'Cambria', serif; /* Serif para leitura longa é mais elegante */
+        font-family: 'Inter', sans-serif; /* Ou mantenha Sans para look moderno. Escolhi Sans aqui. */
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: #374151;
+    }
+
+    /* Título 1 (H1) vindo da IA */
+    .report-content h1 {
+        font-size: 1.8rem;
         font-weight: 700;
-        margin-top: 1.8rem;
+        color: #01552b;
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    /* Título 2 (H2) - As Secções Principais */
+    .report-content h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-top: 2.5rem;
         margin-bottom: 1rem;
-        color: #2c3e50;
-        border-bottom: 2px solid #e9ecef;
-        padding-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        
+        /* Estilo de destaque */
+        padding-left: 1rem;
+        border-left: 4px solid #01552b;
     }
+
+    /* Título 3 (H3) */
+    .report-content h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-top: 1.5rem;
+    }
+
+    /* Negritos (Destaques da IA) */
     .report-content strong {
+        color: #01552b;
         font-weight: 700;
-        color: #212529;
     }
-    .report-content ul, .report-content ol {
-        padding-left: 2rem;
+
+    /* Listas */
+    .report-content ul {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 1.5rem;
     }
     .report-content li {
-        margin-bottom: 0.5rem;
+        position: relative;
+        padding-left: 1.5rem;
+        margin-bottom: 0.75rem;
     }
+    /* Bullet customizado */
+    .report-content li::before {
+        content: '•';
+        color: #01552b;
+        font-weight: bold;
+        position: absolute;
+        left: 0;
+        font-size: 1.2rem;
+        line-height: 1.5rem;
+    }
+
+    /* Código e Termos Técnicos */
     .report-content code {
-        background-color: #e9ecef;
+        background-color: #f1f5f9;
+        color: #0f172a;
         padding: 0.2em 0.4em;
         border-radius: 4px;
         font-size: 0.9em;
+        font-family: 'Menlo', 'Monaco', monospace;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* --- BARRA DE AÇÕES (Flutuante) --- */
+    .action-bar {
+        position: sticky;
+        top: 100px; /* Ajuste conforme a altura da sua navbar */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    @media print {
+        body { background: white; }
+        .navbar, .action-bar, .btn-back { display: none !important; }
+        .report-paper { box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
+        .report-header { border-bottom: 2px solid #000; }
     }
 </style>
 
-<div class="content-card">
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary mb-3"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
-    
-    <h3><i class="fas fa-brain"></i> {{ title }}</h3> 
-    
-    <p class="text-muted">
-        Este é um resumo gerado pela IA com base nos registos da semana de 
-        <strong>{{ start_date.strftime('%d/%m/%Y') }}</strong> a <strong>{{ end_date.strftime('%d/%m/%Y') }}</strong>.
-    </p>
-    <hr>
-    
-    <div class="report-content">
-        {{ report_html | safe }}
+<div class="container pb-5">
+    <div class="row justify-content-center position-relative">
+        
+        <div class="col-12 mb-3 d-flex justify-content-between align-items-center" style="max-width: 850px;">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-link text-decoration-none text-muted px-0 btn-back">
+                <i class="fas fa-arrow-left me-2"></i> Voltar ao Painel
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-dark btn-sm rounded-pill px-4 d-none d-md-block">
+                <i class="fas fa-print me-2"></i> Imprimir / PDF
+            </button>
+        </div>
+
+        <div class="col-12">
+            <div class="report-paper animate__animated animate__fadeInUp">
+                
+                <div class="report-header">
+                    <div>
+                        <div class="report-meta">RELATÓRIO DE DESEMPENHO GERADO POR IA</div>
+                        <h1 class="report-title">{{ title }}</h1>
+                    </div>
+                    <div class="text-end d-none d-sm-block">
+                        <div style="width: 50px; height: 50px; background: #01552b; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-5 p-3 bg-light rounded-3 border border-light">
+                    <div class="col-md-6">
+                        <small class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Período Analisado</small>
+                        <div class="fw-bold text-dark">
+                            {% if start_date != end_date %}
+                                {{ start_date.strftime('%d/%m/%Y') }} a {{ end_date.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                {{ start_date.strftime('%d/%m/%Y') }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                        <small class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Gerado em</small>
+                        <div class="text-dark">{{ start_date.today().strftime('%d/%m/%Y às %H:%M') }}</div>
+                    </div>
+                </div>
+                
+                <div class="report-content">
+                    {{ report_html | safe }}
+                </div>
+
+                <div class="mt-5 pt-4 border-top text-center">
+                    <p class="text-muted small fst-italic">
+                        Este documento foi gerado automaticamente pelo sistema Logbook usando Google Gemini AI.<br>
+                        A análise baseia-se estritamente nos registros inseridos pelos bolsistas.
+                    </p>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
 

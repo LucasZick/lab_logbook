@@ -33,7 +33,7 @@ def send_weekly_report_job():
         ).order_by(User.username, LogEntry.entry_date).all()
 
         if not logs_current_week:
-            print(f"Nenhum registo encontrado na semana ({start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}). E-mail não será enviado.")
+            print(f"Nenhum registro encontrado na semana ({start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}). E-mail não será enviado.")
             return
             
         formatted_logs = ""
@@ -45,7 +45,7 @@ def send_weekly_report_job():
         period_description = f"a semana de {start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}"
         report_title = f"Análise Semanal: {start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}"
         master_prompt = f"""
-        Objetivo: Atue como um analisador de dados. Analise os registos de diário de bordo para {period_description} fornecidos e produza um relatório em formato Markdown.
+        Objetivo: Atue como um analisador de dados. Analise os registros de diário de bordo para {period_description} fornecidos e produza um relatório em formato Markdown.
         
 
         Instruções Estritas:
