@@ -27,23 +27,39 @@ def professor_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- FUNÇÃO AUXILIAR PARA SALVAR FOTO ---
 def save_picture(form_picture):
-    # 1. Gera nome aleatório para evitar conflitos
+    # 1. Gera nome aleatório
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
     
-    # 2. Define o caminho completo (pasta static/profile_pics)
-    picture_path = os.path.join(current_app.root_path, 'static/profile_pics', picture_fn)
+    # 2. Define o caminho RELATIVO (onde a pasta deve estar dentro do app)
+    # current_app.root_path aponta para a pasta 'app/' dentro do container
+    relative_path = 'static/profile_pics'
+    full_directory = os.path.join(current_app.root_path, relative_path)
 
-    # 3. Redimensiona a imagem para 150x150 (poupa espaço)
+    # 3. DEBUG: Imprime onde ele acha que deve salvar
+    print(f"!!! DEBUG SAVE: Tentando salvar em: {full_directory}", file=sys.stderr)
+
+    # 4. CRÍTICO: Cria a pasta se ela não existir (Auto-correção)
+    if not os.path.exists(full_directory):
+        print(f"!!! DEBUG SAVE: A pasta não existia. Criando agora...", file=sys.stderr)
+        os.makedirs(full_directory)
+
+    # 5. Caminho final do arquivo
+    picture_path = os.path.join(full_directory, picture_fn)
+
+    # 6. Redimensiona e Salva
     output_size = (150, 150)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
     
-    # 4. Salva
-    i.save(picture_path)
+    try:
+        i.save(picture_path)
+        print(f"!!! DEBUG SAVE: Sucesso! Arquivo salvo em: {picture_path}", file=sys.stderr)
+    except Exception as e:
+        print(f"!!! ERRO CRÍTICO AO SALVAR ARQUIVO: {e}", file=sys.stderr)
+        raise e # Relança o erro para ser pego na rota principal
 
     return picture_fn
 
