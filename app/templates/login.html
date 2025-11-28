@@ -29,7 +29,6 @@
 
     /* --- LADO ESQUERDO (Branding) --- */
     .brand-col {
-        /* Seu verde institucional */
         background: linear-gradient(135deg, #003319 0%, #01552b 100%);
         color: white;
         display: flex;
@@ -147,6 +146,9 @@
                         {{ form.remember_me(class="form-check-input") }}
                         <label class="form-check-label text-muted small" for="remember_me">Lembrar-me</label>
                     </div>
+                    <a href="{{ url_for('main.reset_password_request') }}" class="text-decoration-none small fw-bold" style="color: #01552b;">
+                        Esqueceu a senha?
+                    </a>
                 </div>
 
                 <div class="d-grid">

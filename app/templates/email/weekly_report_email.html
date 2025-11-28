@@ -1,0 +1,14 @@
+{% extends "email/base_email.html" %}
+
+{% block content %}
+    <h2 style="color: #01552b; border-bottom: 2px solid #eee; padding-bottom: 10px;">Análise Semanal de Atividades</h2>
+    <p style="color: #666; margin-bottom: 20px;">Período: <strong>{{ period }}</strong></p>
+    
+    <div style="text-align: left;">
+        {{ report_content | safe }}
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('main.dashboard', _external=True) }}" class="btn">Aceder ao Painel</a>
+    </div>
+{% endblock %}

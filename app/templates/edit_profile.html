@@ -68,14 +68,22 @@
                 
                 <div class="col-md-4 mb-4">
                     <div class="content-card h-100 text-center">
-                        <div class="section-title text-start">Imagem & Segurança</div>
+                        <div class="section-title text-start">Imagens & Segurança</div>
                         
+                        <div class="mb-4 text-start">
+                            <label class="form-label small fw-bold text-muted">Imagem de Capa (Banner)</label>
+                            {{ form.cover(class="form-control form-control-sm") }}
+                            {% for error in form.cover.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
                         <div class="edit-avatar-wrapper">
                             <img src="{{ image_file }}" class="edit-avatar" alt="Foto de Perfil">
                         </div>
 
                         <div class="mb-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Alterar Foto</label>
+                            <label class="form-label small fw-bold text-muted">Alterar Foto de Perfil</label>
                             {{ form.picture(class="form-control form-control-sm") }}
                             {% for error in form.picture.errors %}
                                 <div class="text-danger small mt-1">{{ error }}</div>
@@ -99,7 +107,8 @@
                         <div class="section-title"><i class="fas fa-user-edit me-2"></i> Informações Pessoais</div>
                         
                         <div class="row g-3 mb-4">
-                            <div class="col-md-6">
+                            
+                            <div class="col-12">
                                 <div class="form-floating">
                                     {{ form.username(class="form-control", id="username", placeholder="Username") }}
                                     <label for="username">Nome de Usuário</label>
@@ -108,12 +117,34 @@
                                     <div class="text-danger small mt-1">{{ error }}</div>
                                 {% endfor %}
                             </div>
+
                             <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.email(class="form-control", id="email", placeholder="Email") }}
+                                    <label for="email">Endereço de E-mail</label>
+                                </div>
+                                {% for error in form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    {{ form.confirm_email(class="form-control", id="confirm_email", placeholder="Confirmar Email") }}
+                                    <label for="confirm_email">Confirmar E-mail</label>
+                                </div>
+                                {% for error in form.confirm_email.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="col-12">
                                 <div class="form-floating">
                                     {{ form.course(class="form-control", id="course", placeholder="Curso") }}
                                     <label for="course">Curso / Vínculo</label>
                                 </div>
                             </div>
+                            
                             <div class="col-12">
                                 <div class="form-floating">
                                     {{ form.bio(class="form-control", id="bio", placeholder="Bio", style="height: 100px") }}

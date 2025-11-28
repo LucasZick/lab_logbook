@@ -1,3 +1,4 @@
+from flask import render_template
 import google.generativeai as genai
 import markdown
 from datetime import date, timedelta
@@ -80,11 +81,15 @@ def send_weekly_report_job():
         
         subject = f"Logbook: Análise Semanal ({start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')})"
         
+        final_email_html = render_template('email/weekly_report_email.html', 
+                                           report_content=report_html, 
+                                           period=f"{start_of_week.strftime('%d/%m')} a {today.strftime('%d/%m')}")
+        
         send_email(subject,
                    sender=app.config['MAIL_USERNAME'],
                    recipients=recipients,
-                   text_body="O seu relatório semanal de atividades está em anexo.",
-                   html_body=report_html)
+                   text_body="O seu relatório está disponível. Por favor, verifique a versão HTML.",
+                   html_body=final_email_html) # <--- MUDANÇA AQUI
         
         print(f"Relatório semanal enviado com sucesso para: {', '.join(recipients)}")
 

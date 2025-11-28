@@ -8,7 +8,8 @@ import calendar
 from flask import render_template, flash, redirect, url_for, request, Blueprint, abort, current_app
 from app import db
 # Importar o novo formulário
-from app.forms import ChangePasswordForm, LoginForm, RegistrationForm, LogEntryForm, EditProfileForm
+from app.email import send_password_reset_email
+from app.forms import ChangePasswordForm, LoginForm, RegistrationForm, LogEntryForm, EditProfileForm, ResetPasswordForm, ResetPasswordRequestForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, LogEntry
 from urllib.parse import urlparse
@@ -64,6 +65,33 @@ def save_picture(form_picture):
 
     return picture_fn
 
+def save_cover(form_cover):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_cover.filename)
+    cover_fn = random_hex + f_ext
+    
+    # Caminho
+    relative_path = 'static/profile_pics' # Vamos guardar na mesma pasta para facilitar
+    full_directory = os.path.join(current_app.root_path, relative_path)
+    
+    if not os.path.exists(full_directory):
+        os.makedirs(full_directory)
+        
+    cover_path = os.path.join(full_directory, cover_fn)
+
+    # Redimensionar para Capa (Ex: Max 1080px de largura, altura proporcional)
+    i = Image.open(form_cover)
+    
+    # Se for muito grande, reduzimos para poupar espaço
+    if i.width > 1080:
+        # Calcula altura proporcional
+        ratio = 1080 / float(i.width)
+        new_height = int((float(i.height) * float(ratio)))
+        i = i.resize((1080, new_height), Image.Resampling.LANCZOS)
+    
+    i.save(cover_path)
+    return cover_fn
+
 # --- ROTAS DE PERFIL ---
 
 @bp.route('/user/<username>')
@@ -75,37 +103,53 @@ def user_profile(username):
     image_file = url_for('static', filename='profile_pics/' + user.image_file)
     return render_template('user_profile.html', title=username, user=user, total_logs=total_logs, image_file=image_file)
 
+@bp.app_errorhandler(404)
+def not_found_error(error):
+    return render_template('errors/404.html'), 404
+
+@bp.app_errorhandler(500)
+def internal_error(error):
+    db.session.rollback() # Importante para evitar travar o banco em caso de erro
+    return render_template('errors/500.html'), 500
+
 @bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
-    form = EditProfileForm(current_user.username)
+    form = EditProfileForm(current_user.username, current_user.email)
     
     if form.validate_on_submit():
-        # 1. Lógica de Imagem (se o usuário enviou uma nova foto)
         if form.picture.data:
             picture_file = save_picture(form.picture.data)
             current_user.image_file = picture_file
+
+        if form.cover.data:
+            cover_file = save_cover(form.cover.data)
+            current_user.cover_file = cover_file
         
-        # 2. Guardar dados de texto (incluindo o novo campo skills)
         current_user.username = form.username.data
+        current_user.email = form.email.data # Salva o email (já validado que é igual à confirmação)
         current_user.course = form.course.data
         current_user.bio = form.bio.data
-        current_user.skills = form.skills.data # <--- Campo Skills adicionado
+        current_user.skills = form.skills.data
         current_user.lattes_link = form.lattes_link.data
         current_user.linkedin_link = form.linkedin_link.data
         current_user.github_link = form.github_link.data
         
-        # 3. Commit no banco
         db.session.commit()
         flash('O seu perfil foi atualizado!', 'success')
         return redirect(url_for('main.user_profile', username=current_user.username))
     
     elif request.method == 'GET':
-        # Preenche o formulário com os dados atuais do banco
         form.username.data = current_user.username
+        
+        # --- MUDANÇA AQUI: Preenche ambos os campos ---
+        form.email.data = current_user.email
+        form.confirm_email.data = current_user.email
+        # ----------------------------------------------
+
         form.course.data = current_user.course
         form.bio.data = current_user.bio
-        form.skills.data = current_user.skills # <--- Campo Skills carregado
+        form.skills.data = current_user.skills
         form.lattes_link.data = current_user.lattes_link
         form.linkedin_link.data = current_user.linkedin_link
         form.github_link.data = current_user.github_link
@@ -647,3 +691,40 @@ def change_password():
         return redirect(url_for('main.user_profile', username=current_user.username))
         
     return render_template('change_password.html', title='Alterar Senha', form=form)
+
+# ROTA 1: Solicitar o Reset
+@bp.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+        
+    form = ResetPasswordRequestForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            send_password_reset_email(user)
+        # Por segurança, mostramos a mensagem mesmo se o email não existir (para não revelar usuários)
+        flash('Verifique o seu e-mail para as instruções de recuperação.', 'info')
+        return redirect(url_for('main.login'))
+        
+    return render_template('auth/reset_password_request.html', title='Recuperar Senha', form=form)
+
+# ROTA 2: Definir a Nova Senha (clicando no link)
+@bp.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+        
+    user = User.verify_reset_token(token)
+    if not user:
+        flash('O link é inválido ou expirou.', 'danger')
+        return redirect(url_for('main.index'))
+        
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        db.session.commit()
+        flash('A sua senha foi redefinida com sucesso!', 'success')
+        return redirect(url_for('main.login'))
+        
+    return render_template('auth/reset_password.html', title='Nova Senha', form=form)

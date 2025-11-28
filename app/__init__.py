@@ -24,7 +24,7 @@ def create_app(config_class=Config, start_scheduler=True):
     login.init_app(app)
     mail.init_app(app)
     
-    # Apenas inicializa e regista as tarefas se for a aplicação principal
+    # Apenas inicializa e registra as tarefas se for a aplicação principal
     if start_scheduler:
         if not scheduler.running:
             scheduler.init_app(app)

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center" style="min-height: 60vh; align-items: center;">
+    <div class="col-md-6 text-center">
+        <div style="font-size: 6rem; color: #dc3545; opacity: 0.2;"><i class="fas fa-bug"></i></div>
+        <h1 class="fw-bold mt-3">500</h1>
+        <h3 class="text-muted mb-4">Erro no Sistema</h3>
+        <p class="mb-4">Ocorreu um erro inesperado no servidor. O administrador foi notificado (mentira, mas soa bem).</p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+            Tentar Novamente
+        </a>
+    </div>
+</div>
+{% endblock %}

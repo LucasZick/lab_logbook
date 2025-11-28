@@ -24,3 +24,7 @@ psycopg2-binary
 email_validator
 
 Pillow
+
+holidays
+
+PyJWT
