@@ -709,7 +709,6 @@ def reset_password_request():
         
     return render_template('auth/reset_password_request.html', title='Recuperar Senha', form=form)
 
-# ROTA 2: Definir a Nova Senha (clicando no link)
 @bp.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     if current_user.is_authenticated:
@@ -727,4 +726,6 @@ def reset_password(token):
         flash('A sua senha foi redefinida com sucesso!', 'success')
         return redirect(url_for('main.login'))
         
-    return render_template('auth/reset_password.html', title='Nova Senha', form=form)
+    # --- CORREÇÃO AQUI ---
+    # Adicionámos 'user=user' para que o template saiba quem é o utilizador
+    return render_template('auth/reset_password.html', title='Nova Senha', form=form, user=user)
