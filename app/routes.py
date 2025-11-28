@@ -354,7 +354,6 @@ meses = {
     7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
 }
 
-# --- ROTA DASHBOARD (PROFESSOR) - CORRIGIDA COM GRÁFICOS ---
 @bp.route('/dashboard')
 @login_required
 @professor_required
@@ -380,15 +379,18 @@ def dashboard():
         dates_labels.append(day.strftime('%d/%m'))
         dates_counts.append(count)
 
-    # 4. Dados para o Gráfico de Projetos (Top 5)
+    # 4. Dados para o Gráfico de Projetos (CORRIGIDO: Últimos 30 Dias)
+    start_date_projects = today - timedelta(days=30) # Define a janela de 30 dias
+    
     projects_data = db.session.query(
         LogEntry.project, func.count(LogEntry.id)
+    ).filter(
+        LogEntry.entry_date >= start_date_projects # <--- FILTRO NOVO
     ).group_by(LogEntry.project).order_by(func.count(LogEntry.id).desc()).limit(5).all()
     
     project_labels = [p[0] for p in projects_data]
     project_counts = [p[1] for p in projects_data]
 
-    # Envia TODAS as variáveis necessárias
     return render_template('dashboard.html', title='Painel do Professor', 
                            pending_users=pending_users, 
                            active_bolsistas=active_bolsistas, 
@@ -398,7 +400,6 @@ def dashboard():
                            available_years=available_years,
                            current_year=current_year,
                            current_month_num=current_month_num,
-                           # Variáveis dos gráficos (Faltavam estas!)
                            dates_labels=dates_labels,
                            dates_counts=dates_counts,
                            project_labels=project_labels,
