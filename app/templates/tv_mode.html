@@ -2,99 +2,241 @@
 
 {% block content %}
 <style>
-    /* Removemos o container padrão para usar largura total */
-    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-    nav, footer { display: none !important; } /* Esconde menus para imersão */
+    /* --- 1. CONFIGURAÇÃO GERAL DO MODO TV --- */
+    nav, footer { display: none !important; }
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; height: 100vh; }
     
-    body { background-color: #111827; color: white; overflow: hidden; }
+    body { 
+        background-color: #0f172a; /* Azul muito escuro (quase preto) */
+        color: white; 
+        overflow: hidden; 
+        font-family: 'Inter', sans-serif;
+    }
 
-    .carousel-item {
-        height: 100vh;
-        padding: 5rem;
+    /* --- 2. O CARTÃO GIGANTE (TV CARD) --- */
+    .carousel-item { 
+        height: 100vh; 
+        padding: 2rem; /* Margem da borda da TV */
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
     }
     
     .tv-card {
-        background: #1f2937;
-        border-radius: 30px;
-        padding: 4rem;
-        height: 80vh;
+        background: #1e293b; /* Cinza azulado escuro */
+        border-radius: 32px;
+        width: 100%;
+        max-width: 1600px;
+        height: 90vh; /* Ocupa 90% da altura */
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        border-left: 20px solid #01552b; /* Faixa verde da marca */
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        overflow: hidden; /* Para a capa não sair das bordas arredondadas */
+        box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
+        border: 1px solid #334155;
+        position: relative;
+    }
+
+    /* --- 3. A NOVA CAPA (BANNER) --- */
+    .tv-cover {
+        height: 25vh; /* Ocupa 25% da altura do cartão */
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    /* Overlay escuro na capa para garantir que textos brancos (se houver) se leiam */
+    .tv-cover::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(30, 41, 59, 1));
+    }
+
+    /* --- 4. CABEÇALHO (AVATAR + NOME) --- */
+    .tv-header {
+        padding: 0 4rem;
+        margin-top: -80px; /* Puxa para cima da capa */
+        display: flex;
+        align-items: flex-end;
+        position: relative;
+        z-index: 10;
+        margin-bottom: 2rem;
     }
 
     .tv-avatar {
-        width: 150px; height: 150px;
+        width: 180px; height: 180px;
         border-radius: 50%;
-        border: 5px solid #01552b;
+        border: 6px solid #1e293b; /* Borda da mesma cor do fundo do cartão para "cortar" a capa */
         object-fit: cover;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        background-color: #fff;
     }
 
-    .tv-date { font-size: 1.5rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 2px; }
-    .tv-author { font-size: 3rem; font-weight: 800; margin-bottom: 0.5rem; }
-    .tv-project { font-size: 2rem; color: #4ade80; font-weight: 600; margin-bottom: 3rem; }
-    
-    .tv-content-label { font-size: 1.2rem; text-transform: uppercase; color: #6b7280; font-weight: 700; margin-bottom: 1rem; }
-    .tv-content-text { font-size: 1.8rem; line-height: 1.5; white-space: pre-wrap; }
+    .tv-identity {
+        margin-left: 2rem;
+        margin-bottom: 1rem;
+    }
 
-    /* Botão de Sair discreto */
-    .btn-exit { position: absolute; top: 20px; right: 20px; opacity: 0.3; color: white; z-index: 9999; }
-    .btn-exit:hover { opacity: 1; }
+    .tv-author { 
+        font-size: 3.5rem; 
+        font-weight: 800; 
+        color: #ffffff; 
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        line-height: 1;
+    }
+    
+    .tv-role {
+        font-size: 1.4rem;
+        color: #94a3b8; /* Cinza claro legível */
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-top: 0.5rem;
+    }
+
+    /* --- 5. CONTEÚDO E LEGIBILIDADE --- */
+    .tv-body {
+        padding: 0 4rem 3rem 4rem;
+        flex-grow: 1;
+        display: flex;
+        gap: 4rem;
+    }
+
+    /* Colunas */
+    .col-left { flex: 2; } /* 66% largura */
+    .col-right { 
+        flex: 1; 
+        background: rgba(255, 255, 255, 0.03); /* Fundo sutil */
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* Títulos das Secções */
+    .tv-label { 
+        font-size: 1.2rem; 
+        text-transform: uppercase; 
+        color: #4ade80; /* Verde Neon para alto contraste */
+        font-weight: 700; 
+        margin-bottom: 1rem; 
+        letter-spacing: 1px;
+        display: flex; align-items: center;
+    }
+
+    /* Texto do Log (CORRIGIDO PARA LEGIBILIDADE) */
+    .tv-text { 
+        font-size: 1.6rem; 
+        line-height: 1.6; 
+        white-space: pre-wrap; 
+        color: #f1f5f9; /* Branco quase puro */
+        font-weight: 400;
+    }
+
+    /* Data e Projeto */
+    .tv-meta {
+        position: absolute;
+        top: 2rem;
+        right: 4rem;
+        text-align: right;
+        z-index: 20;
+    }
+    .tv-date { 
+        font-size: 1.5rem; 
+        color: rgba(255,255,255,0.9); 
+        font-weight: 700; 
+        background: rgba(0,0,0,0.4);
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+        margin-bottom: 0.5rem;
+        display: inline-block;
+    }
+    .tv-project {
+        font-size: 1.8rem;
+        color: #fff;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    /* Botão Sair */
+    .btn-exit { 
+        position: fixed; top: 20px; left: 20px; 
+        background: rgba(255,255,255,0.1); color: white; border: none;
+        padding: 10px 25px; border-radius: 50rem; transition: 0.3s;
+        z-index: 9999; text-decoration: none; font-weight: 600;
+        backdrop-filter: blur(5px);
+    }
+    .btn-exit:hover { background: rgba(255,255,255,0.25); color: white; }
 </style>
 
-<a href="{{ url_for('main.dashboard') }}" class="btn-exit btn btn-outline-light rounded-pill"><i class="fas fa-times"></i> Sair do Modo TV</a>
+<a href="{{ url_for('main.dashboard') }}" class="btn-exit"><i class="fas fa-arrow-left me-2"></i> Voltar</a>
 
-<div id="dailyCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="10000"> <div class="carousel-inner">
+<div id="tvCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="15000" data-bs-pause="false">
+    <div class="carousel-inner h-100">
         
         {% if logs %}
             {% for log in logs %}
             <div class="carousel-item {% if loop.first %}active{% endif %}">
-                <div class="container">
+                <div class="container-fluid p-0 d-flex align-items-center justify-content-center h-100">
+                    
                     <div class="tv-card">
-                        <div class="d-flex align-items-center mb-5">
-                            <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="tv-avatar me-4">
-                            <div>
-                                <div class="tv-date">{{ log.entry_date.strftime('%d/%m/%Y') }}</div>
+                        
+                        <div class="tv-cover" 
+                             style="background-image: url('{{ url_for('static', filename='profile_pics/' + log.author.cover_file) }}');">
+                        </div>
+
+                        <div class="tv-meta">
+                            <div class="tv-date"><i class="far fa-calendar-alt me-2"></i>{{ log.entry_date.strftime('%d/%m/%Y') }}</div>
+                            <div class="tv-project">{{ log.project }}</div>
+                        </div>
+
+                        <div class="tv-header">
+                            <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="tv-avatar">
+                            <div class="tv-identity">
                                 <div class="tv-author">{{ log.author.username }}</div>
-                                <div class="tv-project"><i class="fas fa-robot"></i> {{ log.project }}</div>
+                                <div class="tv-role">{{ log.author.role }}</div>
                             </div>
                         </div>
                         
-                        <div class="row">
-                            <div class="col-8">
-                                <div class="tv-content-label"><i class="fas fa-check-circle"></i> O que foi feito</div>
-                                <div class="tv-content-text">{{ log.tasks_completed | truncate(250) }}</div>
+                        <div class="tv-body">
+                            <div class="col-left">
+                                <div class="tv-label"><i class="fas fa-check-circle me-2"></i> Realizado</div>
+                                <div class="tv-text">{{ log.tasks_completed | truncate(400) }}</div>
+                                
+                                {% if log.observations %}
+                                    <div class="mt-4 p-3 rounded" style="background: rgba(245, 158, 11, 0.1); border-left: 5px solid #f59e0b;">
+                                        <div class="tv-label" style="color: #fbbf24; font-size: 1rem; margin-bottom: 0.5rem;">
+                                            <i class="fas fa-lightbulb me-2"></i> Observação
+                                        </div>
+                                        <div class="tv-text" style="font-size: 1.3rem;">{{ log.observations }}</div>
+                                    </div>
+                                {% endif %}
                             </div>
-                            <div class="col-4 border-start border-secondary ps-5">
-                                <div class="tv-content-label"><i class="fas fa-arrow-right"></i> Próximos Passos</div>
-                                <div class="tv-content-text text-muted" style="font-size: 1.5rem;">{{ log.next_steps | truncate(100) }}</div>
+                            
+                            <div class="col-right">
+                                <div class="tv-label"><i class="fas fa-forward me-2"></i> Próximos Passos</div>
+                                <div class="tv-text" style="color: #cbd5e1;">{{ log.next_steps | truncate(150) }}</div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
             {% endfor %}
         {% else %}
             <div class="carousel-item active">
-                <div class="container d-flex align-items-center justify-content-center" style="height: 100vh;">
-                    <div class="text-center">
-                        <i class="fas fa-bed fa-5x text-secondary mb-4"></i>
-                        <h1 class="display-1 fw-bold">Silêncio no Lab...</h1>
-                        <h3 class="text-muted">Nenhum registo nas últimas 24h.</h3>
-                    </div>
+                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center">
+                    <i class="fas fa-moon fa-6x text-secondary mb-4"></i>
+                    <h1 class="display-1 fw-bold text-white">Modo de Espera</h1>
+                    <h3 class="text-muted">Sem registos recentes para exibir.</h3>
                 </div>
             </div>
         {% endif %}
 
     </div>
     
-    <button class="carousel-control-prev" type="button" data-bs-target="#dailyCarousel" data-bs-slide="prev" style="width: 5%;">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#dailyCarousel" data-bs-slide="next" style="width: 5%;">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    </button>
+    <div style="position: absolute; bottom: 0; left: 0; height: 5px; background: #01552b; width: 100%; animation: progress 15s linear infinite;"></div>
 </div>
+
+<style>
+    @keyframes progress { from { width: 0; } to { width: 100%; } }
+</style>
 {% endblock %}
