@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
     /* Estilos Específicos do Dashboard */
     .stat-card {
@@ -14,37 +16,42 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 1.5rem;
     }
-    
-    .action-header {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border-bottom: 1px solid #e2e8f0;
-        padding-bottom: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
     .avatar-sm { width: 32px; height: 32px; object-fit: cover; }
+    .table-hover tbody tr:hover { background-color: rgba(1, 85, 43, 0.03); }
+    .action-buttons .btn { margin-left: 0.5rem; }
     
-    .table-hover tbody tr:hover {
-        background-color: rgba(1, 85, 43, 0.03); /* Verde muito suave no hover */
+    /* Header Actions */
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
     }
 </style>
 
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2 class="fw-bold text-dark">
+<div class="row mb-4 align-items-center">
+    <div class="col-md-5">
+        <h2 class="fw-bold text-dark mb-1">
             Olá, <span style="color: #01552b;">{{ current_user.username }}</span>!
         </h2>
-        <p class="text-muted">Aqui está o panorama do laboratório hoje.</p>
+        <p class="text-muted mb-0">Aqui está o panorama do laboratório hoje.</p>
     </div>
     
-    <div class="col-md-4">
-        <form action="{{ url_for('main.search') }}" method="get">
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                <input class="form-control border-start-0 ps-0" type="search" name="q" placeholder="Pesquisar em todos os diários..." value="{{ request.args.get('q', '') }}">
-                <button class="btn btn-primary" type="submit">Buscar</button>
-            </div>
-        </form>
+    <div class="col-md-7">
+        <div class="header-actions">
+            <a href="{{ url_for('main.tv_mode') }}" class="btn btn-dark" title="Ativar Modo Apresentação">
+                <i class="fas fa-tv me-2"></i> Modo TV
+            </a>
+
+            <form action="{{ url_for('main.search') }}" method="get" class="d-flex" style="max-width: 300px;">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input class="form-control border-start-0 ps-0" type="search" name="q" placeholder="Pesquisar..." value="{{ request.args.get('q', '') }}">
+                    <button class="btn btn-primary" type="submit">Ir</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -52,40 +59,40 @@
     <div class="col-md-4">
         <div class="content-card p-3 mb-3 stat-card" style="border-color: #22c55e;">
             <div class="d-flex align-items-center">
-                <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-0">Bolsistas Ativos</h6>
-                    <h3 class="fw-bold mb-0">{{ active_bolsistas|length }}</h3>
-                </div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success me-3"><i class="fas fa-users"></i></div>
+                <div><h6 class="text-muted mb-0">Bolsistas Ativos</h6><h3 class="fw-bold mb-0">{{ active_bolsistas|length }}</h3></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="content-card p-3 mb-3 stat-card" style="border-color: #f59e0b;">
             <div class="d-flex align-items-center">
-                <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
-                    <i class="fas fa-user-clock"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-0">Solicitações Pendentes</h6>
-                    <h3 class="fw-bold mb-0">{{ pending_users|length }}</h3>
-                </div>
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3"><i class="fas fa-user-clock"></i></div>
+                <div><h6 class="text-muted mb-0">Solicitações Pendentes</h6><h3 class="fw-bold mb-0">{{ pending_users|length }}</h3></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="content-card p-3 mb-3 stat-card" style="border-color: #64748b;">
             <div class="d-flex align-items-center">
-                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary me-3">
-                    <i class="fas fa-user-lock"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-0">Bolsistas Inativos</h6>
-                    <h3 class="fw-bold mb-0">{{ inactive_bolsistas|length }}</h3>
-                </div>
+                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary me-3"><i class="fas fa-user-lock"></i></div>
+                <div><h6 class="text-muted mb-0">Bolsistas Inativos</h6><h3 class="fw-bold mb-0">{{ inactive_bolsistas|length }}</h3></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="content-card h-100 p-4">
+            <h5 class="fw-bold text-dark mb-4"><i class="fas fa-chart-bar text-primary me-2"></i> Atividade Recente (7 Dias)</h5>
+            <div style="height: 250px;"><canvas id="activityChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="content-card h-100 p-4">
+            <h5 class="fw-bold text-dark mb-4"><i class="fas fa-chart-pie text-success me-2"></i> Top Projetos</h5>
+            <div style="height: 200px; display: flex; justify-content: center;"><canvas id="projectsChart"></canvas></div>
         </div>
     </div>
 </div>
@@ -104,7 +111,8 @@
             <div class="row g-4">
                 <div class="col-md-6 border-end">
                     <h6 class="text-uppercase text-muted small fw-bold mb-3">Análise Semanal</h6>
-                    <form action="{{ url_for('main.generate_report') }}" method="get" id="form-weekly-report">
+                    
+                    <form action="{{ url_for('main.generate_report') }}" method="get" onsubmit="showLoading('btn-weekly-report')">
                         <div class="mb-3">
                             <label class="form-label small">Selecione um dia de referência</label>
                             <input type="date" class="form-control" name="selected_date" value="{{ today_date }}">
@@ -117,7 +125,8 @@
 
                 <div class="col-md-6">
                     <h6 class="text-uppercase text-muted small fw-bold mb-3">Análise Mensal</h6>
-                    <form action="{{ url_for('main.generate_report') }}" method="get" id="form-monthly-report">
+                    
+                    <form action="{{ url_for('main.generate_report') }}" method="get" onsubmit="showLoading('btn-monthly-report')">
                         <input type="hidden" name="report_type" value="month">
                         <div class="row g-2 mb-3">
                             <label class="form-label small">Selecione o mês</label>
@@ -146,17 +155,10 @@
 
         <div class="content-card">
             <h4 class="mb-4">Equipe Ativa</h4>
-            
             {% if active_bolsistas %}
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nome</th>
-                                <th>Curso</th>
-                                <th class="text-end">Ações</th>
-                            </tr>
-                        </thead>
+                        <thead class="table-light"><tr><th>Nome</th><th>Curso</th><th class="text-end">Ações</th></tr></thead>
                         <tbody>
                             {% for bolsista in active_bolsistas %}
                             <tr>
@@ -168,12 +170,8 @@
                                 </td>
                                 <td class="text-muted small">{{ bolsista.course or '-' }}</td>
                                 <td class="text-end">
-                                    <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="btn btn-sm btn-light text-primary" title="Ver Diário">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ url_for('main.deactivate_user', user_id=bolsista.id) }}" class="btn btn-sm btn-light text-warning" onclick="return confirm('Desativar?');" title="Desativar">
-                                        <i class="fas fa-pause"></i>
-                                    </a>
+                                    <a href="{{ url_for('main.view_logs', student_id=bolsista.id) }}" class="btn btn-sm btn-light text-primary" title="Ver Diário"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ url_for('main.deactivate_user', user_id=bolsista.id) }}" class="btn btn-sm btn-light text-warning" onclick="return confirm('Desativar?');" title="Desativar"><i class="fas fa-pause"></i></a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -181,16 +179,12 @@
                     </table>
                 </div>
             {% else %}
-                <div class="empty-state py-4">
-                    <i class="fas fa-users text-muted mb-2" style="font-size: 2rem;"></i>
-                    <p class="text-muted mb-0">Sem bolsistas ativos.</p>
-                </div>
+                <div class="empty-state py-4"><i class="fas fa-users text-muted mb-2" style="font-size: 2rem;"></i><p class="text-muted mb-0">Sem bolsistas ativos.</p></div>
             {% endif %}
         </div>
     </div>
 
     <div class="col-lg-4">
-        
         {% if pending_users %}
         <div class="content-card mb-4 border-warning">
             <h5 class="text-warning mb-3"><i class="fas fa-bell me-2"></i> Pendentes</h5>
@@ -200,10 +194,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="avatar-sm rounded-circle me-2">
-                            <div style="line-height: 1.2;">
-                                <small class="d-block fw-bold">{{ user.username }}</small>
-                                <small class="text-muted" style="font-size: 0.75rem;">{{ user.email }}</small>
-                            </div>
+                            <div style="line-height: 1.2;"><small class="d-block fw-bold">{{ user.username }}</small><small class="text-muted" style="font-size: 0.75rem;">{{ user.email }}</small></div>
                         </div>
                         <div>
                             <a href="{{ url_for('main.approve_user', user_id=user.id) }}" class="btn btn-sm btn-success py-0 px-2"><i class="fas fa-check"></i></a>
@@ -240,7 +231,6 @@
                 {% endif %}
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}
@@ -248,22 +238,59 @@
 {% block scripts %}
 {{ super() }}
 <script>
+    // Esta função é chamada diretamente pelo 'onsubmit' do formulário
+    function showLoading(btnId) {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            // Mudar o texto e adicionar o spinner
+            const originalWidth = btn.offsetWidth; // Mantém a largura para não pular
+            btn.style.width = `${originalWidth}px`;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>A processar...';
+            
+            // Adiciona uma classe visual de desabilitado, mas NÃO usa o atributo 'disabled'
+            // (porque 'disabled' pode impedir o submit em alguns navegadores se for rápido demais)
+            btn.classList.add('disabled');
+            btn.style.pointerEvents = 'none';
+        }
+        // Retorna true para permitir que o formulário seja enviado normalmente
+        return true;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        const handleLoading = (btnId, formId) => {
-            const btn = document.getElementById(btnId);
-            const form = document.getElementById(formId);
-            if (btn && form) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    btn.disabled = true;
-                    const originalContent = btn.innerHTML;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>A processar...';
-                    setTimeout(() => form.submit(), 50);
-                });
-            }
-        };
-        handleLoading('btn-weekly-report', 'form-weekly-report');
-        handleLoading('btn-monthly-report', 'form-monthly-report');
+        // Gráficos (Mantidos iguais)
+        const ctxActivity = document.getElementById('activityChart');
+        if (ctxActivity) {
+            new Chart(ctxActivity.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: {{ dates_labels | tojson }},
+                    datasets: [{
+                        label: 'Registos',
+                        data: {{ dates_counts | tojson }},
+                        backgroundColor: '#01552b',
+                        borderRadius: 4,
+                        barThickness: 30
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
+            });
+        }
+
+        const ctxProjects = document.getElementById('projectsChart');
+        if (ctxProjects) {
+            new Chart(ctxProjects.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: {{ project_labels | tojson }},
+                    datasets: [{
+                        data: {{ project_counts | tojson }},
+                        backgroundColor: ['#01552b', '#10b981', '#3b82f6', '#f59e0b', '#64748b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }
+            });
+        }
     });
 </script>
 {% endblock %}

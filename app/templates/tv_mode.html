@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Removemos o container padrão para usar largura total */
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    nav, footer { display: none !important; } /* Esconde menus para imersão */
+    
+    body { background-color: #111827; color: white; overflow: hidden; }
+
+    .carousel-item {
+        height: 100vh;
+        padding: 5rem;
+    }
+    
+    .tv-card {
+        background: #1f2937;
+        border-radius: 30px;
+        padding: 4rem;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-left: 20px solid #01552b; /* Faixa verde da marca */
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .tv-avatar {
+        width: 150px; height: 150px;
+        border-radius: 50%;
+        border: 5px solid #01552b;
+        object-fit: cover;
+    }
+
+    .tv-date { font-size: 1.5rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 2px; }
+    .tv-author { font-size: 3rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .tv-project { font-size: 2rem; color: #4ade80; font-weight: 600; margin-bottom: 3rem; }
+    
+    .tv-content-label { font-size: 1.2rem; text-transform: uppercase; color: #6b7280; font-weight: 700; margin-bottom: 1rem; }
+    .tv-content-text { font-size: 1.8rem; line-height: 1.5; white-space: pre-wrap; }
+
+    /* Botão de Sair discreto */
+    .btn-exit { position: absolute; top: 20px; right: 20px; opacity: 0.3; color: white; z-index: 9999; }
+    .btn-exit:hover { opacity: 1; }
+</style>
+
+<a href="{{ url_for('main.dashboard') }}" class="btn-exit btn btn-outline-light rounded-pill"><i class="fas fa-times"></i> Sair do Modo TV</a>
+
+<div id="dailyCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="10000"> <div class="carousel-inner">
+        
+        {% if logs %}
+            {% for log in logs %}
+            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                <div class="container">
+                    <div class="tv-card">
+                        <div class="d-flex align-items-center mb-5">
+                            <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="tv-avatar me-4">
+                            <div>
+                                <div class="tv-date">{{ log.entry_date.strftime('%d/%m/%Y') }}</div>
+                                <div class="tv-author">{{ log.author.username }}</div>
+                                <div class="tv-project"><i class="fas fa-robot"></i> {{ log.project }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-8">
+                                <div class="tv-content-label"><i class="fas fa-check-circle"></i> O que foi feito</div>
+                                <div class="tv-content-text">{{ log.tasks_completed | truncate(250) }}</div>
+                            </div>
+                            <div class="col-4 border-start border-secondary ps-5">
+                                <div class="tv-content-label"><i class="fas fa-arrow-right"></i> Próximos Passos</div>
+                                <div class="tv-content-text text-muted" style="font-size: 1.5rem;">{{ log.next_steps | truncate(100) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="carousel-item active">
+                <div class="container d-flex align-items-center justify-content-center" style="height: 100vh;">
+                    <div class="text-center">
+                        <i class="fas fa-bed fa-5x text-secondary mb-4"></i>
+                        <h1 class="display-1 fw-bold">Silêncio no Lab...</h1>
+                        <h3 class="text-muted">Nenhum registo nas últimas 24h.</h3>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+    
+    <button class="carousel-control-prev" type="button" data-bs-target="#dailyCarousel" data-bs-slide="prev" style="width: 5%;">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#dailyCarousel" data-bs-slide="next" style="width: 5%;">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    </button>
+</div>
+{% endblock %}

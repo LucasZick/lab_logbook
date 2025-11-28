@@ -14,7 +14,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, LogEntry
 from urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from functools import wraps
 import google.generativeai as genai
 import markdown
@@ -354,30 +354,55 @@ meses = {
     7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
 }
 
+# --- ROTA DASHBOARD (PROFESSOR) - CORRIGIDA COM GRÁFICOS ---
 @bp.route('/dashboard')
 @login_required
 @professor_required
 def dashboard():
+    # 1. Dados dos Usuários
     pending_users = User.query.filter_by(is_approved=False).all()
     active_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=True).order_by(User.username).all()
     inactive_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=False).order_by(User.username).all()
     
-    # --- DADOS PARA OS SELETORES ---
+    # 2. Dados para os Seletores
     today = date.today()
     current_year = today.year
     current_month_num = today.month
     today_date_str = today.strftime('%Y-%m-%d')
     available_years = [current_year, current_year - 1, current_year - 2, current_year - 3]
     
+    # 3. Dados para o Gráfico de Atividade (Últimos 7 dias)
+    dates_labels = []
+    dates_counts = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        count = LogEntry.query.filter(func.date(LogEntry.entry_date) == day).count()
+        dates_labels.append(day.strftime('%d/%m'))
+        dates_counts.append(count)
+
+    # 4. Dados para o Gráfico de Projetos (Top 5)
+    projects_data = db.session.query(
+        LogEntry.project, func.count(LogEntry.id)
+    ).group_by(LogEntry.project).order_by(func.count(LogEntry.id).desc()).limit(5).all()
+    
+    project_labels = [p[0] for p in projects_data]
+    project_counts = [p[1] for p in projects_data]
+
+    # Envia TODAS as variáveis necessárias
     return render_template('dashboard.html', title='Painel do Professor', 
                            pending_users=pending_users, 
                            active_bolsistas=active_bolsistas, 
                            inactive_bolsistas=inactive_bolsistas,
-                           today_date=today_date_str, # Para o seletor de semana
-                           meses=meses, # Para o seletor de mês
-                           available_years=available_years, # Para o seletor de ano
+                           today_date=today_date_str,
+                           meses=meses,
+                           available_years=available_years,
                            current_year=current_year,
-                           current_month_num=current_month_num)
+                           current_month_num=current_month_num,
+                           # Variáveis dos gráficos (Faltavam estas!)
+                           dates_labels=dates_labels,
+                           dates_counts=dates_counts,
+                           project_labels=project_labels,
+                           project_counts=project_counts)
 
 @bp.route('/get_week_range')
 @login_required
@@ -746,3 +771,17 @@ def community():
                            users=users, 
                            today=date.today(), 
                            timedelta=timedelta)
+
+@bp.route('/tv_mode')
+@login_required
+@professor_required
+def tv_mode():
+    # Busca logs dos últimos 2 dias (para garantir que temos algo para mostrar)
+    today = date.today()
+    start_date = today - timedelta(days=1) # Ontem e Hoje
+    
+    recent_logs = LogEntry.query.filter(
+        LogEntry.entry_date >= start_date
+    ).order_by(LogEntry.entry_date.desc()).all()
+    
+    return render_template('tv_mode.html', title='Modo Apresentação', logs=recent_logs)
