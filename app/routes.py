@@ -733,7 +733,13 @@ def reset_password(token):
 @bp.route('/community')
 @login_required
 def community():
-    # Busca todos os usuários ativos e aprovados, ordenados por nome
+    # Busca todos os usuários ativos e aprovados
     users = User.query.filter_by(is_active=True, is_approved=True).order_by(User.username).all()
     
-    return render_template('community.html', title='Equipe', users=users)
+    # Injeta o "último projeto" em cada objeto de usuário temporariamente
+    for user in users:
+        last_log = user.logs.order_by(LogEntry.entry_date.desc()).first()
+        user.last_project = last_log.project if last_log else None
+        user.last_active_date = last_log.entry_date if last_log else None
+
+    return render_template('community.html', title='Comunidade do Lab', users=users)

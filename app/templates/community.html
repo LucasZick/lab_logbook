@@ -48,12 +48,35 @@
         color: #01552b; font-size: 1.3rem;
     }
 
+    .filter-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 1rem;
+    }
+    .filter-btn {
+        background: white;
+        border: 1px solid #e5e7eb;
+        color: #64748b;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .filter-btn:hover, .filter-btn.active {
+        background: #01552b;
+        color: white;
+        border-color: #01552b;
+        box-shadow: 0 4px 10px rgba(1, 85, 43, 0.2);
+    }
+
     /* --- 2. CARTÕES DE MEMBRO (Redesign) --- */
     .member-card {
         background: #fff;
         border: 1px solid #f3f4f6;
         border-radius: 20px;
-        padding: 2rem 1.5rem;
         text-align: center;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
@@ -113,7 +136,7 @@
     .member-name { font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 0.25rem; }
     .member-course { font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem; min-height: 1.2em; }
     
-    .member-bio {
+    .member-body {
         font-size: 0.9rem; color: #4b5563; line-height: 1.5;
         margin-bottom: 1.5rem;
         display: -webkit-box;
@@ -136,6 +159,21 @@
         font-weight: 500;
     }
     
+    /* Rodapé do Cartão (Projeto Atual) */
+    .member-footer {
+        background-color: #f8fafc;
+        padding: 1rem;
+        border-top: 1px solid #f1f5f9;
+        text-align: left;
+    }
+    .last-project-label {
+        font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 2px;
+    }
+    .last-project-name {
+        font-size: 0.85rem; color: #334155; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
     /* Animação de Entrada */
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(20px); }
@@ -148,70 +186,96 @@
     
     <!-- 1. Hero Header -->
     <div class="community-hero">
-        <h1 class="fw-bold mb-2">Equipe do Laboratório</h1>
+        <h1 class="fw-bold mb-2">Equipa do Laboratório</h1>
         <p class="opacity-75 mb-0" style="font-size: 1.1rem;">Conecte-se, colabore e descubra talentos.</p>
     </div>
 
-    <!-- 2. Barra de Busca Flutuante -->
-    <div class="search-container">
-        <i class="fas fa-search search-icon"></i>
-        <input type="text" id="memberSearch" class="form-control search-input" placeholder="Pesquisar por nome, curso ou habilidade (ex: Python)...">
+    <!-- 2. Controlos (Busca e Filtro) -->
+    <div class="controls-container">
+        <div class="position-relative">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="memberSearch" class="form-control search-input" placeholder="Pesquisar por nome, curso ou habilidade (ex: Python)...">
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" onclick="filterRole('all', this)">Todos</button>
+            <button class="filter-btn" onclick="filterRole('professor', this)">Professores</button>
+            <button class="filter-btn" onclick="filterRole('bolsista', this)">Bolsistas</button>
+        </div>
     </div>
 
     <!-- 3. Grid de Membros -->
-    <div class="row g-4 mt-4" id="membersGrid">
+    <div class="row g-4" id="membersGrid">
         {% for user in users %}
         <div class="col-md-6 col-lg-4 member-item animate-card" 
-             style="animation-delay: {{ loop.index0 * 0.1 }}s;"
+             style="animation-delay: {{ loop.index0 * 0.05 }}s;"
              data-name="{{ user.username|lower }}" 
+             data-role="{{ user.role }}"
              data-skills="{{ user.skills|lower if user.skills else '' }}"
-             data-course="{{ user.course|lower if user.course else '' }}">
+             data-project="{{ user.last_project|lower if user.last_project else '' }}">
             
             <a href="{{ url_for('main.user_profile', username=user.username) }}" class="member-card">
                 
-                <div class="avatar-wrapper">
-                    <!-- Avatar -->
-                    {% if user.image_file == 'default.jpg' %}
-                        <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=01552b&color=fff&size=200" class="member-avatar">
-                    {% else %}
-                        <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="member-avatar">
-                    {% endif %}
-                    
-                    <!-- Badge de Função -->
-                    <span class="role-badge {% if user.role == 'professor' %}professor{% endif %}">
-                        {{ user.role }}
-                    </span>
-                </div>
-
-                <h5 class="member-name">{{ user.username }}</h5>
-                <div class="member-course">
-                    {% if user.course %}
-                        <i class="fas fa-graduation-cap me-1 text-muted" style="font-size: 0.8em;"></i> {{ user.course }}
-                    {% endif %}
-                </div>
-                
-                <div class="member-bio">
-                    {% if user.bio %}
-                        {{ user.bio }}
-                    {% else %}
-                        <span class="text-muted fst-italic opacity-50">Membro da equipe.</span>
-                    {% endif %}
-                </div>
-
-                <div class="skills-container">
-                    {% if user.skills %}
-                        {% for skill in user.skills.split(',')[:4] %} <!-- Máximo 4 skills -->
-                            {% if skill|trim %}
-                                <span class="skill-tag">{{ skill|trim }}</span>
-                            {% endif %}
-                        {% endfor %}
-                        {% if user.skills.split(',')|length > 4 %}
-                            <span class="skill-tag" style="background-color: #e6f4ea; color: #01552b;">+{{ user.skills.split(',')|length - 4 }}</span>
+                <div class="member-body" style="padding: 2rem 1.5rem 1rem 1.5rem; flex-grow: 1;">
+                    <div class="avatar-wrapper">
+                        <!-- Avatar -->
+                        {% if user.image_file == 'default.jpg' %}
+                            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=01552b&color=fff&size=200" class="member-avatar">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="member-avatar">
                         {% endif %}
-                    {% else %}
-                        <span class="skill-tag opacity-50">--</span>
-                    {% endif %}
+                        
+                        <!-- Badge de Função -->
+                        <span class="role-badge {% if user.role == 'professor' %}professor{% endif %}">
+                            {{ user.role }}
+                        </span>
+                    </div>
+
+                    <h5 class="member-name">{{ user.username }}</h5>
+                    <div class="member-course">
+                        {% if user.course %}
+                            <i class="fas fa-graduation-cap me-1 text-muted" style="font-size: 0.8em;"></i> {{ user.course }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="member-bio">
+                        {% if user.bio %}
+                            {{ user.bio }}
+                        {% else %}
+                            <span class="text-muted fst-italic opacity-50">Membro da equipa.</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="skills-container">
+                        {% if user.skills %}
+                            {% for skill in user.skills.split(',')[:4] %} <!-- Máximo 4 skills -->
+                                {% if skill|trim %}
+                                    <span class="skill-tag">{{ skill|trim }}</span>
+                                {% endif %}
+                            {% endfor %}
+                            {% if user.skills.split(',')|length > 4 %}
+                                <span class="skill-tag" style="background-color: #e6f4ea; color: #01552b;">+{{ user.skills.split(',')|length - 4 }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="skill-tag opacity-50">--</span>
+                        {% endif %}
+                    </div>
                 </div>
+
+                <!-- Rodapé: Último Projeto (SÓ PARA BOLSISTAS) -->
+                {% if user.role == 'bolsista' %}
+                    {% if user.last_project %}
+                    <div class="member-footer">
+                        <span class="last-project-label"><i class="fas fa-history me-1"></i> Trabalhou recentemente em:</span>
+                        <div class="last-project-name" title="{{ user.last_project }}">{{ user.last_project }}</div>
+                    </div>
+                    {% else %}
+                    <div class="member-footer">
+                        <span class="last-project-label">Atividade Recente</span>
+                        <div class="last-project-name text-muted fw-normal">Sem registos recentes</div>
+                    </div>
+                    {% endif %}
+                {% endif %}
             </a>
 
         </div>
@@ -233,31 +297,48 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    document.getElementById('memberSearch').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
+    let currentRoleFilter = 'all';
+
+    // Função de Filtro de Texto
+    document.getElementById('memberSearch').addEventListener('keyup', applyFilters);
+
+    // Função de Filtro de Botão (Role)
+    function filterRole(role, btn) {
+        currentRoleFilter = role;
+        
+        // Atualiza botões visuais
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        applyFilters();
+    }
+
+    function applyFilters() {
+        let textFilter = document.getElementById('memberSearch').value.toLowerCase();
         let items = document.querySelectorAll('.member-item');
-        let hasResults = false;
+        let visibleCount = 0;
 
         items.forEach(function(item) {
             let name = item.getAttribute('data-name');
             let skills = item.getAttribute('data-skills');
-            let course = item.getAttribute('data-course');
+            let project = item.getAttribute('data-project');
+            let role = item.getAttribute('data-role');
 
-            if (name.includes(filter) || skills.includes(filter) || course.includes(filter)) {
+            // Verifica Texto
+            let textMatch = name.includes(textFilter) || skills.includes(textFilter) || project.includes(textFilter);
+            
+            // Verifica Role
+            let roleMatch = (currentRoleFilter === 'all') || (role === currentRoleFilter);
+
+            if (textMatch && roleMatch) {
                 item.style.display = 'block';
-                hasResults = true;
+                visibleCount++;
             } else {
                 item.style.display = 'none';
             }
         });
 
-        const noResultsDiv = document.getElementById('noResults');
-        if (hasResults) {
-            noResultsDiv.classList.add('d-none');
-        } else {
-            noResultsDiv.classList.remove('d-none');
-            noResultsDiv.classList.add('animate-card'); // Adiciona animação
-        }
-    });
+        document.getElementById('noResults').classList.toggle('d-none', visibleCount > 0);
+    }
 </script>
 {% endblock %}
