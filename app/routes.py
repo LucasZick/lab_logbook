@@ -729,3 +729,11 @@ def reset_password(token):
     # --- CORREÇÃO AQUI ---
     # Adicionámos 'user=user' para que o template saiba quem é o utilizador
     return render_template('auth/reset_password.html', title='Nova Senha', form=form, user=user)
+
+@bp.route('/community')
+@login_required
+def community():
+    # Busca todos os usuários ativos e aprovados, ordenados por nome
+    users = User.query.filter_by(is_active=True, is_approved=True).order_by(User.username).all()
+    
+    return render_template('community.html', title='Equipe', users=users)

@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- 1. HERO SECTION (Cabeçalho com Fundo) --- */
+    .community-hero {
+        background: linear-gradient(135deg, #003319 0%, #01552b 100%);
+        border-radius: 24px;
+        padding: 4rem 2rem;
+        text-align: center;
+        color: white;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(1, 85, 43, 0.3);
+    }
+    
+    /* Decoração de fundo abstrata */
+    .community-hero::before {
+        content: ''; position: absolute; top: -50%; left: -10%; width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+        border-radius: 50%; pointer-events: none;
+    }
+
+    /* Barra de Busca Flutuante */
+    .search-container {
+        max-width: 600px;
+        margin: -2.5rem auto 0 auto; /* Sobe para ficar metade dentro, metade fora do hero */
+        position: relative;
+        z-index: 10;
+    }
+    
+    .search-input {
+        padding: 1.2rem 1.5rem;
+        padding-left: 3.5rem;
+        border-radius: 50rem;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    .search-input:focus {
+        box-shadow: 0 15px 40px rgba(1, 85, 43, 0.15);
+        transform: translateY(-2px);
+    }
+    .search-icon {
+        position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%);
+        color: #01552b; font-size: 1.3rem;
+    }
+
+    /* --- 2. CARTÕES DE MEMBRO (Redesign) --- */
+    .member-card {
+        background: #fff;
+        border: 1px solid #f3f4f6;
+        border-radius: 20px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .member-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
+        border-color: #e5e7eb;
+    }
+    
+    /* Efeito de Borda Verde no Hover */
+    .member-card::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: #01552b; border-radius: 20px 20px 0 0;
+        opacity: 0; transition: opacity 0.3s;
+    }
+    .member-card:hover::after { opacity: 1; }
+
+    /* Avatar */
+    .avatar-wrapper {
+        position: relative;
+        margin: 0 auto 1rem auto;
+        width: 100px; height: 100px;
+    }
+    .member-avatar {
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #f8fafc;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+    }
+    .member-card:hover .member-avatar { transform: scale(1.05); border-color: #fff; }
+
+    /* Role Badge */
+    .role-badge {
+        position: absolute; bottom: 0; right: 0;
+        background: #fff;
+        border: 2px solid #f8fafc;
+        border-radius: 50rem;
+        padding: 4px 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #4b5563;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .role-badge.professor { color: #01552b; background-color: #e6f4ea; border-color: #e6f4ea; }
+
+    /* Texto */
+    .member-name { font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 0.25rem; }
+    .member-course { font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem; min-height: 1.2em; }
+    
+    .member-bio {
+        font-size: 0.9rem; color: #4b5563; line-height: 1.5;
+        margin-bottom: 1.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3; /* Limita a 3 linhas */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex-grow: 1; /* Empurra o footer para baixo */
+    }
+
+    /* Skills */
+    .skills-container {
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+    }
+    .skill-tag {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        background-color: #f1f5f9;
+        color: #475569;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    /* Animação de Entrada */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-card { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
+</style>
+
+<div class="container pb-5">
+    
+    <!-- 1. Hero Header -->
+    <div class="community-hero">
+        <h1 class="fw-bold mb-2">Equipe do Laboratório</h1>
+        <p class="opacity-75 mb-0" style="font-size: 1.1rem;">Conecte-se, colabore e descubra talentos.</p>
+    </div>
+
+    <!-- 2. Barra de Busca Flutuante -->
+    <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="memberSearch" class="form-control search-input" placeholder="Pesquisar por nome, curso ou habilidade (ex: Python)...">
+    </div>
+
+    <!-- 3. Grid de Membros -->
+    <div class="row g-4 mt-4" id="membersGrid">
+        {% for user in users %}
+        <div class="col-md-6 col-lg-4 member-item animate-card" 
+             style="animation-delay: {{ loop.index0 * 0.1 }}s;"
+             data-name="{{ user.username|lower }}" 
+             data-skills="{{ user.skills|lower if user.skills else '' }}"
+             data-course="{{ user.course|lower if user.course else '' }}">
+            
+            <a href="{{ url_for('main.user_profile', username=user.username) }}" class="member-card">
+                
+                <div class="avatar-wrapper">
+                    <!-- Avatar -->
+                    {% if user.image_file == 'default.jpg' %}
+                        <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=01552b&color=fff&size=200" class="member-avatar">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="member-avatar">
+                    {% endif %}
+                    
+                    <!-- Badge de Função -->
+                    <span class="role-badge {% if user.role == 'professor' %}professor{% endif %}">
+                        {{ user.role }}
+                    </span>
+                </div>
+
+                <h5 class="member-name">{{ user.username }}</h5>
+                <div class="member-course">
+                    {% if user.course %}
+                        <i class="fas fa-graduation-cap me-1 text-muted" style="font-size: 0.8em;"></i> {{ user.course }}
+                    {% endif %}
+                </div>
+                
+                <div class="member-bio">
+                    {% if user.bio %}
+                        {{ user.bio }}
+                    {% else %}
+                        <span class="text-muted fst-italic opacity-50">Membro da equipe.</span>
+                    {% endif %}
+                </div>
+
+                <div class="skills-container">
+                    {% if user.skills %}
+                        {% for skill in user.skills.split(',')[:4] %} <!-- Máximo 4 skills -->
+                            {% if skill|trim %}
+                                <span class="skill-tag">{{ skill|trim }}</span>
+                            {% endif %}
+                        {% endfor %}
+                        {% if user.skills.split(',')|length > 4 %}
+                            <span class="skill-tag" style="background-color: #e6f4ea; color: #01552b;">+{{ user.skills.split(',')|length - 4 }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="skill-tag opacity-50">--</span>
+                    {% endif %}
+                </div>
+            </a>
+
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Estado Vazio da Busca -->
+    <div id="noResults" class="text-center py-5 d-none">
+        <div style="font-size: 3rem; color: #e5e7eb; margin-bottom: 1rem;">
+            <i class="fas fa-search"></i>
+        </div>
+        <h5 class="text-muted">Nenhum membro encontrado</h5>
+        <p class="text-muted small">Tente pesquisar por outro termo.</p>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.getElementById('memberSearch').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let items = document.querySelectorAll('.member-item');
+        let hasResults = false;
+
+        items.forEach(function(item) {
+            let name = item.getAttribute('data-name');
+            let skills = item.getAttribute('data-skills');
+            let course = item.getAttribute('data-course');
+
+            if (name.includes(filter) || skills.includes(filter) || course.includes(filter)) {
+                item.style.display = 'block';
+                hasResults = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        const noResultsDiv = document.getElementById('noResults');
+        if (hasResults) {
+            noResultsDiv.classList.add('d-none');
+        } else {
+            noResultsDiv.classList.remove('d-none');
+            noResultsDiv.classList.add('animate-card'); // Adiciona animação
+        }
+    });
+</script>
+{% endblock %}

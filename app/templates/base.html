@@ -232,6 +232,14 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('main.pending_logs') }}"><i class="fas fa-exclamation-circle"></i> Pendências</a>
                         </li>
+                    
+                    {% endif %}
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.community') }}">
+                                <i class="fas fa-users"></i> Equipe
+                            </a>
+                        </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">

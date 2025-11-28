@@ -5,7 +5,7 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 
-Aplicação web desenvolvida para a gestão de atividades diárias em laboratórios de pesquisa, com um foco especial em ambientes de robótica. O sistema permite que bolsistas registem o seu progresso diário e que professores supervisionem, aprovem contas e analisem o trabalho da equipa de forma centralizada e eficiente.
+Aplicação web desenvolvida para a gestão de atividades diárias em laboratórios de pesquisa, com um foco especial em ambientes de robótica. O sistema permite que bolsistas registem o seu progresso diário e que professores supervisionem, aprovem contas e analisem o trabalho da equipe de forma centralizada e eficiente.
 
 ## ✨ Funcionalidades Principais
 
@@ -77,7 +77,7 @@ Aplicação web desenvolvida para a gestão de atividades diárias em laboratór
     flask create-professor <username> <email> <password>
     ```
 2.  Acesse `http://127.0.0.1:5000` e faça login com a conta de professor.
-3.  Peça aos bolsistas para se registarem. As solicitações aparecerão no seu painel para aprovação.
+3.  Peça aos bolsistas para se registrarem. As solicitações aparecerão no seu painel para aprovação.
 
 ## 🐳 Implantação com Docker
 
