@@ -19,3 +19,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SCHEDULER_API_ENABLED = True
+
+    SERVER_NAME = os.environ.get('SERVER_NAME')
