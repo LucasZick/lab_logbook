@@ -1,0 +1,15 @@
+CONVITE INSTITUCIONAL - LOGBOOK
+
+Olá {{ user.username }},
+
+Você foi convidado para o: {{ lab_name }}
+
+Função: {{ 'Administrador' if user.role == 'professor' else 'Bolsista' }}
+
+Para aceitar o convite e ativar a sua conta, acesse:
+{{ url_for('main.reset_password', token=token, _external=True) }}
+
+Se não reconhece este convite, ignore esta mensagem.
+
+Atenciosamente,
+Equipe Logbook

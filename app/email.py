@@ -24,3 +24,14 @@ def send_password_reset_email(user):
                                          user=user, token=token),
                html_body=render_template('email/reset_password.html',
                                          user=user, token=token))
+    
+# --- NOVO: EMAIL DE CONVITE ---
+def send_invite_email(user, lab_name):
+    token = user.get_reset_token() # Reutilizamos o token de reset de senha (funciona igual)
+    send_email(f'[Logbook] Convite para administrar o {lab_name}',
+               sender=current_app.config['MAIL_USERNAME'],
+               recipients=[user.email],
+               text_body=render_template('email/invite_professor.txt',
+                                         user=user, lab_name=lab_name, token=token),
+               html_body=render_template('email/invite_professor.html',
+                                         user=user, lab_name=lab_name, token=token))

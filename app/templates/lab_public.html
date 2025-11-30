@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- RESET GERAL --- */
+    nav, footer { display: none !important; }
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    body { background-color: #ffffff; color: #1e293b; font-family: 'Inter', sans-serif; }
+
+    /* --- 1. HERO SECTION (Cinemática) --- */
+    .lab-hero {
+        height: 70vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        background-color: #020617;
+        overflow: hidden;
+    }
+    
+    /* Fundo Tecnológico Abstrato */
+    .hero-bg {
+        position: absolute; inset: 0;
+        background-image: url('https://img.freepik.com/free-vector/gradient-technological-background_23-2148884155.jpg');
+        background-size: cover; background-position: center;
+        opacity: 0.4; animation: slowPan 60s infinite alternate;
+    }
+    @keyframes slowPan { from { transform: scale(1); } to { transform: scale(1.1); } }
+    
+    .hero-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to right, rgba(2, 6, 23, 0.9) 0%, rgba(2, 6, 23, 0.6) 100%);
+    }
+
+    .hero-content {
+        position: relative; z-index: 10; width: 100%; max-width: 1200px; margin: 0 auto; padding: 2rem;
+        display: grid; grid-template-columns: 1.5fr 1fr; gap: 4rem; align-items: center;
+    }
+
+    /* Lado Esquerdo: Identidade */
+    .lab-brand { display: flex; flex-direction: column; align-items: flex-start; }
+    
+    .lab-logo {
+        width: 100px; height: 100px; object-fit: contain;
+        background: white; padding: 10px; border-radius: 20px;
+        margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .lab-acronym {
+        color: #4ade80; font-weight: 800; letter-spacing: 4px; font-size: 1rem; text-transform: uppercase;
+        margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px;
+    }
+    .lab-acronym::before { content: ''; width: 40px; height: 2px; background: #4ade80; }
+
+    .lab-title {
+        font-size: 4rem; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 1.5rem;
+        text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .lab-desc {
+        font-size: 1.2rem; line-height: 1.6; color: #94a3b8; margin-bottom: 2.5rem; max-width: 600px;
+    }
+
+    /* Lado Direito: Stats Grid */
+    .stats-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+    }
+    .stat-card {
+        background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 20px;
+        text-align: center; transition: transform 0.3s;
+    }
+    .stat-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); border-color: #4ade80; }
+    
+    .stat-num { font-size: 2.5rem; font-weight: 800; color: white; display: block; line-height: 1; margin-bottom: 5px; }
+    .stat-label { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 1px; }
+
+    /* --- 2. SECÇÃO DE PROJETOS (Estilo Revista) --- */
+    .projects-section { padding: 6rem 2rem; background: #ffffff; }
+    
+    .section-header { 
+        max-width: 1200px; margin: 0 auto 3rem auto; display: flex; justify-content: space-between; align-items: flex-end;
+        border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;
+    }
+    .section-title { font-size: 2rem; font-weight: 800; color: #0f172a; margin: 0; }
+    .section-subtitle { color: #64748b; font-size: 1rem; margin: 0; }
+
+    .projects-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2.5rem;
+        max-width: 1200px; margin: 0 auto;
+    }
+
+    .project-card {
+        display: block; text-decoration: none; color: inherit; group: project;
+    }
+    
+    .p-image-box {
+        height: 260px; border-radius: 20px; overflow: hidden; position: relative; margin-bottom: 1.5rem;
+        box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);
+    }
+    .p-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+    .project-card:hover .p-img { transform: scale(1.05); }
+    
+    .p-overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .project-card:hover .p-overlay { opacity: 1; }
+    .btn-view { 
+        background: white; color: #0f172a; padding: 10px 25px; border-radius: 50rem; 
+        font-weight: 700; transform: translateY(20px); transition: transform 0.3s;
+    }
+    .project-card:hover .btn-view { transform: translateY(0); }
+
+    .p-cat { font-size: 0.75rem; font-weight: 800; color: #01552b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; display: block; }
+    .p-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; line-height: 1.3; }
+    .p-desc { color: #64748b; line-height: 1.6; font-size: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* --- 3. EQUIPA (Modern Grid) --- */
+    .team-section { padding: 6rem 2rem; background: #f8fafc; }
+    
+    .team-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;
+        max-width: 1000px; margin: 0 auto;
+    }
+    
+    .member-card {
+        background: white; border-radius: 20px; padding: 2rem 1rem; text-align: center;
+        border: 1px solid #e2e8f0; transition: transform 0.3s;
+    }
+    .member-card:hover { transform: translateY(-10px); border-color: #01552b; box-shadow: 0 10px 30px -10px rgba(1, 85, 43, 0.15); }
+
+    .m-avatar { 
+        width: 90px; height: 90px; border-radius: 50%; object-fit: cover; 
+        border: 3px solid #f1f5f9; margin-bottom: 1rem; 
+    }
+    .m-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; display: block; margin-bottom: 0.2rem; }
+    .m-role { font-size: 0.75rem; text-transform: uppercase; color: #64748b; letter-spacing: 1px; font-weight: 600; }
+    
+    /* Destaque para o Professor */
+    .member-card.professor { border-top: 4px solid #01552b; }
+
+    /* --- 4. FOOTER CTA --- */
+    .lab-cta {
+        background: #0f172a; color: white; text-align: center; padding: 5rem 2rem;
+        position: relative; overflow: hidden;
+    }
+    .lab-cta h2 { font-size: 2.5rem; font-weight: 900; margin-bottom: 2rem; }
+    .btn-join {
+        background: #4ade80; color: #022c16; padding: 1rem 3rem; border-radius: 12px;
+        font-weight: 800; text-decoration: none; font-size: 1.1rem; transition: all 0.2s;
+        box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+    }
+    .btn-join:hover { transform: scale(1.05); background: white; box-shadow: 0 0 40px rgba(255,255,255,0.3); }
+
+    .btn-back-float {
+        position: fixed; top: 25px; left: 25px; z-index: 100;
+        background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        color: white; width: 45px; height: 45px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        text-decoration: none; border: 1px solid rgba(255,255,255,0.2);
+        transition: background 0.2s;
+    }
+    .btn-back-float:hover { background: rgba(255,255,255,0.3); }
+
+    /* Responsivo */
+    @media (max-width: 992px) {
+        .hero-content { grid-template-columns: 1fr; text-align: center; padding-top: 4rem; }
+        .lab-brand { align-items: center; margin-bottom: 3rem; }
+        .lab-acronym { justify-content: center; }
+        .lab-acronym::before { display: none; }
+        .lab-title { font-size: 3rem; }
+        .lab-hero { height: auto; padding-bottom: 4rem; }
+    }
+</style>
+
+<a href="{{ url_for('main.landing') }}" class="btn-back-float" title="Voltar"><i class="fas fa-arrow-left"></i></a>
+
+<div class="lab-hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    
+    <div class="hero-content">
+        <div class="lab-brand animate__animated animate__fadeInLeft">
+            <img src="{{ url_for('static', filename='lab_logos/' + lab.image_file) }}" class="lab-logo">
+            <div class="lab-acronym">{{ lab.acronym }}</div>
+            <h1 class="lab-title">{{ lab.name }}</h1>
+            <p class="lab-desc">
+                {{ lab.description if lab.description else 'Polo de inovação tecnológica e pesquisa aplicada.' }}
+            </p>
+            
+            {% if prof %}
+            <div class="d-flex align-items-center gap-3 mt-2">
+                <img src="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}" style="width:40px; height:40px; border-radius:50%; border:2px solid white;">
+                <div style="text-align: left; line-height: 1.2;">
+                    <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Coordenação</span><br>
+                    <span style="color: white; font-weight: 700;">{{ prof.username }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="stats-grid animate__animated animate__fadeInRight">
+            <div class="stat-card">
+                <span class="stat-num">{{ projects|length }}</span>
+                <span class="stat-label">Projetos Ativos</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num">{{ students|length }}</span>
+                <span class="stat-label">Pesquisadores</span>
+            </div>
+            <div class="stat-card" style="grid-column: span 2;">
+                <span class="stat-num">{{ total_logs }}+</span>
+                <span class="stat-label">Horas de Desenvolvimento</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if projects %}
+<div class="projects-section">
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">Portfólio</h2>
+            <p class="section-subtitle">O que estamos a construir.</p>
+        </div>
+    </div>
+
+    <div class="projects-grid">
+        {% for proj in projects %}
+        <a href="{{ url_for('main.public_project', project_id=proj.id) }}" class="project-card">
+            <div class="p-image-box">
+                <img src="{{ url_for('static', filename='profile_pics/' + proj.image_file) }}" class="p-img">
+                <div class="p-overlay">
+                    <span class="btn-view">Ver Detalhes</span>
+                </div>
+            </div>
+            <span class="p-cat">{{ proj.category }}</span>
+            <h3 class="p-title">{{ proj.name }}</h3>
+            <p class="p-desc">{{ proj.description if proj.description else 'Sem descrição.' }}</p>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if students %}
+<div class="team-section">
+    <div class="section-header justify-content-center text-center mb-5">
+        <div>
+            <h2 class="section-title">Equipa de Pesquisa</h2>
+            <p class="section-subtitle">As mentes por trás da inovação.</p>
+        </div>
+    </div>
+
+    <div class="team-grid">
+        {% for student in students %}
+        <div class="member-card">
+            <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" class="m-avatar">
+            <span class="m-name">{{ student.username }}</span>
+            <span class="m-role">Bolsista</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="lab-cta">
+    <h2>Quer fazer parte deste laboratório?</h2>
+    <a href="{{ url_for('main.register') }}" class="btn-join">
+        Solicitar Acesso <i class="fas fa-arrow-right ms-2"></i>
+    </a>
+</div>
+
+{% endblock %}

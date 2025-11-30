@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="content-card">
+            <h3><i class="fas fa-user-plus text-primary"></i> Convidar Membro</h3>
+            <p class="text-muted">Adicione um novo professor ou bolsista ao <strong>{{ current_user.laboratory.name }}</strong>.</p>
+            <hr>
+            
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">E-mail do Convidado</label>
+                    <input type="email" name="email" class="form-control" required placeholder="exemplo@udesc.br">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label">Função</label>
+                    <select name="role" class="form-select">
+                        <option value="bolsista">Bolsista (Aluno)</option>
+                        <option value="professor">Professor (Co-Admin)</option>
+                    </select>
+                    <div class="form-text text-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Professores terão acesso total aos dados deste laboratório.
+                    </div>
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success fw-bold">Enviar Convite</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

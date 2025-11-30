@@ -12,6 +12,22 @@ import holidays
 def load_user(id):
     return User.query.get(int(id))
 
+# --- NOVO: TABELA DE LABORATÓRIOS (O TEMA DO MULTI-TENANT) ---
+class Laboratory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    acronym = db.Column(db.String(20))
+    
+    # NOVOS CAMPOS
+    description = db.Column(db.Text)
+    image_file = db.Column(db.String(100), nullable=False, default='default_lab.jpg')
+    
+    users = db.relationship('User', backref='laboratory', lazy='dynamic')
+    projects = db.relationship('Project', backref='laboratory', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Lab {self.acronym}>'
+
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
@@ -19,6 +35,8 @@ class Project(db.Model):
     image_file = db.Column(db.String(100), nullable=False, default='default_project.jpg')
     created_at = db.Column(db.DateTime, default=db.func.now())
     category = db.Column(db.String(50), nullable=False, default='Geral')
+
+    laboratory_id = db.Column(db.Integer, db.ForeignKey('laboratory.id'), nullable=True) # Nullable=True por enquanto para a migração
     
     # Relação com os logs
     logs = db.relationship('LogEntry', backref='parent_project', lazy='dynamic')
@@ -44,6 +62,9 @@ class User(UserMixin, db.Model):
     github_link = db.Column(db.String(256))
     bio = db.Column(db.Text)
     skills = db.Column(db.String(256))
+    invite_status = db.Column(db.String(20), default='none')
+
+    laboratory_id = db.Column(db.Integer, db.ForeignKey('laboratory.id'), nullable=True)
 
     logs = db.relationship('LogEntry', backref='author', lazy='dynamic')
 

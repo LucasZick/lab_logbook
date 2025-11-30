@@ -1,0 +1,49 @@
+{% extends "email/base_email.html" %}
+
+{% block content %}
+    <h2 style="color: #01552b; margin-top: 0;">Convite Institucional</h2>
+    
+    <p>Olá, <strong>{{ user.username }}</strong>.</p>
+    
+    <p>Você foi convidado para se juntar à equipe do:</p>
+    
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #01552b; padding: 20px; border-radius: 4px; margin: 20px 0;">
+        <p style="margin: 0; font-size: 0.85em; text-transform: uppercase; color: #64748b; font-weight: bold;">Laboratório</p>
+        <h3 style="margin: 5px 0 0 0; color: #1e293b; font-size: 1.2em;">{{ lab_name }}</h3>
+        
+        <p style="margin: 10px 0 0 0; color: #059669; font-size: 0.9em;">
+            Função: 
+            <span style="background: #d1fae5; padding: 2px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">
+                {% if user.role == 'professor' %}
+                    Administrador Responsável
+                {% else %}
+                    Bolsista / Pesquisador
+                {% endif %}
+            </span>
+        </p>
+    </div>
+    
+    {% if user.role == 'professor' %}
+        <p>Para aceitar a coordenação e ativar o seu acesso administrativo, clique no botão abaixo:</p>
+    {% else %}
+        <p>Para aceitar o convite, ativar a sua conta e começar a registar as suas atividades, clique abaixo:</p>
+    {% endif %}
+    
+    <div style="text-align: center; margin: 35px 0;">
+        <a href="{{ url_for('main.reset_password', token=token, _external=True) }}" 
+           style="background-color: #01552b; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 10px rgba(1, 85, 43, 0.3);">
+            Aceitar Convite &rarr;
+        </a>
+    </div>
+    
+    <p style="font-size: 0.9em; color: #64748b; line-height: 1.5;">
+        <strong>Nota:</strong> Se você não reconhece este convite, ignore este e-mail.
+    </p>
+    
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;">
+    
+    <p style="font-size: 0.8em; color: #94a3b8; text-align: center;">
+        Link de ativação: <br>
+        <a href="{{ url_for('main.reset_password', token=token, _external=True) }}" style="color: #01552b;">{{ url_for('main.reset_password', token=token, _external=True) }}</a>
+    </p>
+{% endblock %}

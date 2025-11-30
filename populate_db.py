@@ -1,227 +1,199 @@
 import random
 import calendar
-from datetime import date
-import secrets
-
-# Importa as ferramentas necessárias da nossa aplicação
+from datetime import date, timedelta
 from app import create_app, db
-from app.models import User, LogEntry, Project
+from app.models import User, LogEntry, Project, Laboratory
 
-# --- Configuração ---
 app = create_app()
 app.app_context().push()
 
-# --- 1. DADOS PARA CRIAÇÃO DE PROJETOS (Com CATEGORIAS) ---
-projects_data = [
+# --- DADOS TEMÁTICOS PARA GERAR REALISMO ---
+
+# 1. Configuração dos Laboratórios
+labs_config = [
     {
-        "name": "Robô Manipulador Kuka",
-        "desc": "Desenvolvimento de algoritmos de cinemática inversa e controlo de força para manipulação delicada.",
-        "cat": "Robotica"
+        "name": "Laboratório de Robótica (LAR)", "acronym": "LAR", "cat": "Robotica",
+        "prof": ("prof_robo", "prof.robo@udesc.br"),
+        "students": ["ana", "bruno", "carlos", "diego", "elena"],
+        "projects": [
+            {"name": "Robô Kuka V2", "desc": "Manipulador industrial."},
+            {"name": "Drone de Resgate", "desc": "Voo autônomo em florestas."},
+            {"name": "AGV Logístico", "desc": "Robô de armazém."},
+            {"name": "Visão Computacional", "desc": "Reconhecimento de faces."}
+        ],
+        "tasks": ["Calibrei o sensor IMU.", "Soldei a PCB do motor.", "Atualizei o ROS2.", "Treinei a rede neural YOLO.", "Imprimi peça em 3D."],
+        "skills": "Python,C++,ROS,Soldagem,Impressão 3D"
     },
     {
-        "name": "Veículo Autônomo (AGV)",
-        "desc": "Navegação autônoma em ambientes internos usando ROS2, LiDAR e SLAM.",
-        "cat": "Robotica"
+        "name": "Laboratório de Química Orgânica (LQO)", "acronym": "LQO", "cat": "Ciencia",
+        "prof": ("prof_quimica", "prof.quimica@udesc.br"),
+        "students": ["fernanda", "gabriel", "hugo", "ines"],
+        "projects": [
+            {"name": "Síntese de Polímeros", "desc": "Plásticos biodegradáveis."},
+            {"name": "Análise de Água", "desc": "Monitoramento do Rio."},
+            {"name": "Catálise Enzimática", "desc": "Aceleração de reações."}
+        ],
+        "tasks": ["Realizei a titulação.", "Preparei a solução tampão.", "Limpei a vidraria.", "Analisei espectro IR.", "Misturei reagentes."],
+        "skills": "Química,Análise,Segurança,Vidraria"
     },
     {
-        "name": "Firmware do Braço Delta",
-        "desc": "Otimização do código de baixo nível para controladores de motores de passo em alta velocidade.",
-        "cat": "Embedded"
+        "name": "Núcleo de Redes e Segurança (NRED)", "acronym": "NRED", "cat": "TI",
+        "prof": ("prof_redes", "prof.redes@udesc.br"),
+        "students": ["joao", "kleber", "lucas", "maria"],
+        "projects": [
+            {"name": "Firewall Inteligente", "desc": "Bloqueio via IA."},
+            {"name": "Cluster Kubernetes", "desc": "Infraestrutura em nuvem."},
+            {"name": "Monitoramento IoT", "desc": "Sensores de temperatura."}
+        ],
+        "tasks": ["Configurei a VLAN 20.", "Atualizei o switch.", "Analisei logs SSH.", "Configurei o Docker.", "Testei o ping."],
+        "skills": "Linux,Redes,Cisco,Docker,Python"
     },
     {
-        "name": "Sistema de Visão Estéreo",
-        "desc": "Implementação de visão computacional para deteção de profundidade e objetos em tempo real.",
-        "cat": "IA"
-    },
-    {
-        "name": "Drone de Mapeamento",
-        "desc": "Fotogrametria aérea e reconstrução 3D de terrenos acidentados.",
-        "cat": "Robotica"
-    },
-    {
-        "name": "Hexápode Explorador",
-        "desc": "Robô aranha para terrenos irregulares com aprendizagem por reforço.",
-        "cat": "IA"
-    },
-    {
-        "name": "Interface Homem-Máquina",
-        "desc": "Dashboard em React para controlo e telemetria dos robôs do laboratório.",
-        "cat": "Software"
-    },
-    {
-        "name": "Prótese Impressa em 3D",
-        "desc": "Modelagem e impressão de prótese mioelétrica de baixo custo.",
-        "cat": "3D"
+        "name": "Lab de Física Experimental (LAF)", "acronym": "LAF", "cat": "Fisica",
+        "prof": ("prof_fisica", "prof.fisica@udesc.br"),
+        "students": ["nelson", "olivia", "paulo"],
+        "projects": [
+            {"name": "Acelerador de Partículas", "desc": "Mini ciclotron."},
+            {"name": "Laser de Alta Potência", "desc": "Corte a laser."},
+            {"name": "Telescópio Digital", "desc": "Rastreamento de estrelas."}
+        ],
+        "tasks": ["Alinhei os espelhos.", "Calibrei o laser.", "Medi a radiação.", "Ajustei a lente.", "Registei dados do osciloscópio."],
+        "skills": "Matemática,Física,Óptica,Excel"
     }
 ]
 
-# --- 2. DADOS PARA OS LOGS ---
-tasks_list = [
-    "Desenvolvi e testei o nó ROS para controle de trajetória.",
-    "Realizei a calibração cinemática do manipulador com novos parâmetros.",
-    "Modelei e imprimi em 3D um novo suporte para os motores.",
-    "Implementei um filtro de partículas para localização (AMCL).",
-    "Fiz a fusão de sensores do IMU e encoders de roda com um filtro de Kalman.",
-    "Refatorei o código de comunicação serial para reduzir latência.",
-    "Realizei testes de bateria e consumo energético em carga máxima.",
-    "Atualizei a documentação técnica no Wiki do laboratório.",
-    "Corrigi bugs na leitura da câmera térmica.",
-    "Participei na reunião de planeamento semanal e defini novas metas."
-]
-
-observations_list = [
-    "O motor do eixo 2 está superaquecendo após 20 minutos.",
-    "A precisão do GPS melhorou 15% com o novo filtro.",
-    "A simulação no Gazebo foi bem sucedida, pronto para testes reais.",
-    "Perda de pacotes na comunicação Wi-Fi ao afastar mais de 10m.",
-    "O novo gripper funciona perfeitamente com objetos cilíndricos.",
-    "Dificuldade em compilar a biblioteca PCL no Raspberry Pi.",
-    "Necessário comprar mais filamento PLA para as próximas peças.",
-    None, # Às vezes não há obs
-    None
-]
-
-next_steps_list = [
-    "Analisar o log de dados do motor 2.",
-    "Otimizar o código de processamento de imagem.",
-    "Corrigir o arquivo URDF com as medidas precisas do robô.",
-    "Integrar o módulo de voz.",
-    "Preparar apresentação para a banca.",
-    "Testar o algoritmo em ambiente externo."
-]
-
-# --- 3. DADOS DE PERFIL ---
-courses = [
-    "Engenharia Mecatrônica - 7º Semestre", "Ciência da Computação - 5º Semestre",
-    "Engenharia Elétrica - 9º Semestre", "Mestrado em Robótica",
-    "Engenharia de Controle e Automação", "Doutoramento em IA"
-]
-skills_pool = [
-    "Python", "C++", "ROS", "Linux", "SolidWorks", "PCB Design", "Soldagem",
-    "Visão Computacional", "Deep Learning", "Docker", "Git", "Arduino", "Raspberry Pi"
-]
-bios = [
-    "Apaixonado por robótica móvel e sistemas autônomos.",
-    "Focado em visão computacional e inteligência artificial aplicada a drones.",
-    "Interessado em design mecânico e prototipagem rápida.",
-    "Pesquisando sobre manipulação robótica e controle de força.",
-    "Entusiasta de automação residencial e IoT."
+# Observações genéricas
+generic_obs = [
+    "Tudo funcionou como esperado.",
+    "Tive dificuldades com a documentação.",
+    "Preciso de ajuda do professor na próxima etapa.",
+    "Equipamento estava ocupado hoje.",
+    None, None, None # Muitos dias sem obs
 ]
 
 def populate():
-    print("\n=== INICIANDO POPULAÇÃO DO BANCO DE DADOS ===\n")
+    print("\n=== POPULAÇÃO MASSIVA MULTI-TENANT ===\n")
 
-    print("1. Limpando dados antigos...")
-    LogEntry.query.delete()
-    Project.query.delete()
-    User.query.delete()
-    db.session.commit()
-    print("   -> Dados antigos removidos.")
+    try:
+        print("1. Limpando base de dados...")
+        LogEntry.query.delete()
+        Project.query.delete()
+        User.query.delete()
+        Laboratory.query.delete()
+        db.session.commit()
+        print("   [OK] Base limpa.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"   [AVISO] Erro ao limpar (tabelas novas?): {e}")
 
-    # --- CRIAÇÃO DOS PROJETOS ---
-    print("2. Criando Projetos...")
-    db_projects = []
-    for p_data in projects_data:
-        proj = Project(
-            name=p_data["name"], 
-            description=p_data["desc"],
-            category=p_data["cat"], # <--- CATEGORIA ADICIONADA AQUI
-            image_file='default_project.jpg' 
-        )
-        db.session.add(proj)
-        db_projects.append(proj)
-    
-    db.session.commit()
-    print(f"   -> {len(db_projects)} projetos criados.")
+    # --- SUPER ADMIN ---
+    admin = User(username='admin', email='admin@udesc.br', role='admin', is_approved=True, is_active=True)
+    admin.set_password('admin')
+    db.session.add(admin)
+    print("   -> Super Admin criado.")
 
-    # --- CRIAÇÃO DOS USUÁRIOS ---
-    print("3. Criando Usuários...")
-    
-    # Professor
-    professor = User(
-        username='professor', email='prof@example.com', role='professor', 
-        is_approved=True, is_active=True,
-        bio="Coordenador do Laboratório. Doutor em Robótica pela USP.",
-        course="Professor Titular", skills="Gestão,Robótica,IA,Educação"
-    )
-    professor.set_password('professor')
-    db.session.add(professor)
-
-    # Lista de Bolsistas Ativos
-    active_names = ['ana', 'bruno', 'carlos', 'daniela', 'eduardo', 'fernanda']
-    students_objs = []
-    
-    for name in active_names:
-        user_skills = ",".join(random.sample(skills_pool, k=random.randint(3, 5)))
-        
-        user = User(
-            username=name, 
-            email=f'{name}@example.com', 
-            is_approved=True, 
-            is_active=True,
-            course=random.choice(courses),
-            bio=random.choice(bios),
-            skills=user_skills,
-            github_link=f"https://github.com/{name}",
-            linkedin_link=f"https://linkedin.com/in/{name}"
-        )
-        user.set_password(name)
-        db.session.add(user)
-        students_objs.append(user)
-        print(f"   -> Bolsista ativo '{name}' criado.")
-
-    # Bolsista Inativo
-    inactive = User(username='gabriel', email='gabriel@example.com', is_approved=True, is_active=False, bio="Ex-bolsista.")
-    inactive.set_password('gabriel')
-    db.session.add(inactive)
-    
-    # Pendentes
-    db.session.add(User(username='hugo', email='hugo@example.com'))
-    db.session.add(User(username='isabela', email='isabela@example.com'))
-    
-    db.session.commit()
-    print("   -> Usuários criados com sucesso.")
-
-    # --- GERAÇÃO DE LOGS ---
-    print("4. Gerando Histórico de Registros...")
-    
-    months_to_populate = range(1, 13) 
-    current_year = 2025
     total_logs = 0
-
-    for student in students_objs:
-        for month in months_to_populate:
-            _, num_days = calendar.monthrange(current_year, month)
-            num_logs = random.randint(5, 12)
-            used_days = set()
-            
-            while len(used_days) < num_logs:
-                day = random.randint(1, num_days)
-                entry_date = date(current_year, month, day)
-                
-                if day not in used_days and entry_date.weekday() < 5:
-                    
-                    if random.random() > 0.3:
-                        proj = db_projects[hash(student.username) % len(db_projects)]
-                    else:
-                        proj = random.choice(db_projects)
-                    
-                    log = LogEntry(
-                        entry_date=entry_date,
-                        project=proj.name,
-                        project_id=proj.id,
-                        tasks_completed=random.choice(tasks_list),
-                        observations=random.choice(observations_list),
-                        next_steps=random.choice(next_steps_list),
-                        author=student
-                    )
-                    db.session.add(log)
-                    used_days.add(day)
-                    total_logs += 1
     
+    # --- LOOP POR LABORATÓRIO ---
+    for lab_conf in labs_config:
+        print(f"\n--- Configurando {lab_conf['name']} ---")
+        
+        # 1. Criar Lab
+        lab = Laboratory(name=lab_conf['name'], acronym=lab_conf['acronym'])
+        db.session.add(lab)
+        db.session.commit()
+
+        # 2. Criar Professor
+        p_user, p_email = lab_conf['prof']
+        prof = User(
+            username=p_user, email=p_email, role='professor',
+            is_approved=True, is_active=True, laboratory=lab,
+            image_file='default.jpg', invite_status='accepted'
+        )
+        prof.set_password(p_user) # Senha fácil para testes
+        db.session.add(prof)
+
+        # 3. Criar Projetos
+        lab_projects_objs = []
+        for p_data in lab_conf['projects']:
+            proj = Project(
+                name=p_data['name'], 
+                description=p_data['desc'],
+                category=lab_conf['cat'],
+                image_file='default_project.jpg',
+                laboratory=lab
+            )
+            db.session.add(proj)
+            lab_projects_objs.append(proj)
+        
+        db.session.commit() # Commit para ter IDs dos projetos
+
+        # 4. Criar Alunos e Logs
+        # Vamos simular um ano inteiro (2025)
+        months = range(1, 12) # Jan a Nov
+        current_year = 2025
+
+        for s_name in lab_conf['students']:
+            student = User(
+                username=s_name, email=f"{s_name}@udesc.br", role='bolsista',
+                is_approved=True, is_active=True, laboratory=lab,
+                image_file='default.jpg', skills=lab_conf['skills'],
+                bio=f"Estudante pesquisador do {lab.acronym}."
+            )
+            student.set_password(s_name)
+            db.session.add(student)
+            
+            # Gerar Logs para este aluno
+            student_log_count = 0
+            
+            for month in months:
+                _, num_days = calendar.monthrange(current_year, month)
+                
+                # Frequência: Alunos dedicados fazem 15 logs/mês, outros 5
+                logs_this_month = random.randint(5, 18)
+                days_worked = set()
+                
+                # Tenta criar um streak (semana cheia)
+                streak_start = random.randint(1, 20)
+                for k in range(5): 
+                    if streak_start + k <= num_days: days_worked.add(streak_start + k)
+
+                # Preenche o resto dos dias aleatoriamente
+                while len(days_worked) < logs_this_month:
+                    days_worked.add(random.randint(1, num_days))
+                
+                for day in days_worked:
+                    d = date(current_year, month, day)
+                    if d.weekday() < 5: # Apenas dias de semana
+                        # Escolhe projeto e tarefa do contexto do lab
+                        proj = random.choice(lab_projects_objs)
+                        task = random.choice(lab_conf['tasks'])
+                        
+                        log = LogEntry(
+                            entry_date=d,
+                            project=proj.name,
+                            project_id=proj.id,
+                            tasks_completed=task,
+                            observations=random.choice(generic_obs),
+                            next_steps="Continuar amanhã.",
+                            author=student
+                        )
+                        db.session.add(log)
+                        student_log_count += 1
+                        total_logs += 1
+            
+            print(f"   -> Aluno '{s_name}' criado ({student_log_count} logs).")
+
     db.session.commit()
-    print(f"\n=== SUCESSO! ===")
-    print(f"Banco de dados populado com {total_logs} registros de diário.")
+    print(f"\n=== CONCLUÍDO ===")
+    print(f"Total de Laboratórios: {len(labs_config)}")
+    print(f"Total de Registos Gerados: {total_logs}")
+    print("------------------------------------------------")
+    print("USUÁRIOS PARA TESTE (Senha igual ao usuário):")
+    print("1. Admin Geral: 'admin'")
+    print("2. Prof. Robótica: 'prof_robo' (Vê alunos Ana, Bruno...)")
+    print("3. Prof. Química: 'prof_quimica' (Vê alunos Fernanda, Gabriel...)")
+    print("4. Aluno: 'ana' (Do Lab de Robótica)")
 
 if __name__ == '__main__':
     populate()

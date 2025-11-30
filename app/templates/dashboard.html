@@ -44,6 +44,10 @@
                 <i class="fas fa-tv me-2"></i> Modo TV
             </a>
 
+            <a href="{{ url_for('main.invite_member') }}" class="btn btn-outline-primary">
+                <i class="fas fa-paper-plane me-2"></i> Convidar Membro
+            </a>
+
             <form action="{{ url_for('main.search') }}" method="get" class="d-flex" style="max-width: 300px;">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>

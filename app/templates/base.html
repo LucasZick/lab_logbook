@@ -213,14 +213,99 @@
             background: #003319;
             transform: translateY(-1px);
         }
+
+        /* --- BRANDING DA NAVBAR --- */
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none; /* Garante que não sublinha */
+        }
+
+        /* Caixa do Logo */
+        .brand-logo-box {
+            width: 52px;          /* Aumentado (antes 42px) */
+            height: 52px;
+            background: white; 
+            border-radius: 50%;   /* Círculo perfeito: resolve o problema de logos redondas */
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Sombra mais forte para destacar */
+            border: 3px solid rgba(255,255,255,0.3); /* Borda translúcida mais grossa */
+            overflow: hidden;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;       /* Garante que não amassa */
+        }
+
+        /* Efeito ao passar o mouse */
+        .navbar-brand:hover .brand-logo-box {
+            transform: scale(1.1); /* Zoom um pouco maior no hover */
+            border-color: white;
+        }
+
+        .brand-img {
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain;   /* Tenta preencher o círculo (bom para logos cheias) */
+            /* Se a sua logo ficar cortada, mude 'cover' para 'contain' na linha de baixo: */
+            /* object-fit: contain; */ 
+            padding: 2px;        /* Padding mínimo */
+        }
+
+        /* Texto */
+        .brand-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+
+        .brand-title {
+            font-size: 1.25rem; /* Maior */
+            margin-bottom: -2px;
+        }
+
+        .brand-subtitle {
+            font-size: 0.65rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+
+        /* Ícone de fallback (quando não tem lab) */
+        .brand-icon-fallback {
+            font-size: 1.2rem;
+            color: #01552b; /* Verde da marca dentro do box branco */
+        }
         
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.dashboard') if current_user.is_authenticated and current_user.role == 'professor' else url_for('main.index') }}">
-                <i class="fas fa-book"></i> LogBook
+            <a class="navbar-brand p-0" href="{{ url_for('main.dashboard') if current_user.is_authenticated and current_user.role == 'professor' else url_for('main.index') }}">
+                <div class="brand-container">
+                    
+                    <div class="brand-logo-box">
+                        {% if current_lab %}
+                            <img src="{{ url_for('static', filename='lab_logos/' + current_lab.image_file) }}" class="brand-img" alt="Logo">
+                        {% else %}
+                            <i class="fas fa-robot brand-icon-fallback"></i>
+                        {% endif %}
+                    </div>
+
+                    <div class="brand-info">
+                        {% if current_lab %}
+                            <span class="brand-title">{{ current_lab.acronym }}</span>
+                            <span class="brand-subtitle">Research Lab</span>
+                        {% else %}
+                            <span class="brand-title">LOGBOOK</span>
+                            <span class="brand-subtitle">Gestão Inteligente</span>
+                        {% endif %}
+                    </div>
+
+                </div>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -250,6 +335,7 @@
                         {% if current_user.role == 'professor' %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Painel</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.calendar_view') }}"><i class="fas fa-calendar-alt"></i> Calendário</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.lab_settings') }}"><i class="fas fa-cogs"></i> Configurar Lab</a></li>
                         {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

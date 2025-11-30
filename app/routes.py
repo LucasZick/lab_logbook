@@ -1,28 +1,34 @@
-import os
-import secrets
-import sys
-from PIL import Image
 import itertools
 from datetime import date, timedelta
 import calendar
-from flask import jsonify, render_template, flash, redirect, url_for, request, Blueprint, abort, current_app
+from flask import render_template, flash, redirect, url_for, request, Blueprint, abort, current_app, jsonify, make_response
 from app import db
-# Importar o novo formulário
-from app.email import send_password_reset_email
-from app.forms import ChangePasswordForm, LoginForm, ProjectForm, RegistrationForm, LogEntryForm, EditProfileForm, ResetPasswordForm, ResetPasswordRequestForm
+from app.forms import ActivateAccountForm, EditLabForm, LabForm, LoginForm, RegistrationForm, LogEntryForm, EditProfileForm, ChangePasswordForm, ProjectForm, ResetPasswordRequestForm, ResetPasswordForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import Project, User, LogEntry
+from app.models import User, LogEntry, Project, Laboratory
 from urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func, or_
+from sqlalchemy import or_, func
 from functools import wraps
 import google.generativeai as genai
 import markdown
+import csv
+import io
+import secrets
+from PIL import Image
+import os
 import qrcode
-from io import BytesIO
 import base64
+from io import BytesIO
+from app.email import send_invite_email, send_password_reset_email
 
 bp = Blueprint('main', __name__)
+
+# Dicionário de meses global
+meses = {
+    1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho',
+    7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+}
 
 def professor_required(f):
     @wraps(f)
@@ -32,212 +38,403 @@ def professor_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.role != 'admin':
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- UTILITÁRIOS DE IMAGEM ---
 def save_picture(form_picture):
-    # 1. Gera nome aleatório
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
-    
-    # 2. Define o caminho RELATIVO (onde a pasta deve estar dentro do app)
-    # current_app.root_path aponta para a pasta 'app/' dentro do container
     relative_path = 'static/profile_pics'
     full_directory = os.path.join(current_app.root_path, relative_path)
-
-    # 3. DEBUG: Imprime onde ele acha que deve salvar
-    print(f"!!! DEBUG SAVE: Tentando salvar em: {full_directory}", file=sys.stderr)
-
-    # 4. CRÍTICO: Cria a pasta se ela não existir (Auto-correção)
-    if not os.path.exists(full_directory):
-        print(f"!!! DEBUG SAVE: A pasta não existia. Criando agora...", file=sys.stderr)
-        os.makedirs(full_directory)
-
-    # 5. Caminho final do arquivo
+    if not os.path.exists(full_directory): os.makedirs(full_directory)
     picture_path = os.path.join(full_directory, picture_fn)
-
-    # 6. Redimensiona e Salva
     output_size = (150, 150)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
-    
-    try:
-        i.save(picture_path)
-        print(f"!!! DEBUG SAVE: Sucesso! Arquivo salvo em: {picture_path}", file=sys.stderr)
-    except Exception as e:
-        print(f"!!! ERRO CRÍTICO AO SALVAR ARQUIVO: {e}", file=sys.stderr)
-        raise e # Relança o erro para ser pego na rota principal
-
+    i.save(picture_path)
     return picture_fn
 
 def save_cover(form_cover):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_cover.filename)
     cover_fn = random_hex + f_ext
-    
-    # Caminho
-    relative_path = 'static/profile_pics' # Vamos guardar na mesma pasta para facilitar
+    relative_path = 'static/profile_pics'
     full_directory = os.path.join(current_app.root_path, relative_path)
-    
-    if not os.path.exists(full_directory):
-        os.makedirs(full_directory)
-        
+    if not os.path.exists(full_directory): os.makedirs(full_directory)
     cover_path = os.path.join(full_directory, cover_fn)
-
-    # Redimensionar para Capa (Ex: Max 1080px de largura, altura proporcional)
     i = Image.open(form_cover)
-    
-    # Se for muito grande, reduzimos para poupar espaço
     if i.width > 1080:
-        # Calcula altura proporcional
         ratio = 1080 / float(i.width)
         new_height = int((float(i.height) * float(ratio)))
         i = i.resize((1080, new_height), Image.Resampling.LANCZOS)
-    
     i.save(cover_path)
     return cover_fn
 
-# --- ROTAS DE PERFIL ---
+def save_lab_logo(form_picture):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    
+    # Pasta separada para organização
+    relative_path = 'static/lab_logos'
+    full_directory = os.path.join(current_app.root_path, relative_path)
+    if not os.path.exists(full_directory): os.makedirs(full_directory)
+    
+    picture_path = os.path.join(full_directory, picture_fn)
+    
+    # Redimensionar (Logos não precisam ser gigantes)
+    output_size = (300, 300)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(picture_path)
+    
+    return picture_fn
 
-@bp.route('/user/<username>')
-@login_required
-def user_profile(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    total_logs = user.logs.count()
-    # Define a imagem. Se for default, busca a padrão, senão busca a do usuário
-    image_file = url_for('static', filename='profile_pics/' + user.image_file)
-    return render_template('user_profile.html', title=username, user=user, total_logs=total_logs, image_file=image_file)
+@bp.context_processor
+def inject_lab_info():
+    if current_user.is_authenticated and current_user.laboratory:
+        return dict(current_lab=current_user.laboratory)
+    return dict(current_lab=None)
 
+# --- ROTA DE ERROS ---
 @bp.app_errorhandler(404)
 def not_found_error(error):
     return render_template('errors/404.html'), 404
 
 @bp.app_errorhandler(500)
 def internal_error(error):
-    db.session.rollback() # Importante para evitar travar o banco em caso de erro
+    db.session.rollback()
     return render_template('errors/500.html'), 500
 
-@bp.route('/edit_profile', methods=['GET', 'POST'])
-@login_required
-def edit_profile():
-    form = EditProfileForm(current_user.username, current_user.email)
-    
-    if form.validate_on_submit():
-        if form.picture.data:
-            picture_file = save_picture(form.picture.data)
-            current_user.image_file = picture_file
-
-        if form.cover.data:
-            cover_file = save_cover(form.cover.data)
-            current_user.cover_file = cover_file
-        
-        current_user.username = form.username.data
-        current_user.email = form.email.data # Salva o email (já validado que é igual à confirmação)
-        current_user.course = form.course.data
-        current_user.bio = form.bio.data
-        current_user.skills = form.skills.data
-        current_user.lattes_link = form.lattes_link.data
-        current_user.linkedin_link = form.linkedin_link.data
-        current_user.github_link = form.github_link.data
-        
-        db.session.commit()
-        flash('O seu perfil foi atualizado!', 'success')
-        return redirect(url_for('main.user_profile', username=current_user.username))
-    
-    elif request.method == 'GET':
-        form.username.data = current_user.username
-        
-        # --- MUDANÇA AQUI: Preenche ambos os campos ---
-        form.email.data = current_user.email
-        form.confirm_email.data = current_user.email
-        # ----------------------------------------------
-
-        form.course.data = current_user.course
-        form.bio.data = current_user.bio
-        form.skills.data = current_user.skills
-        form.lattes_link.data = current_user.lattes_link
-        form.linkedin_link.data = current_user.linkedin_link
-        form.github_link.data = current_user.github_link
-        
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
-    return render_template('edit_profile.html', title='Editar Perfil', form=form, image_file=image_file)
-
-def get_missing_dates(user, days_back=30):
-    """
-    Retorna uma lista de dias úteis (Seg-Sex) nos últimos 'days_back' dias
-    onde o usuário NÃO fez nenhum registro.
-    """
-    today = date.today()
-    
-    # 1. Busca todos os logs do usuário nesse período para comparar
-    start_range = today - timedelta(days=days_back)
-    logs = LogEntry.query.filter_by(author=user).filter(
-        LogEntry.entry_date >= start_range,
-        LogEntry.entry_date < today # Não cobra o dia de hoje ainda
-    ).all()
-    
-    # Cria um conjunto (set) de datas que JÁ têm log (para busca rápida)
-    logged_dates = {log.entry_date for log in logs}
-    missing_dates = []
-
-    # 2. Varre dia a dia para trás
-    for i in range(1, days_back + 1):
-        check_date = today - timedelta(days=i)
-        
-        # Se é fim de semana (Sáb=5, Dom=6), ignora
-        if check_date.weekday() >= 5:
-            continue
-            
-        # Se NÃO está na lista de logs feitos, é uma pendência
-        if check_date not in logged_dates:
-            missing_dates.append(check_date)
-    
-    # Retorna ordenado do mais recente para o mais antigo
-    return missing_dates
-
-
-# --- NOVA ROTA: PÁGINA DE PENDÊNCIAS ---
-@bp.route('/pending')
-@login_required
-def pending_logs():
-    if current_user.role != 'bolsista':
-        return redirect(url_for('main.dashboard'))
-        
-    missing = get_missing_dates(current_user)
-    
-    return render_template('pending_logs.html', title='Pendências', missing_dates=missing)
-
-# --- ROTA DA LANDING PAGE (PÚBLICA) ---
+# --- LANDING PAGE (PÚBLICA) ---
 @bp.route('/')
 def landing():
-    # Se o usuário já estiver logado, mandamos para o painel interno
     if current_user.is_authenticated:
-        if current_user.role == 'professor':
-            return redirect(url_for('main.dashboard'))
+        if current_user.role == 'professor': return redirect(url_for('main.dashboard'))
         return redirect(url_for('main.index'))
-
-    # --- DADOS PARA A VITRINE ---
     
-    # 1. Estatísticas de Impacto
+    # Estatísticas Globais (Vitrine)
+    stats = {
+        'users': User.query.filter_by(is_active=True).count(),
+        'projects': Project.query.count(),
+        'logs': LogEntry.query.count()
+    }
+    
+    # Mostra projetos recentes de qualquer laboratório
+    featured_projects = Project.query.order_by(Project.created_at.desc()).limit(3).all()
+    team_members = User.query.filter_by(is_active=True, is_approved=True).limit(6).all()
+    labs = Laboratory.query.order_by(Laboratory.name).all()
+
+    return render_template('landing.html', title='Bem-vindo', stats=stats, 
+                           featured_projects=featured_projects, team_members=team_members, labs=labs)
+
+# --- PAINEL GERAL (SUPER ADMIN) ---
+@bp.route('/admin')
+@login_required
+@admin_required
+def admin_dashboard():
+    labs = Laboratory.query.order_by(Laboratory.name).all()
+    
+    # Estatísticas Globais
+    total_users = User.query.count()
     total_projects = Project.query.count()
     total_logs = LogEntry.query.count()
-    total_members = User.query.filter_by(is_active=True).count()
     
-    # 2. Projetos em Destaque (Os 3 com mais atividade recente)
-    # (Simplificando: pegamos os 3 últimos criados ou atualizados)
-    featured_projects = Project.query.order_by(Project.created_at.desc()).limit(3).all()
+    return render_template('admin_dashboard.html', title='Administração Geral', 
+                           labs=labs, total_users=total_users, 
+                           total_projects=total_projects, total_logs=total_logs)
 
-    # 3. Membros em Destaque (Para o carrossel de equipe)
-    # Pegamos 5 aleatórios ou os mais ativos
-    team_members = User.query.filter_by(is_active=True, is_approved=True).limit(6).all()
+# --- CRIAR NOVO LABORATÓRIO ---
+@bp.route('/admin/lab/new', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def new_lab():
+    form = LabForm()
+    if form.validate_on_submit():
+        # 1. Cria Lab
+        lab = Laboratory(name=form.name.data, acronym=form.acronym.data)
+        db.session.add(lab)
+        db.session.commit()
+        
+        # 2. Verifica Professor
+        existing_user = User.query.filter_by(email=form.prof_email.data).first()
+        
+        if existing_user:
+            existing_user.laboratory = lab
+            existing_user.role = 'professor'
+            # Se já existia, assumimos que já está aceito, ou mantemos o status anterior
+            flash(f'Usuário existente movido para este laboratório.', 'info')
+        else:
+            # 3. CRIA O NOVO PROFESSOR (PENDENTE)
+            random_pass = secrets.token_urlsafe(16)
+            prof = User(
+                username=form.prof_name.data, 
+                email=form.prof_email.data,
+                role='professor',
+                is_approved=True,
+                is_active=True, # Deixamos ativo para ele poder logar assim que tiver senha
+                laboratory=lab,
+                invite_status='pending' # <--- AQUI: Marca como Solicitado
+            )
+            prof.set_password(random_pass)
+            db.session.add(prof)
+            db.session.commit()
+            
+            send_invite_email(prof, lab.name)
+            flash(f'Convite enviado para {prof.email}. Status: Solicitado.', 'success')
+        
+        db.session.commit()
+        return redirect(url_for('main.admin_dashboard'))
+        
+    return render_template('create_lab.html', title='Novo Laboratório', form=form)
 
-    return render_template('landing.html', 
-                           title='Bem-vindo',
-                           total_projects=total_projects,
-                           total_logs=total_logs,
-                           total_members=total_members,
-                           featured_projects=featured_projects,
-                           team_members=team_members)
+@bp.route('/admin/lab/<int:lab_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_lab(lab_id):
+    lab = Laboratory.query.get_or_404(lab_id)
+    
+    # Tenta encontrar o professor atual para preencher o formulário
+    current_prof = lab.users.filter_by(role='professor').first()
+    
+    form = LabForm()
 
-@bp.route('/app', methods=['GET', 'POST'])
+    if form.validate_on_submit():
+        # 1. Atualiza dados do Lab
+        lab.name = form.name.data
+        lab.acronym = form.acronym.data
+        
+        # 2. Verifica se mudou o professor responsável
+        if current_prof and current_prof.email != form.prof_email.data:
+            # O e-mail mudou! Precisamos definir um novo responsável.
+            
+            new_prof_user = User.query.filter_by(email=form.prof_email.data).first()
+            
+            if new_prof_user:
+                # Usuário já existe: Move para este lab e promove
+                new_prof_user.laboratory = lab
+                new_prof_user.role = 'professor'
+                flash(f'Responsabilidade transferida para {new_prof_user.username}.', 'info')
+            else:
+                # Usuário novo: Cria e convida
+                random_pass = secrets.token_urlsafe(16)
+                new_prof = User(
+                    username=form.prof_name.data,
+                    email=form.prof_email.data,
+                    role='professor',
+                    is_approved=True,
+                    is_active=True,
+                    laboratory=lab,
+                    invite_status='pending'
+                )
+                new_prof.set_password(random_pass)
+                db.session.add(new_prof)
+                db.session.commit() # Commit para gerar ID
+                
+                send_invite_email(new_prof, lab.name)
+                flash(f'Novo responsável convidado: {new_prof.email}', 'success')
+                
+        elif not current_prof:
+            # Caso raro: Lab estava sem professor e agora estamos adicionando um
+             # (Mesma lógica de criar novo usuário acima - simplificada aqui)
+             pass 
+
+        db.session.commit()
+        flash('Laboratório atualizado com sucesso!', 'success')
+        return redirect(url_for('main.admin_dashboard'))
+
+    elif request.method == 'GET':
+        # Preenche o formulário com os dados atuais
+        form.name.data = lab.name
+        form.acronym.data = lab.acronym
+        if current_prof:
+            form.prof_name.data = current_prof.username
+            form.prof_email.data = current_prof.email
+
+    # Reutiliza o template de criação, mudando o título
+    return render_template('create_lab.html', title='Editar Laboratório', form=form, is_edit=True)
+
+@bp.route('/team/invite', methods=['GET', 'POST'])
+@login_required
+@professor_required
+def invite_member():
+    # Reutilizamos um form simples ou criamos um InviteForm (email, role)
+    # Vou simular o form aqui para brevidade
+    if request.method == 'POST':
+        email = request.form.get('email')
+        role = request.form.get('role') # 'professor' ou 'bolsista'
+        name_hint = email.split('@')[0] # Nome provisório
+
+        # Verifica se já existe
+        if User.query.filter_by(email=email).first():
+            flash('Este e-mail já está cadastrado no sistema.', 'warning')
+        else:
+            # Cria o utilizador pré-aprovado vinculado ao MEU laboratório
+            random_pass = secrets.token_urlsafe(16)
+            new_user = User(
+                username=name_hint,
+                email=email,
+                role=role,
+                is_approved=True, # Já nasce aprovado pois foi convidado
+                is_active=True,
+                laboratory_id=current_user.laboratory_id, # <--- AQUI ESTÁ A MÁGICA
+                invite_status='pending'
+            )
+            new_user.set_password(random_pass)
+            db.session.add(new_user)
+            db.session.commit()
+
+            # Envia o e-mail (reutiliza a função de convite que já fizemos)
+            # Pode adaptar o texto do email para diferenciar "Novo Admin" de "Novo Aluno" se quiser
+            send_invite_email(new_user, current_user.laboratory.name)
+            
+            flash(f'Convite enviado para {email}.', 'success')
+            return redirect(url_for('main.dashboard')) # Ou uma página de gestão de equipe
+
+    return render_template('invite_member.html', title='Convidar Membro')
+
+@bp.route('/admin/lab/<int:lab_id>/delete')
+@login_required
+@admin_required
+def delete_lab(lab_id):
+    lab = Laboratory.query.get_or_404(lab_id)
+    
+    # 1. Proteção: Não apagar o laboratório onde você está logado agora
+    if current_user.laboratory_id == lab.id:
+        flash('Segurança: Você não pode apagar o laboratório que está a usar no momento. Mude de laboratório ou crie outro admin.', 'danger')
+        return redirect(url_for('main.admin_dashboard'))
+
+    try:
+        print(f"--- INICIANDO EXCLUSÃO DO LAB: {lab.name} ---")
+
+        # A. Identificar todos os usuários deste laboratório
+        # Usamos .all() para pegar a lista de objetos
+        users = User.query.filter_by(laboratory_id=lab.id).all()
+        user_ids = [u.id for u in users] # Lista de IDs: [1, 2, 5...]
+
+        # B. Apagar TODOS os Logs desses usuários (Limpeza da base da pirâmide)
+        # Usamos o operador IN para apagar em lote, que é muito mais rápido e seguro
+        if user_ids:
+            deleted_logs = LogEntry.query.filter(LogEntry.user_id.in_(user_ids)).delete(synchronize_session=False)
+            print(f"   -> {deleted_logs} logs apagados.")
+        
+        # C. Apagar TODOS os Projetos deste laboratório
+        deleted_projects = Project.query.filter_by(laboratory_id=lab.id).delete(synchronize_session=False)
+        print(f"   -> {deleted_projects} projetos apagados.")
+
+        # D. Apagar TODOS os Usuários deste laboratório
+        # Agora podemos apagar, pois eles não têm mais logs presos a eles
+        deleted_users = User.query.filter_by(laboratory_id=lab.id).delete(synchronize_session=False)
+        print(f"   -> {deleted_users} usuários apagados.")
+
+        # E. Finalmente, apagar o Laboratório
+        db.session.delete(lab)
+        
+        # F. O Grande Commit (Aplica tudo de uma vez)
+        db.session.commit()
+        
+        print("--- EXCLUSÃO CONCLUÍDA COM SUCESSO ---")
+        flash(f'Laboratório "{lab.name}" e todos os seus dados foram removidos permanentemente.', 'success')
+
+    except Exception as e:
+        # Se der qualquer erro no meio, desfaz TUDO. Nada é apagado.
+        db.session.rollback()
+        print(f"!!! ERRO AO APAGAR LAB: {e}")
+        flash('Erro crítico ao tentar apagar o laboratório. Operação cancelada e dados restaurados.', 'danger')
+
+    return redirect(url_for('main.admin_dashboard'))
+
+# --- EDITAR REGISTRO DE DIÁRIO ---
+@bp.route('/log/<int:log_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_log(log_id):
+    log = LogEntry.query.get_or_404(log_id)
+    
+    # 1. SEGURANÇA: Só o próprio autor pode editar
+    if log.author != current_user:
+        abort(403)
+        
+    # 2. SEGURANÇA: Bloqueio temporal (Ex: 7 dias)
+    # Se o registo tiver mais de 7 dias, não pode ser editado
+    delta = date.today() - log.entry_date
+    if delta.days > 7:
+        flash('Este registo é antigo demais para ser editado (limite de 7 dias).', 'warning')
+        return redirect(url_for('main.index'))
+
+    form = LogEntryForm()
+    
+    # Precisamos repopular o Select de Projetos (igual ao index)
+    lab_id = current_user.laboratory_id
+    projects = []
+    if lab_id:
+        projects = Project.query.filter_by(laboratory_id=lab_id).order_by(Project.name).all()
+        
+    project_choices = [(p.id, p.name) for p in projects]
+    project_choices.insert(0, (0, 'Geral / Outros (Sem Projeto Específico)'))
+    form.project_select.choices = project_choices
+
+    if form.validate_on_submit():
+        # Atualiza os campos
+        log.entry_date = form.entry_date.data
+        log.tasks_completed = form.tasks_completed.data
+        log.observations = form.observations.data
+        log.next_steps = form.next_steps.data
+        
+        # Atualiza o projeto
+        selected_id = form.project_select.data
+        if selected_id and selected_id > 0:
+            proj = Project.query.get(selected_id)
+            if proj:
+                log.project = proj.name
+                log.project_id = proj.id
+        else:
+            log.project = "Geral / Outros"
+            log.project_id = None
+            
+        db.session.commit()
+        flash('Registo atualizado com sucesso!', 'success')
+        return redirect(url_for('main.index'))
+        
+    elif request.method == 'GET':
+        # Preenche o formulário com os dados existentes
+        form.entry_date.data = log.entry_date
+        form.tasks_completed.data = log.tasks_completed
+        form.observations.data = log.observations
+        form.next_steps.data = log.next_steps
+        # Seleciona o projeto atual no dropdown
+        form.project_select.data = log.project_id if log.project_id else 0
+
+    return render_template('edit_log.html', title='Editar Registo', form=form, log=log)
+
+@bp.route('/log/<int:log_id>/delete')
+@login_required
+def delete_log(log_id):
+    log = LogEntry.query.get_or_404(log_id)
+    
+    # 1. SEGURANÇA: Só o próprio autor pode apagar
+    if log.author != current_user:
+        abort(403)
+        
+    # 2. SEGURANÇA: Bloqueio temporal (7 dias)
+    delta = date.today() - log.entry_date
+    if delta.days > 7:
+        flash('Este registo é antigo demais para ser apagado.', 'warning')
+        return redirect(url_for('main.index'))
+
+    db.session.delete(log)
+    db.session.commit()
+    
+    flash('Registo removido com sucesso.', 'success')
+    return redirect(url_for('main.index'))
+
+# --- ROTA INDEX (BOLSISTA) ---
 @bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
@@ -246,20 +443,18 @@ def index():
 
     form = LogEntryForm()
     
-    # --- 1. POPULAR O SELECT ---
-    # Busca projetos reais
-    projects = Project.query.order_by(Project.name).all()
+    # FILTRO: Mostrar apenas projetos do MEU laboratório
+    lab_id = current_user.laboratory_id
+    if lab_id:
+        projects = Project.query.filter_by(laboratory_id=lab_id).order_by(Project.name).all()
+    else:
+        projects = []
     
-    # Cria a lista de tuplas (Valor, Texto)
     project_choices = [(p.id, p.name) for p in projects]
-    
-    # ADICIONA A OPÇÃO "GERAL" NO TOPO COM ID 0
     project_choices.insert(0, (0, 'Geral / Outros (Sem Projeto Específico)'))
-    
-    # Atribui ao formulário
     form.project_select.choices = project_choices
-    
-    # (Lógica de preenchimento por data na URL - Mantém igual)
+
+    # Preenchimento automático via URL
     if request.method == 'GET' and request.args.get('fill_date'):
         try:
             fill_date = date.fromisoformat(request.args.get('fill_date'))
@@ -268,24 +463,24 @@ def index():
         except ValueError: pass
 
     if form.validate_on_submit():
-        # --- 2. LÓGICA DE SALVAR ---
         selected_id = form.project_select.data
-        
-        # Valores padrão para "Geral"
         project_name_str = "Geral / Outros"
         project_db_id = None 
 
-        # Se o usuário escolheu um projeto real (ID > 0)
         if selected_id and selected_id > 0:
-            proj = Project.query.get(selected_id)
+            # SEGURANÇA: Verificar se o projeto pertence ao laboratório
+            proj = Project.query.filter_by(id=selected_id, laboratory_id=current_user.laboratory_id).first()
             if proj:
                 project_name_str = proj.name
                 project_db_id = proj.id
-        
+            else:
+                flash('Erro: Projeto inválido.', 'danger')
+                return redirect(url_for('main.index'))
+
         log_entry = LogEntry(
             entry_date=form.entry_date.data,
-            project=project_name_str,    # Salva o nome (Real ou "Geral")
-            project_id=project_db_id,    # Salva o ID (Real ou None)
+            project=project_name_str,
+            project_id=project_db_id,
             tasks_completed=form.tasks_completed.data,
             observations=form.observations.data,
             next_steps=form.next_steps.data,
@@ -300,6 +495,7 @@ def index():
             flash('Você já possui um registro para esta data.', 'danger')
         return redirect(url_for('main.index'))
 
+    # Visualização de Logs
     today = date.today()
     has_log_today = LogEntry.query.filter_by(author=current_user, entry_date=today).first() is not None
     year = request.args.get('ano', default=today.year, type=int)
@@ -310,8 +506,10 @@ def index():
     _, num_days_in_month = calendar.monthrange(year, month)
     start_date = date(year, month, 1)
     end_date = date(year, month, num_days_in_month)
+    
     logs_in_month = LogEntry.query.filter_by(author=current_user).filter(LogEntry.entry_date >= start_date, LogEntry.entry_date <= end_date).order_by(LogEntry.entry_date.desc()).all()
     logs_lookup = {log.entry_date.day for log in logs_in_month}
+    
     days_status_list = []
     for day in range(1, num_days_in_month + 1):
         current_day_date = date(year, month, day)
@@ -323,151 +521,80 @@ def index():
         elif is_weekend_day: show_icon = False
         else: icon_type = 'times'
         days_status_list.append({'day': day, 'show_icon': show_icon, 'icon_type': icon_type, 'is_weekend': is_weekend_day})
-    days_header_list = []
-    for day in range(1, num_days_in_month + 1):
-        is_weekend_day = date(year, month, day).weekday() >= 5
-        days_header_list.append({'day': day, 'is_weekend': is_weekend_day})
-    current_month_name = f"{meses[month]} de {year}"
-    return render_template('index.html', title='Página Inicial', form=form, logs_to_display=logs_in_month, available_months=[], current_month_name=current_month_name, has_log_today=has_log_today, days_status=days_status_list, days_header=days_header_list, prev_month={'ano': prev_month_date.year, 'mes': prev_month_date.month}, next_month={'ano': next_month_date.year, 'mes': next_month_date.month})
+    
+    days_header_list = [{'day': d, 'is_weekend': date(year, month, d).weekday() >= 5} for d in range(1, num_days_in_month + 1)]
 
-# --- ROTA DE LOGIN ATUALIZADA ---
-@bp.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        if current_user.role == 'professor': return redirect(url_for('main.dashboard'))
-        return redirect(url_for('main.index'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
-            flash('Usuário ou senha inválidos', 'warning')
-            return redirect(url_for('main.login'))
-        if not user.is_approved:
-            flash('Sua conta ainda não foi aprovada.', 'warning')
-            return redirect(url_for('main.login'))
-        # NOVA VERIFICAÇÃO: Impede login de usuários inativos
-        if not user.is_active:
-            flash('Sua conta está desativada. Entre em contato com um professor.', 'warning')
-            return redirect(url_for('main.login'))
-        login_user(user, remember=form.remember_me.data)
-        if current_user.role == 'professor': return redirect(url_for('main.dashboard'))
-        else:
-            next_page = request.args.get('next')
-            if not next_page or urlparse(next_page).netloc != '': next_page = url_for('main.index')
-            return redirect(next_page)
-    return render_template('login.html', title='Entrar', form=form)
+    return render_template('index.html', title='Página Inicial', form=form, logs_to_display=logs_in_month, current_month_name=f"{meses[month]} de {year}", has_log_today=has_log_today, days_status=days_status_list, days_header=days_header_list, prev_month={'ano': prev_month_date.year, 'mes': prev_month_date.month}, next_month={'ano': next_month_date.year, 'mes': next_month_date.month},today_date_obj=date.today())
 
-# --- ROTA DE APROVAÇÃO ATUALIZADA ---
-@bp.route('/approve/<int:user_id>')
-@login_required
-@professor_required
-def approve_user(user_id):
-    user = User.query.get_or_404(user_id)
-    user.is_approved = True
-    user.is_active = True # Ativa o usuário ao aprovar
-    db.session.commit()
-    flash(f'O usuário {user.username} foi aprovado e ativado!', 'success')
-    return redirect(url_for('main.dashboard'))
-
-meses = {
-    1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho',
-    7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
-}
-
+# --- DASHBOARD (PROFESSOR) ---
 @bp.route('/dashboard')
 @login_required
 @professor_required
 def dashboard():
-    # 1. Dados dos Usuários
-    pending_users = User.query.filter_by(is_approved=False).all()
-    active_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=True).order_by(User.username).all()
-    inactive_bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=False).order_by(User.username).all()
+    lab_id = current_user.laboratory_id
+
+    pending_users = User.query.filter_by(laboratory_id=lab_id, is_approved=False).all()
+    active_bolsistas = User.query.filter_by(laboratory_id=lab_id, role='bolsista', is_approved=True, is_active=True).order_by(User.username).all()
+    inactive_bolsistas = User.query.filter_by(laboratory_id=lab_id, role='bolsista', is_approved=True, is_active=False).order_by(User.username).all()
     
-    # 2. Dados para os Seletores
     today = date.today()
-    current_year = today.year
-    current_month_num = today.month
-    today_date_str = today.strftime('%Y-%m-%d')
-    available_years = [current_year, current_year - 1, current_year - 2, current_year - 3]
     
-    # 3. Dados para o Gráfico de Atividade (Últimos 7 dias)
-    dates_labels = []
-    dates_counts = []
+    # Gráficos filtrados por Lab
+    dates_labels = []; dates_counts = []
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
-        count = LogEntry.query.filter(func.date(LogEntry.entry_date) == day).count()
+        count = LogEntry.query.join(User).filter(User.laboratory_id == lab_id, func.date(LogEntry.entry_date) == day).count()
         dates_labels.append(day.strftime('%d/%m'))
         dates_counts.append(count)
 
-    # 4. Dados para o Gráfico de Projetos (CORRIGIDO: Últimos 30 Dias)
-    start_date_projects = today - timedelta(days=30) # Define a janela de 30 dias
-    
-    projects_data = db.session.query(
-        LogEntry.project, func.count(LogEntry.id)
-    ).filter(
-        LogEntry.entry_date >= start_date_projects # <--- FILTRO NOVO
-    ).group_by(LogEntry.project).order_by(func.count(LogEntry.id).desc()).all()
+    start_date_projects = today - timedelta(days=30)
+    projects_data = db.session.query(LogEntry.project, func.count(LogEntry.id))\
+        .join(User).filter(User.laboratory_id == lab_id, LogEntry.entry_date >= start_date_projects)\
+        .group_by(LogEntry.project).order_by(func.count(LogEntry.id).desc()).limit(5).all()
     
     project_labels = [p[0] for p in projects_data]
     project_counts = [p[1] for p in projects_data]
 
     return render_template('dashboard.html', title='Painel do Professor', 
-                           pending_users=pending_users, 
-                           active_bolsistas=active_bolsistas, 
-                           inactive_bolsistas=inactive_bolsistas,
-                           today_date=today_date_str,
-                           meses=meses,
-                           available_years=available_years,
-                           current_year=current_year,
-                           current_month_num=current_month_num,
-                           dates_labels=dates_labels,
-                           dates_counts=dates_counts,
-                           project_labels=project_labels,
-                           project_counts=project_counts)
-
-@bp.route('/get_week_range')
-@login_required
-@professor_required
-def get_week_range():
-    """
-    Calcula e retorna o intervalo de uma semana (Seg-Dom) com base numa data.
-    Usado pelo JavaScript para dar feedback ao utilizador.
-    """
-    selected_date_str = request.args.get('date')
-    if not selected_date_str:
-        return jsonify({'error': 'Nenhuma data fornecida'}), 400
-    
-    try:
-        selected_date = date.fromisoformat(selected_date_str)
-        # Calcula o início (Segunda) e o fim (Domingo) da semana
-        start_of_week = selected_date - timedelta(days=selected_date.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
-        
-        # Formata a string de exibição no formato DD/MM/YYYY
-        display_string = f"Semana: {start_of_week.strftime('%d/%m/%Y')} a {end_of_week.strftime('%d/%m/%Y')}"
-        
-        return jsonify({'display': display_string})
-    except ValueError:
-        return jsonify({'error': 'Formato de data inválido'}), 400
+                           pending_users=pending_users, active_bolsistas=active_bolsistas, inactive_bolsistas=inactive_bolsistas,
+                           today_date=today.strftime('%Y-%m-%d'), meses=meses, available_years=[today.year, today.year-1], 
+                           current_year=today.year, current_month_num=today.month,
+                           dates_labels=dates_labels, dates_counts=dates_counts, project_labels=project_labels, project_counts=project_counts)
 
 # --- CALENDÁRIO ATUALIZADO ---
-# Mostra apenas bolsistas ativos na grade
 @bp.route('/calendar')
 @login_required
 @professor_required
 def calendar_view():
-    bolsistas = User.query.filter_by(role='bolsista', is_approved=True, is_active=True).order_by(User.username).all()
-    # ... (o resto da função é o mesmo)
+    # 1. Busca apenas bolsistas do laboratório atual
+    bolsistas = User.query.filter_by(
+        role='bolsista', 
+        is_approved=True, 
+        is_active=True, 
+        laboratory_id=current_user.laboratory_id
+    ).order_by(User.username).all()
+    
+    # Lógica de Datas
     year = request.args.get('ano', default=date.today().year, type=int)
     month = request.args.get('mes', default=date.today().month, type=int)
     current_date = date(year, month, 1)
     prev_month_date = current_date - timedelta(days=1)
     next_month_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+    
     _, num_days_in_month = calendar.monthrange(year, month)
     start_date = date(year, month, 1)
     end_date = date(year, month, num_days_in_month)
-    logs_in_month = LogEntry.query.filter(LogEntry.entry_date >= start_date, LogEntry.entry_date <= end_date).all()
+    
+    # 2. Busca logs apenas deste laboratório
+    logs_in_month = LogEntry.query.join(User).filter(
+        User.laboratory_id == current_user.laboratory_id,
+        LogEntry.entry_date >= start_date, 
+        LogEntry.entry_date <= end_date
+    ).all()
+    
     logs_lookup = {(log.user_id, log.entry_date.day) for log in logs_in_month}
+    
+    # Monta a Grade
     grid_data = []
     for bolsista in bolsistas:
         days_status = []
@@ -476,111 +603,28 @@ def calendar_view():
             has_log = (bolsista.id, day) in logs_lookup
             days_status.append({'day': day, 'has_log': has_log, 'is_weekend': is_weekend_day})
         grid_data.append({'student': bolsista, 'days': days_status})
-    days_header = []
-    for day in range(1, num_days_in_month + 1):
-        is_weekend_day = date(year, month, day).weekday() >= 5
-        days_header.append({'day': day, 'is_weekend': is_weekend_day})
-    meses = {1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'}
+        
+    days_header = [{'day': d, 'is_weekend': date(year, month, d).weekday() >= 5} for d in range(1, num_days_in_month + 1)]
+    
+    # Variável 'meses' deve estar acessível (global ou definida aqui)
     current_month_name = f"{meses[month]} de {year}"
-    return render_template('calendar_view.html', title="Calendário de Atividades", grid_data=grid_data, days_header=days_header, current_month_name=current_month_name, prev_month={'ano': prev_month_date.year, 'mes': prev_month_date.month}, next_month={'ano': next_month_date.year, 'mes': next_month_date.month})
-
-# --- NOVAS ROTAS PARA ATIVAR/DESATIVAR ---
-@bp.route('/deactivate/<int:user_id>')
-@login_required
-@professor_required
-def deactivate_user(user_id):
-    user = User.query.get_or_404(user_id)
-    if user.role == 'bolsista':
-        user.is_active = False
-        db.session.commit()
-        flash(f'O bolsista {user.username} foi desativado.', 'success')
-    return redirect(url_for('main.dashboard'))
-
-@bp.route('/activate/<int:user_id>')
-@login_required
-@professor_required
-def activate_user(user_id):
-    user = User.query.get_or_404(user_id)
-    if user.role == 'bolsista':
-        user.is_active = True
-        db.session.commit()
-        flash(f'O bolsista {user.username} foi reativado.', 'success')
-    return redirect(url_for('main.dashboard'))
-
-
-@bp.route('/view_logs/<int:student_id>')
-@login_required
-@professor_required
-def view_logs(student_id):
-    student = User.query.get_or_404(student_id)
-    if student.role != 'bolsista': abort(404)
-    target_year = request.args.get('ano', type=int)
-    target_month = request.args.get('mes', type=int)
-    all_logs = student.logs.order_by(LogEntry.entry_date.desc()).all()
-    meses = {1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril', 5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto', 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'}
-    available_months = []
-    for key, group in itertools.groupby(all_logs, key=lambda log: (log.entry_date.year, log.entry_date.month)):
-        year, month = key
-        month_name = f"{meses[month]} de {year}"
-        available_months.append({'year': year, 'month': month, 'name': month_name})
-    if target_year and target_month:
-        display_logs = [log for log in all_logs if log.entry_date.year == target_year and log.entry_date.month == target_month]
-        current_month_name = f"{meses[target_month]} de {target_year}"
-    elif all_logs:
-        most_recent = all_logs[0]
-        mry, mrm = most_recent.entry_date.year, most_recent.entry_date.month
-        display_logs = [log for log in all_logs if log.entry_date.year == mry and log.entry_date.month == mrm]
-        current_month_name = f"{meses[mrm]} de {mry}"
-    else:
-        display_logs, current_month_name = [], "Nenhum registro encontrado"
-    return render_template('view_logs.html', title=f"Diário de {student.username}", student=student, logs_to_display=display_logs, available_months=available_months, current_month_name=current_month_name)
-
-@bp.route('/reject/<int:user_id>')
-@login_required
-@professor_required
-def reject_user(user_id):
-    user_to_reject = User.query.filter_by(id=user_id, is_approved=False).first_or_404()
-    username = user_to_reject.username
-    db.session.delete(user_to_reject)
-    db.session.commit()
-    flash(f'A solicitação do usuário {username} foi rejeitada.', 'success')
-    return redirect(url_for('main.dashboard'))
-
-@bp.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('main.login'))
-
-@bp.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated: return redirect(url_for('main.index'))
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Solicitação de registro enviada! Aguarde a aprovação.', 'info')
-        return redirect(url_for('main.login'))
-    return render_template('register.html', title='Registrar', form=form)
-
+    
+    return render_template('calendar_view.html', title="Calendário de Atividades", 
+                           grid_data=grid_data, days_header=days_header, current_month_name=current_month_name, 
+                           prev_month={'ano': prev_month_date.year, 'mes': prev_month_date.month}, 
+                           next_month={'ano': next_month_date.year, 'mes': next_month_date.month})
 # --- NOVA ROTA PARA A BUSCA GLOBAL ---
 @bp.route('/search')
 @login_required
 @professor_required
 def search():
-    """
-    Realiza uma busca por um termo em todos os registros de todos os bolsistas.
-    """
-    # Pega o termo de busca da URL (ex: /search?q=motor)
     query = request.args.get('q', '', type=str)
     results = []
-
     if query:
         search_term = f"%{query}%"
-        # A query busca o termo em vários campos do LogEntry,
-        # apenas de usuários que são 'bolsista'.
+        # Filtra logs onde o autor pertence ao mesmo laboratório do professor logado
         results = LogEntry.query.join(User).filter(
+            User.laboratory_id == current_user.laboratory_id,
             User.role == 'bolsista',
             or_(
                 LogEntry.project.ilike(search_term),
@@ -589,14 +633,8 @@ def search():
                 LogEntry.next_steps.ilike(search_term)
             )
         ).order_by(LogEntry.entry_date.desc()).all()
+    return render_template('search_results.html', title=f"Resultados para '{query}'", results=results, query=query)
 
-    return render_template('search_results.html', 
-                           title=f"Resultados para '{query}'", 
-                           results=results, 
-                           query=query)
-
-
-# --- ROTA DE GERAÇÃO DE RELATÓRIO (ATUALIZADA PARA ACEITAR DATA) ---
 @bp.route('/generate_report')
 @login_required
 @professor_required
@@ -607,7 +645,6 @@ def generate_report():
         return redirect(url_for('main.dashboard'))
 
     # --- LÓGICA DE DECISÃO INTELIGENTE ---
-    # Verificamos quais parâmetros foram enviados para decidir o tipo de relatório
     if 'month_num' in request.args:
         report_type = 'month'
     else:
@@ -644,10 +681,9 @@ def generate_report():
         flash(f'Período inválido selecionado: {e}', 'warning')
         return redirect(url_for('main.dashboard'))
 
-    # ... (O resto da função: buscar logs, formatar, chamar IA, e renderizar o 'report_view.html'
-    #      permanece exatamente o mesmo, pois já está a usar estas variáveis)
-    
+    # --- BUSCA DE LOGS (COM FILTRO DE LABORATÓRIO) ---
     logs_period = LogEntry.query.join(User).filter(
+        User.laboratory_id == current_user.laboratory_id, # <--- SEGURANÇA: Apenas do meu lab
         User.role == 'bolsista',
         User.is_active == True,
         LogEntry.entry_date >= start_period,
@@ -719,40 +755,280 @@ def generate_report():
                            start_date=start_period,
                            end_date=end_period)
 
+@bp.route('/view_logs/<int:student_id>')
+@login_required
+@professor_required
+def view_logs(student_id):
+    # --- SEGURANÇA: Busca estudante apenas se pertencer ao mesmo lab do professor ---
+    student = User.query.filter_by(id=student_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    
+    if student.role != 'bolsista': abort(404)
+    
+    target_year = request.args.get('ano', type=int)
+    target_month = request.args.get('mes', type=int)
+    
+    all_logs = student.logs.order_by(LogEntry.entry_date.desc()).all()
+    
+    available_months = []
+    for key, group in itertools.groupby(all_logs, key=lambda log: (log.entry_date.year, log.entry_date.month)):
+        year, month = key
+        month_name = f"{meses[month]} de {year}"
+        available_months.append({'year': year, 'month': month, 'name': month_name})
+        
+    if target_year and target_month:
+        display_logs = [log for log in all_logs if log.entry_date.year == target_year and log.entry_date.month == target_month]
+        current_month_name = f"{meses[target_month]} de {target_year}"
+    elif all_logs:
+        most_recent = all_logs[0]
+        mry, mrm = most_recent.entry_date.year, most_recent.entry_date.month
+        display_logs = [log for log in all_logs if log.entry_date.year == mry and log.entry_date.month == mrm]
+        current_month_name = f"{meses[mrm]} de {mry}"
+    else:
+        display_logs, current_month_name = [], "Nenhum registro encontrado"
+        
+    return render_template('view_logs.html', title=f"Diário de {student.username}", student=student, logs_to_display=display_logs, available_months=available_months, current_month_name=current_month_name)
+
+# --- GESTÃO DE PROJETOS ---
+@bp.route('/projects/new', methods=['GET', 'POST'])
+@login_required
+def new_project():
+    form = ProjectForm()
+    if form.validate_on_submit():
+        image_file = 'default_project.jpg'
+        if form.image.data: image_file = save_cover(form.image.data)
+        
+        project = Project(
+            name=form.name.data, description=form.description.data, category=form.category.data, image_file=image_file,
+            laboratory_id=current_user.laboratory_id # Vincula ao lab atual
+        )
+        db.session.add(project)
+        db.session.commit()
+        flash('Projeto criado com sucesso!', 'success')
+        return redirect(url_for('main.gallery'))
+    return render_template('create_project.html', title='Novo Projeto', form=form)
+
+@bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
+@login_required
+@professor_required
+def edit_project(project_id):
+    project = Project.query.filter_by(id=project_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    
+    form = ProjectForm(original_name=project.name)
+    if form.validate_on_submit():
+        project.name = form.name.data; project.description = form.description.data; project.category = form.category.data
+        if form.image.data: project.image_file = save_cover(form.image.data)
+        db.session.commit(); flash('Projeto atualizado!', 'success')
+        return redirect(url_for('main.gallery'))
+    elif request.method == 'GET':
+        form.name.data = project.name; form.description.data = project.description; form.category.data = project.category
+    image_file = url_for('static', filename='profile_pics/' + project.image_file)
+    return render_template('create_project.html', title='Editar Projeto', form=form, legend='Editar Projeto', is_edit=True, image_file=image_file)
+
+@bp.route('/project/<int:project_id>/delete')
+@login_required
+@professor_required
+def delete_project(project_id):
+    project = Project.query.filter_by(id=project_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    db.session.delete(project); db.session.commit()
+    flash('Projeto removido.', 'success')
+    return redirect(url_for('main.gallery'))
+
+# --- GALERIA ---
+@bp.route('/gallery')
+@login_required
+def gallery():
+    projects = Project.query.filter_by(laboratory_id=current_user.laboratory_id).order_by(Project.name).all()
+    return render_template('gallery.html', title='Galeria', projects=projects)
+
+# --- COMUNIDADE ---
+@bp.route('/community')
+@login_required
+def community():
+    users = User.query.filter_by(laboratory_id=current_user.laboratory_id, is_active=True, is_approved=True).order_by(User.username).all()
+    
+    for user in users:
+        last_log = user.logs.order_by(LogEntry.entry_date.desc()).first()
+        if last_log:
+            user.last_project_name = last_log.project; user.last_project_id = last_log.project_id; user.last_active_date = last_log.entry_date
+        else:
+            user.last_project_name = None; user.last_project_id = None; user.last_active_date = None
+    return render_template('community.html', title='Comunidade', users=users, today=date.today(), timedelta=timedelta)
+
+# --- DETALHES E QR CODE ---
+@bp.route('/project/<int:project_id>')
+@login_required
+def project_details(project_id):
+    project = Project.query.filter_by(id=project_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    logs = project.logs.order_by(LogEntry.entry_date.desc()).all()
+    contributors = User.query.join(LogEntry).filter(LogEntry.project_id == project.id).distinct().all()
+    return render_template('project_details.html', title=project.name, project=project, logs=logs, contributors=contributors)
+
+@bp.route('/project/<int:project_id>/label')
+@login_required
+def project_label(project_id):
+    project = Project.query.filter_by(id=project_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    project_url = url_for('main.public_project', project_id=project.id, _external=True)
+    qr = qrcode.QRCode(version=1, box_size=10, border=4); qr.add_data(project_url); qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffered = BytesIO(); img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    return render_template('project_label.html', title=f'Etiqueta - {project.name}', project=project, qr_code=img_str)
+
+# --- ROTA PÚBLICA (QR CODE) ---
+@bp.route('/p/<int:project_id>')
+def public_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    contributors = User.query.join(LogEntry).filter(LogEntry.project_id == project.id).distinct().all()
+    recent_logs = project.logs.order_by(LogEntry.entry_date.desc()).limit(10).all()
+    return render_template('project_public.html', title=project.name, project=project, contributors=contributors, recent_logs=recent_logs, now_date=date.today())
+
+# --- MODO TV ---
+@bp.route('/tv_mode')
+@login_required
+@professor_required
+def tv_mode():
+    # Filtrar pelo Laboratório do usuário
+    lab_id = current_user.laboratory_id
+    today = date.today()
+    week_ago = today - timedelta(days=7)
+    
+    # Join com User para garantir que os logs são deste laboratório
+    logs = LogEntry.query.join(User).filter(
+        User.laboratory_id == lab_id,
+        LogEntry.entry_date >= week_ago
+    ).order_by(LogEntry.entry_date.desc()).limit(20).all()
+    
+    if not logs:
+        logs = LogEntry.query.join(User).filter(User.laboratory_id == lab_id).order_by(LogEntry.entry_date.desc()).limit(5).all()
+
+    return render_template('tv_mode.html', title='Modo TV', logs=logs)
+
+# --- EXPORTAR CSV ---
+@bp.route('/export_logs')
+@login_required
+@professor_required
+def export_logs():
+    # Exporta apenas logs do laboratório atual
+    logs = LogEntry.query.join(User).filter(User.laboratory_id == current_user.laboratory_id).order_by(LogEntry.entry_date.desc()).all()
+    si = io.StringIO(); cw = csv.writer(si, delimiter=';')
+    cw.writerow(['Data', 'Bolsista', 'Projeto', 'Tarefas', 'Obs', 'Próximos'])
+    for log in logs: cw.writerow([log.entry_date.strftime('%d/%m/%Y'), log.author.username, log.project, log.tasks_completed, log.observations or "", log.next_steps])
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=relatorio.csv"; output.headers["Content-type"] = "text/csv"
+    return output
+
+# --- PENDÊNCIAS ---
+@bp.route('/pending')
+@login_required
+def pending_logs():
+    if current_user.role != 'bolsista': return redirect(url_for('main.dashboard'))
+    missing = get_missing_dates(current_user) # Função usa filter_by(author=user), que já tem lab, seguro.
+    return render_template('pending_logs.html', title='Pendências', missing_dates=missing)
+
+# --- PERFIL E EDIÇÃO ---
+@bp.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm(current_user.username, current_user.email)
+    if form.validate_on_submit():
+        if form.picture.data: current_user.image_file = save_picture(form.picture.data)
+        if form.cover.data: current_user.cover_file = save_cover(form.cover.data)
+        current_user.username = form.username.data; current_user.email = form.email.data
+        current_user.course = form.course.data; current_user.bio = form.bio.data
+        current_user.skills = form.skills.data; current_user.lattes_link = form.lattes_link.data
+        current_user.linkedin_link = form.linkedin_link.data; current_user.github_link = form.github_link.data
+        db.session.commit(); flash('Perfil atualizado!', 'success')
+        return redirect(url_for('main.user_profile', username=current_user.username))
+    elif request.method == 'GET':
+        form.username.data = current_user.username; form.email.data = current_user.email; form.confirm_email.data = current_user.email
+        form.course.data = current_user.course; form.bio.data = current_user.bio; form.skills.data = current_user.skills
+        form.lattes_link.data = current_user.lattes_link; form.linkedin_link.data = current_user.linkedin_link; form.github_link.data = current_user.github_link
+    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+    return render_template('edit_profile.html', title='Editar Perfil', form=form, image_file=image_file)
+
+@bp.route('/user/<username>')
+@login_required
+def user_profile(username):
+    # Filtro de segurança: só vejo perfis do meu laboratório
+    user = User.query.filter_by(username=username, laboratory_id=current_user.laboratory_id).first_or_404()
+    total_logs = user.logs.count()
+    image_file = url_for('static', filename='profile_pics/' + user.image_file)
+    return render_template('user_profile.html', user=user, total_logs=total_logs, image_file=image_file)
+
+# --- AUTENTICAÇÃO (LOGIN/REGISTRO/SENHA) ---
+@bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated: return redirect(url_for('main.index'))
+    
+    form = RegistrationForm()
+    
+    # Popula o menu de laboratórios disponíveis
+    labs = Laboratory.query.order_by(Laboratory.name).all()
+    form.lab_select.choices = [(l.id, f"{l.acronym} - {l.name}") for l in labs]
+
+    if form.validate_on_submit():
+        # Criação segura: Sempre bolsista, sempre inativo até aprovação
+        lab = Laboratory.query.get(form.lab_select.data)
+        
+        user = User(
+            username=form.username.data, 
+            email=form.email.data,
+            role='bolsista',       # Forçado
+            is_active=False,       # Segurança
+            is_approved=False,
+            laboratory=lab
+        )
+        user.set_password(form.password.data)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Solicitação enviada ao coordenador do laboratório!', 'info')
+        return redirect(url_for('main.login'))
+        
+    return render_template('register.html', title='Solicitar Acesso', form=form)
+
+@bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        if current_user.role == 'professor': return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash('Inválido.', 'warning'); return redirect(url_for('main.login'))
+        if not user.is_approved: flash('Não aprovado.', 'warning'); return redirect(url_for('main.login'))
+        if not user.is_active: flash('Desativado.', 'warning'); return redirect(url_for('main.login'))
+        login_user(user, remember=form.remember_me.data)
+        if current_user.role == 'professor': return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.index'))
+    return render_template('login.html', title='Entrar', form=form)
+
+@bp.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('main.login'))
+
 @bp.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
-        # 1. Verifica se a senha antiga está correta
-        if not current_user.check_password(form.old_password.data):
-            flash('A senha atual está incorreta.', 'danger')
-            return redirect(url_for('main.change_password'))
-        
-        # 2. Define a nova senha
-        current_user.set_password(form.new_password.data)
-        db.session.commit()
-        
-        flash('Sua senha foi alterada com sucesso!', 'success')
-        return redirect(url_for('main.user_profile', username=current_user.username))
-        
+        if not current_user.check_password(form.old_password.data): flash('Senha atual incorreta.', 'danger'); return redirect(url_for('main.change_password'))
+        current_user.set_password(form.new_password.data); db.session.commit()
+        flash('Senha alterada!', 'success'); return redirect(url_for('main.user_profile', username=current_user.username))
     return render_template('change_password.html', title='Alterar Senha', form=form)
 
-# ROTA 1: Solicitar o Reset
 @bp.route('/reset_password_request', methods=['GET', 'POST'])
 def reset_password_request():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-        
+    if current_user.is_authenticated: return redirect(url_for('main.index'))
     form = ResetPasswordRequestForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user:
-            send_password_reset_email(user)
-        # Por segurança, mostramos a mensagem mesmo se o email não existir (para não revelar usuários)
-        flash('Verifique o seu e-mail para as instruções de recuperação.', 'info')
+        if user: send_password_reset_email(user)
+        flash('Verifique o seu e-mail para as instruções.', 'info')
         return redirect(url_for('main.login'))
-        
     return render_template('auth/reset_password_request.html', title='Recuperar Senha', form=form)
 
 @bp.route('/reset_password/<token>', methods=['GET', 'POST'])
@@ -764,186 +1040,145 @@ def reset_password(token):
     if not user:
         flash('O link é inválido ou expirou.', 'danger')
         return redirect(url_for('main.index'))
-        
-    form = ResetPasswordForm()
-    if form.validate_on_submit():
-        user.set_password(form.password.data)
-        db.session.commit()
-        flash('A sua senha foi redefinida com sucesso!', 'success')
-        return redirect(url_for('main.login'))
-        
-    # --- CORREÇÃO AQUI ---
-    # Adicionámos 'user=user' para que o template saiba quem é o utilizador
-    return render_template('auth/reset_password.html', title='Nova Senha', form=form, user=user)
-
-@bp.route('/community')
-@login_required
-def community():
-    users = User.query.filter_by(is_active=True, is_approved=True).order_by(User.username).all()
     
-    for user in users:
-        last_log = user.logs.order_by(LogEntry.entry_date.desc()).first()
-        if last_log:
-            user.last_project_name = last_log.project      # Nome (para exibir)
-            user.last_project_id = last_log.project_id     # ID (para o link funcionar)
-            user.last_active_date = last_log.entry_date
-        else:
-            user.last_project_name = None
-            user.last_project_id = None
-            user.last_active_date = None
-
-    return render_template('community.html', title='Comunidade', users=users, today=date.today(), timedelta=timedelta)
-
-@bp.route('/tv_mode')
-def tv_mode():
-    # Define a janela de tempo para 7 dias atrás
-    today = date.today()
-    week_ago = today - timedelta(days=7)
-    
-    # Busca logs da última semana
-    # Adicionamos .limit(20) para garantir que o carrossel não fica infinito
-    logs = LogEntry.query.join(User).filter(
-        LogEntry.entry_date >= week_ago
-    ).order_by(LogEntry.entry_date.desc()).limit(20).all()
-    
-    # Fallback: Se não houver NADA na última semana (ex: férias), 
-    # mostra os 5 últimos registros da história para a TV não ficar preta.
-    if not logs:
-        logs = LogEntry.query.order_by(LogEntry.entry_date.desc()).limit(5).all()
-
-    return render_template('tv_mode.html', title='Modo TV', logs=logs)
-
-@bp.route('/projects/new', methods=['GET', 'POST'])
-@login_required
-def new_project():
-    form = ProjectForm()
-    if form.validate_on_submit():
-        # LÓGICA DE IMAGEM PADRÃO
-        image_file = 'default_project.jpg' # Valor padrão inicial
+    # --- LÓGICA DE DECISÃO ---
+    if user.invite_status == 'pending':
+        # FLUXO DE ATIVAÇÃO (Primeiro Acesso)
+        form = ActivateAccountForm()
         
-        if form.image.data:
-            # Se o usuário enviou algo, substitui o padrão
-            image_file = save_cover(form.image.data)
-        
-        project = Project(
-            name=form.name.data,
-            description=form.description.data,
-            category=form.category.data,
-            image_file=image_file # Usa a variável calculada acima
-        )
-        db.session.add(project)
-        db.session.commit()
-        flash('Projeto criado com sucesso!', 'success')
-        return redirect(url_for('main.gallery'))
-        
-    return render_template('create_project.html', title='Novo Projeto', form=form)
+        # Preenche o username sugerido (baseado no email) na primeira vez
+        if request.method == 'GET':
+            form.username.data = user.username
 
-# --- EDITAR PROJETO ---
-@bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
+        if form.validate_on_submit():
+            # Verifica se o username mudou e se já existe
+            if form.username.data != user.username:
+                existing = User.query.filter_by(username=form.username.data).first()
+                if existing:
+                    flash('Este nome de usuário já está em uso. Escolha outro.', 'warning')
+                    return render_template('auth/activate_account.html', title='Ativar Conta', form=form, user=user)
+            
+            user.username = form.username.data
+            user.set_password(form.password.data)
+            user.invite_status = 'accepted'
+            
+            db.session.commit()
+            flash('Conta ativada com sucesso! Bem-vindo à equipe.', 'success')
+            return redirect(url_for('main.login'))
+            
+        return render_template('auth/activate_account.html', title='Ativar Conta', form=form, user=user)
+
+    else:
+        # FLUXO DE RECUPERAÇÃO (Esqueceu a Senha)
+        form = ResetPasswordForm()
+        if form.validate_on_submit():
+            user.set_password(form.password.data)
+            db.session.commit()
+            flash('A sua senha foi redefinida com sucesso!', 'success')
+            return redirect(url_for('main.login'))
+            
+        return render_template('auth/reset_password.html', title='Nova Senha', form=form, user=user)
+
+# --- GESTÃO DE USUÁRIOS ---
+@bp.route('/approve/<int:user_id>')
 @login_required
 @professor_required
-def edit_project(project_id):
-    project = Project.query.get_or_404(project_id)
-    form = ProjectForm(original_name=project.name)
+def approve_user(user_id):
+    # Segurança: Só aprovo usuários do meu lab
+    user = User.query.filter_by(id=user_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    user.is_approved = True
+    user.is_active = True
+    db.session.commit()
+    flash(f'O usuário {user.username} foi aprovado e ativado!', 'success')
+    return redirect(url_for('main.dashboard'))
+
+@bp.route('/reject/<int:user_id>')
+@login_required
+@professor_required
+def reject_user(user_id):
+    user_to_reject = User.query.filter_by(id=user_id, is_approved=False, laboratory_id=current_user.laboratory_id).first_or_404()
+    username = user_to_reject.username
+    db.session.delete(user_to_reject)
+    db.session.commit()
+    flash(f'A solicitação do usuário {username} foi rejeitada.', 'success')
+    return redirect(url_for('main.dashboard'))
+
+@bp.route('/deactivate/<int:user_id>')
+@login_required
+@professor_required
+def deactivate_user(user_id):
+    user = User.query.filter_by(id=user_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    if user.role == 'bolsista':
+        user.is_active = False; db.session.commit()
+        flash(f'O bolsista {user.username} foi desativado.', 'success')
+    return redirect(url_for('main.dashboard'))
+
+@bp.route('/activate/<int:user_id>')
+@login_required
+@professor_required
+def activate_user(user_id):
+    user = User.query.filter_by(id=user_id, laboratory_id=current_user.laboratory_id).first_or_404()
+    if user.role == 'bolsista':
+        user.is_active = True; db.session.commit()
+        flash(f'O bolsista {user.username} foi reativado.', 'success')
+    return redirect(url_for('main.dashboard'))
+
+def get_missing_dates(user, days_back=30):
+    today = date.today()
+    start_range = today - timedelta(days=days_back)
+    # Garante que busca logs do lab certo
+    logs = LogEntry.query.filter_by(author=user).filter(LogEntry.entry_date >= start_range, LogEntry.entry_date < today).all()
+    logged_dates = {log.entry_date for log in logs}
+    missing_dates = []
+    for i in range(1, days_back + 1):
+        check_date = today - timedelta(days=i)
+        if check_date.weekday() < 5 and check_date not in logged_dates:
+            missing_dates.append(check_date)
+    return sorted(missing_dates, reverse=True)
+
+@bp.route('/lab/settings', methods=['GET', 'POST'])
+@login_required
+@professor_required
+def lab_settings():
+    lab = current_user.laboratory
+    form = EditLabForm()
     
     if form.validate_on_submit():
-        project.name = form.name.data
-        project.description = form.description.data
-        project.category = form.category.data # <--- ATUALIZA A CATEGORIA
+        if form.logo.data:
+            lab.image_file = save_lab_logo(form.logo.data)
         
-        if form.image.data:
-            project.image_file = save_cover(form.image.data)
-            
+        lab.name = form.name.data
+        lab.acronym = form.acronym.data
+        lab.description = form.description.data
+        
         db.session.commit()
-        flash('Projeto atualizado!', 'success')
-        return redirect(url_for('main.gallery'))
+        flash('Configurações do laboratório atualizadas!', 'success')
+        return redirect(url_for('main.lab_settings'))
     
     elif request.method == 'GET':
-        form.name.data = project.name
-        form.description.data = project.description
-        form.category.data = project.category
+        form.name.data = lab.name
+        form.acronym.data = lab.acronym
+        form.description.data = lab.description
 
-    # ADICIONADO: Passamos a image_file atual para o template
-    image_file = url_for('static', filename='profile_pics/' + project.image_file)
-    
-    return render_template('create_project.html', title='Editar Projeto', 
-                           form=form, legend='Editar Projeto', is_edit=True, 
-                           image_file=image_file) # <--- AQUI
+    image_file = url_for('static', filename='lab_logos/' + lab.image_file)
+    return render_template('lab_settings.html', title='Configurações do Lab', form=form, image_file=image_file)
 
-# --- APAGAR PROJETO ---
-@bp.route('/project/<int:project_id>/delete')
-@login_required
-@professor_required
-def delete_project(project_id):
-    project = Project.query.get_or_404(project_id)
+@bp.route('/lab/<int:lab_id>')
+def public_lab(lab_id):
+    lab = Laboratory.query.get_or_404(lab_id)
     
-    # Opcional: Verificar se tem logs associados antes de apagar
-    # Se apagar, os logs ficam com project_id=NULL (se configurado) ou dá erro.
-    # Vamos assumir que você quer apagar mesmo assim.
+    # Dados para mostrar
+    prof = lab.users.filter_by(role='professor').first()
+    students = lab.users.filter_by(role='bolsista', is_active=True).all()
+    projects = lab.projects.order_by(Project.created_at.desc()).all()
     
-    db.session.delete(project)
-    db.session.commit()
-    flash('Projeto removido com sucesso.', 'success')
-    return redirect(url_for('main.gallery'))
-
-@bp.route('/gallery')
-@login_required
-def gallery():
-    # Busca projetos e conta quantos logs cada um tem
-    projects = Project.query.order_by(Project.name).all()
-    return render_template('gallery.html', title='Galeria de Projetos', projects=projects)
-
-# --- DETALHES DO PROJETO ---
-@bp.route('/project/<int:project_id>')
-@login_required
-def project_details(project_id):
-    project = Project.query.get_or_404(project_id)
+    # Estatísticas simples para mostrar impacto
+    total_logs = LogEntry.query.join(User).filter(User.laboratory_id == lab.id).count()
     
-    # 1. Busca logs deste projeto
-    logs = project.logs.order_by(LogEntry.entry_date.desc()).all()
-    
-    # 2. Descobre quem trabalhou neste projeto (Contribuidores únicos)
-    # Faz um join para pegar usuários que têm logs neste projeto
-    contributors = User.query.join(LogEntry).filter(LogEntry.project_id == project.id).distinct().all()
-    
-    return render_template('project_details.html', 
-                           title=project.name, 
-                           project=project, 
-                           logs=logs, 
-                           contributors=contributors)
-
-@bp.route('/project/<int:project_id>/label')
-@login_required
-def project_label(project_id):
-    project = Project.query.get_or_404(project_id)
-    
-    # MUDANÇA AQUI: Aponta para 'main.public_project'
-    project_url = url_for('main.public_project', project_id=project.id, _external=True)
-    
-    # ... (o resto do código de geração do QR code mantém-se igual) ...
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(project_url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    
-    return render_template('project_label.html', title=f'Etiqueta - {project.name}', project=project, qr_code=img_str)
-
-@bp.route('/p/<int:project_id>')
-def public_project(project_id):
-    project = Project.query.get_or_404(project_id)
-    
-    # Busca contribuidores (para mostrar a equipa)
-    contributors = User.query.join(LogEntry).filter(LogEntry.project_id == project.id).distinct().all()
-    
-    # Busca os logs mais recentes
-    recent_logs = project.logs.order_by(LogEntry.entry_date.desc()).all()
-    
-    return render_template('project_public.html', 
-                           title=project.name, 
-                           project=project, 
-                           contributors=contributors, 
-                           recent_logs=recent_logs,
-                           now_date=date.today())
+    return render_template('lab_public.html', 
+                           title=f"{lab.acronym} - {lab.name}",
+                           lab=lab,
+                           prof=prof,
+                           students=students,
+                           projects=projects,
+                           total_logs=total_logs)

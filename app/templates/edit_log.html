@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- ESTILOS DE EDIÇÃO PREMIUM --- */
+    
+    /* Cartão Flutuante */
+    .edit-card {
+        border: none;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
+        background: white;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Cabeçalho Elegante */
+    .edit-header {
+        padding: 2.5rem 2.5rem 1.5rem 2.5rem;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(to bottom, #ffffff, #f8fafc);
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .header-icon-box {
+        width: 52px; height: 52px;
+        background: #f0fdf4; /* Verde muito claro */
+        color: #01552b;      /* Verde Marca */
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; margin-right: 1.2rem;
+        box-shadow: 0 4px 10px rgba(1, 85, 43, 0.1);
+        border: 1px solid #dcfce7;
+    }
+    
+    .header-title { font-size: 1.4rem; font-weight: 800; color: #1e293b; margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
+    .header-subtitle { font-size: 0.9rem; color: #64748b; margin: 2px 0 0 0; }
+
+    /* Corpo do Formulário */
+    .edit-body { padding: 2.5rem; }
+
+    /* Inputs Modernos */
+    .form-floating > .form-control, .form-floating > .form-select {
+        border: 1px solid #e2e8f0; 
+        border-radius: 12px;
+        background-color: #fff;
+        font-size: 0.95rem;
+        color: #334155;
+    }
+    .form-floating > .form-control:focus, .form-floating > .form-select:focus {
+        border-color: #01552b;
+        box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
+    }
+    .form-floating > label { color: #94a3b8; padding-left: 1rem; }
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label,
+    .form-floating > .form-select ~ label { 
+        color: #01552b; font-weight: 600; transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+
+    /* Botões */
+    .btn-save {
+        background: #01552b; color: white; font-weight: 700; padding: 0.9rem 2.5rem;
+        border-radius: 50rem; border: none; box-shadow: 0 4px 15px rgba(1, 85, 43, 0.3);
+        transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-save:hover { 
+        background: #014421; transform: translateY(-2px); 
+        box-shadow: 0 8px 20px rgba(1, 85, 43, 0.4); color: white;
+    }
+
+    .btn-cancel {
+        color: #64748b; background: white; border: 1px solid #e2e8f0;
+        padding: 0.8rem 1.5rem; border-radius: 50rem; font-weight: 600; transition: all 0.2s;
+        text-decoration: none;
+    }
+    .btn-cancel:hover { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
+
+    /* Botão de Lixeira (Estilo Fantasma) */
+    .btn-delete-ghost {
+        color: #ef4444; background: transparent; border: 1px solid transparent;
+        padding: 0.6rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+        display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
+        opacity: 0.7;
+    }
+    .btn-delete-ghost:hover { 
+        background: #fef2f2; border-color: #fca5a5; color: #dc2626; opacity: 1;
+    }
+
+    /* Botão Voltar no Topo */
+    .btn-back-top {
+        text-decoration: none; color: #64748b; font-weight: 600; font-size: 0.9rem;
+        display: inline-flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    .btn-back-top:hover { color: #01552b; }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('main.index') }}" class="btn-back-top">
+                <i class="fas fa-arrow-left"></i> Voltar ao Painel
+            </a>
+        </div>
+
+        <div class="edit-card animate__animated animate__fadeInUp">
+            
+            <div class="edit-header">
+                <div class="header-icon-box">
+                    <i class="fas fa-pen-nib"></i>
+                </div>
+                <div>
+                    <h1 class="header-title">Editar Registo</h1>
+                    <p class="header-subtitle">Atualize os detalhes ou corrija informações.</p>
+                </div>
+            </div>
+
+            <div class="edit-body">
+                <form action="" method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                {{ form.entry_date(class="form-control", placeholder="Data") }}
+                                <label><i class="far fa-calendar-alt me-2"></i>Data</label>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-floating">
+                                {{ form.project_select(class="form-select", id="projectSelect") }}
+                                <label for="projectSelect"><i class="fas fa-project-diagram me-2"></i>Projeto</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        {{ form.tasks_completed(class="form-control", placeholder="Tarefas", style="height: 140px") }}
+                        <label>O que foi realizado?</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        {{ form.observations(class="form-control", placeholder="Obs", style="height: 100px") }}
+                        <label>Observações e Resultados</label>
+                    </div>
+
+                    <div class="form-floating mb-5">
+                        {{ form.next_steps(class="form-control", placeholder="Próximos", style="height: 80px") }}
+                        <label>Próximos Passos</label>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        
+                        <a href="{{ url_for('main.delete_log', log_id=log.id) }}" 
+                           class="btn-delete-ghost"
+                           title="Apagar Registo"
+                           onclick="return confirm('Tem a certeza? Esta ação não pode ser desfeita.');">
+                            <i class="far fa-trash-alt"></i> <span>Apagar</span>
+                        </a>
+                        
+                        <div class="d-flex gap-3 align-items-center">
+                            <a href="{{ url_for('main.index') }}" class="btn-cancel">Cancelar</a>
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-check"></i> Guardar Alterações
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

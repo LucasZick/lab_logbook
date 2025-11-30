@@ -2,206 +2,399 @@
 
 {% block content %}
 <style>
-    /* --- AJUSTES GERAIS PARA LANDING --- */
-    /* Remove padding do container principal para ocupar largura total */
+    /* --- CONFIGURAÇÃO GERAL --- */
     main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-    
-    /* Esconde a Navbar padrão se quiser uma navbar específica, 
-       ou ajusta-a para ser transparente (vamos manter a padrão por simplicidade, mas transparente seria top) */
-    
-    /* --- 1. HERO SECTION --- */
+    /* nav { display: none !important; } */ /* Descomente se quiser remover a navbar */
+
+    body {
+        background-color: #020617;
+        color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+    }
+
+    /* Utilitários de Texto */
+    .text-gradient {
+        background: linear-gradient(to right, #fff, #94a3b8);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .text-brand { color: #4ade80; }
+    .section-padding { padding: 8rem 2rem; }
+
+    /* --- 1. HERO SECTION (Refinada) --- */
     .hero-section {
-        background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
-        position: relative;
+        min-height: 90vh;
+        background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 70%);
+        position: relative; display: flex; align-items: center; justify-content: center; text-align: center;
+        overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    /* Glow de fundo */
+    .hero-glow {
+        position: absolute; width: 800px; height: 600px; background: #01552b;
+        filter: blur(150px); opacity: 0.15; top: -200px; border-radius: 50%;
+        animation: breathe 10s infinite alternate;
+    }
+    @keyframes breathe { from { opacity: 0.15; transform: scale(1); } to { opacity: 0.25; transform: scale(1.1); } }
+
+    .hero-content { position: relative; z-index: 10; max-width: 900px; }
+
+    .hero-badge {
+        background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 8px 16px; border-radius: 50rem; font-size: 0.8rem; font-weight: 600;
+        color: #cbd5e1; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 2rem;
+        backdrop-filter: blur(5px);
+    }
+    .hero-badge-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80; }
+
+    .hero-title { font-size: 5rem; font-weight: 900; line-height: 1.05; margin-bottom: 1.5rem; letter-spacing: -2px; }
+    .hero-desc { font-size: 1.3rem; color: #94a3b8; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+
+    /* Botões CTA */
+    .btn-hero-primary {
+        background: #22c55e; color: #022c16; padding: 1rem 2.5rem; border-radius: 12px;
+        font-weight: 700; text-decoration: none; transition: all 0.3s;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); display: inline-block;
+    }
+    .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 0 40px rgba(34, 197, 94, 0.5); color: #022c16; background: #4ade80; }
+
+    /* --- 2. BENTO GRID (A grande mudança visual) --- */
+    .bento-section { background: #0f172a; }
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 colunas */
+        grid-template-rows: repeat(2, 300px); /* 2 linhas fixas */
+        gap: 20px; max-width: 1200px; margin: 0 auto;
+    }
+
+    .bento-card {
+        background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 24px; padding: 2.5rem; position: relative; overflow: hidden;
+        transition: transform 0.3s; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .bento-card:hover { border-color: rgba(255,255,255,0.1); background: rgba(30, 41, 59, 0.5); }
+
+    /* Configuração das Células */
+    .bento-wide { grid-column: span 2; } /* Ocupa 2 colunas */
+    .bento-tall { grid-row: span 2; background: linear-gradient(to bottom, #0f172a, #1e293b); border-color: #01552b; } /* Ocupa 2 linhas */
+
+    .bento-icon { 
+        font-size: 2.5rem; margin-bottom: 1rem; 
+        background: linear-gradient(135deg, #4ade80, #01552b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .bento-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; color: white; }
+    .bento-desc { font-size: 1rem; color: #94a3b8; line-height: 1.5; }
+    
+    /* Imagens/Decorativo dentro do Bento */
+    .bento-visual {
+        position: absolute; right: -20px; bottom: -20px; opacity: 0.1; font-size: 10rem; transform: rotate(-15deg);
+    }
+
+    /* --- 3. SPLIT SECTION (Para Quem é) --- */
+    .roles-section { padding: 6rem 2rem; background: #020617; border-top: 1px solid rgba(255,255,255,0.05); }
+    .roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; max-width: 1100px; margin: 0 auto; }
+    
+    .role-col h3 { font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 15px; }
+    .role-col ul { list-style: none; padding: 0; }
+    .role-col li { 
+        margin-bottom: 1rem; font-size: 1.1rem; color: #cbd5e1; 
+        display: flex; align-items: flex-start; gap: 12px;
+    }
+    .role-col li i { color: #4ade80; margin-top: 5px; }
+
+    /* --- 4. FAQ SECTION (Conteúdo útil) --- */
+    .faq-section { padding: 6rem 2rem; background: #0f172a; }
+    .faq-container { max-width: 800px; margin: 0 auto; }
+    .faq-title { text-align: center; font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; }
+    
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1.5rem 0; }
+    .faq-question { font-size: 1.2rem; font-weight: 600; color: white; cursor: pointer; display: flex; justify-content: space-between; }
+    .faq-answer { margin-top: 1rem; color: #94a3b8; line-height: 1.6; display: none; } /* JS simples para abrir */
+    
+    /* --- FOOTER --- */
+    footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 4rem 0; text-align: center; background: #020617; }
+
+    /* Responsivo */
+    @media (max-width: 992px) {
+        .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+        .bento-wide, .bento-tall { grid-column: span 1; grid-row: span 1; }
+        .roles-grid { grid-template-columns: 1fr; }
+        .hero-title { font-size: 3.5rem; }
+    }
+
+    /* --- SECÇÃO DE LABORATÓRIOS (NOVO) --- */
+    .labs-section {
+        padding: 6rem 2rem;
+        background: #f8fafc; /* Fundo claro para contraste com o footer escuro */
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .labs-header {
+        text-align: center; margin-bottom: 4rem;
+    }
+    .labs-tag {
+        color: #01552b; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem; display: block; margin-bottom: 1rem;
+    }
+    .labs-title {
+        font-size: 2.5rem; font-weight: 900; color: #0f172a; margin: 0;
+    }
+
+    .labs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        max-width: 1100px; margin: 0 auto;
+    }
+
+    /* O Cartão do Lab */
+    .lab-card {
+        background: white;
+        border-radius: 24px;
         overflow: hidden;
-        padding: 8rem 2rem 6rem 2rem;
-        color: white;
-    }
-    
-    /* Background Animado (Grid) */
-    .hero-bg {
-        position: absolute; inset: 0; opacity: 0.2;
-        background-image: radial-gradient(#01552b 1px, transparent 1px);
-        background-size: 40px 40px;
-        animation: moveGrid 60s linear infinite;
-    }
-    @keyframes moveGrid { from { transform: translateY(0); } to { transform: translateY(40px); } }
-
-    .hero-content { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
-
-    .hero-tag {
-        display: inline-block; background: rgba(74, 222, 128, 0.1); color: #4ade80;
-        padding: 8px 16px; border-radius: 50rem; font-weight: 700; font-size: 0.8rem;
-        text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem;
-        border: 1px solid rgba(74, 222, 128, 0.2);
-    }
-
-    .hero-title {
-        font-size: 4rem; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem;
-        background: linear-gradient(to right, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-
-    .hero-text { font-size: 1.25rem; color: #94a3b8; line-height: 1.6; margin-bottom: 2.5rem; max-width: 500px; }
-
-    .hero-btns { display: flex; gap: 1rem; }
-    .btn-cta {
-        padding: 1rem 2rem; border-radius: 12px; font-weight: 700; text-decoration: none; transition: all 0.3s;
-        display: inline-flex; align-items: center; gap: 10px;
-    }
-    .btn-primary-cta { background: #01552b; color: white; border: 1px solid #01552b; box-shadow: 0 10px 25px -5px rgba(1, 85, 43, 0.4); }
-    .btn-primary-cta:hover { transform: translateY(-3px); box-shadow: 0 20px 30px -5px rgba(1, 85, 43, 0.6); color: white; }
-    
-    .btn-secondary-cta { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-    .btn-secondary-cta:hover { background: rgba(255,255,255,0.1); color: white; }
-
-    /* Hero Image (Direita) */
-    .hero-visual {
+        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
         position: relative;
     }
-    .glass-card {
-        background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(20px);
-        border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
-        padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-        transform: rotate(-2deg); transition: transform 0.5s ease;
-    }
-    .hero-visual:hover .glass-card { transform: rotate(0deg) scale(1.02); }
 
-    /* --- 2. NUMBERS SECTION --- */
-    .stats-section { background: white; padding: 4rem 2rem; border-bottom: 1px solid #e5e7eb; }
-    .stats-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; text-align: center; }
-    .stat-number { font-size: 3.5rem; font-weight: 900; color: #0f172a; line-height: 1; margin-bottom: 0.5rem; }
-    .stat-label { font-size: 1rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 1px; }
+    .lab-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px -10px rgba(1, 85, 43, 0.15);
+        border-color: #01552b;
+    }
 
-    /* --- 3. FEATURED PROJECTS --- */
-    .projects-section { padding: 6rem 2rem; background-color: #f8fafc; }
-    .section-header { text-align: center; max-width: 700px; margin: 0 auto 4rem auto; }
-    .section-tag { color: #01552b; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 1rem; display: block; }
-    .section-headline { font-size: 2.5rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem; }
-    
-    .projects-grid-home {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto;
+    /* Área da Logo */
+    .lab-logo-area {
+        height: 140px;
+        background: #f1f5f9;
+        display: flex; align-items: center; justify-content: center;
+        position: relative;
     }
-    .project-card-home {
-        background: white; border-radius: 20px; overflow: hidden;
-        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); transition: all 0.3s;
-        text-decoration: none; color: inherit; border: 1px solid #e2e8f0;
+    /* Círculo branco atrás da logo */
+    .lab-logo-bg {
+        width: 80px; height: 80px;
+        background: white;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
     }
-    .project-card-home:hover { transform: translateY(-10px); box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); border-color: #01552b; }
-    
-    .p-img { height: 200px; width: 100%; object-fit: cover; }
-    .p-body { padding: 1.5rem; }
-    .p-cat { font-size: 0.7rem; font-weight: 800; color: #01552b; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
-    .p-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
-    .p-desc { font-size: 0.9rem; color: #64748b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .lab-card:hover .lab-logo-bg { transform: scale(1.1); }
 
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .hero-content { grid-template-columns: 1fr; text-align: center; }
-        .hero-visual { display: none; } /* Esconde a imagem no mobile para limpar */
-        .hero-btns { justify-content: center; }
-        .stats-container { grid-template-columns: 1fr; gap: 3rem; }
-        .hero-title { font-size: 3rem; }
+    .lab-img {
+        width: 50px; height: 50px; object-fit: contain;
     }
+
+    /* Corpo */
+    .lab-body {
+        padding: 2rem; text-align: center; flex-grow: 1;
+        display: flex; flex-direction: column; align-items: center;
+    }
+
+    .lab-acronym {
+        background: #dcfce7; color: #166534;
+        padding: 4px 12px; border-radius: 6px;
+        font-size: 0.75rem; font-weight: 800;
+        margin-bottom: 1rem; display: inline-block;
+    }
+
+    .lab-name {
+        font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;
+        line-height: 1.3;
+    }
+
+    .lab-stats {
+        margin-top: auto;
+        padding-top: 1.5rem;
+        width: 100%;
+        display: flex; justify-content: center; gap: 1.5rem;
+        color: #64748b; font-size: 0.85rem; font-weight: 500;
+    }
+    .lab-stats span { display: flex; align-items: center; gap: 6px; }
+
+    /* Seta de Ação */
+    .lab-arrow {
+        margin-top: 1.5rem;
+        color: #01552b; font-weight: 700; font-size: 0.9rem;
+        opacity: 0; transform: translateX(-10px);
+        transition: all 0.3s;
+    }
+    .lab-card:hover .lab-arrow { opacity: 1; transform: translateX(0); }
 </style>
 
 <section class="hero-section">
-    <div class="hero-bg"></div>
-    <div class="hero-content">
+    <div class="hero-glow"></div>
+    <div class="hero-content animate-up">
+        <div class="hero-badge">
+            <div class="hero-badge-dot"></div> v1.0 Stable
+        </div>
+        <h1 class="hero-title">
+            Gestão de Laboratório <br>
+            <span class="text-gradient">Reinventada.</span>
+        </h1>
+        <p class="hero-desc">
+            Logbook integra registos diários, inteligência artificial e gestão de projetos numa única plataforma unificada para equipas de pesquisa.
+        </p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{{ url_for('main.login') }}" class="btn-hero-primary">Aceder ao Sistema</a>
+        </div>
         
-        <div>
-            <span class="hero-tag">Inovação & Pesquisa</span>
-            <h1 class="hero-title">O Futuro da Robótica começa aqui.</h1>
-            <p class="hero-text">
-                Plataforma oficial de gestão de conhecimento, projetos e atividades do nosso Laboratório. Conectando pessoas, robôs e dados.
-            </p>
-            <div class="hero-btns">
-                <a href="{{ url_for('main.login') }}" class="btn-cta btn-primary-cta">
-                    <i class="fas fa-sign-in-alt"></i> Acesso Membro
-                </a>
-                <a href="#projetos" class="btn-cta btn-secondary-cta">
-                    Explorar Projetos
-                </a>
+        <div class="d-flex justify-content-center gap-5 mt-5 pt-4 border-top border-white border-opacity-10">
+            <div>
+                <div class="fs-2 fw-bold text-white">{{ stats.projects }}</div>
+                <div class="text-uppercase fs-7 text-muted fw-bold ls-1">Projetos</div>
+            </div>
+            <div>
+                <div class="fs-2 fw-bold text-white">{{ stats.logs }}</div>
+                <div class="text-uppercase fs-7 text-muted fw-bold ls-1">Registos</div>
+            </div>
+            <div>
+                <div class="fs-2 fw-bold text-white">{{ stats.users }}</div>
+                <div class="text-uppercase fs-7 text-muted fw-bold ls-1">Membros</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-padding bento-section">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold fs-1 mb-3">Tudo o que precisa. Num só lugar.</h2>
+        <p class="text-muted fs-5">Ferramentas desenhadas especificamente para o fluxo académico.</p>
+    </div>
+
+    <div class="bento-grid">
+        <div class="bento-card bento-wide">
+            <div>
+                <i class="fas fa-brain bento-icon"></i>
+                <h3 class="bento-title">Relatórios Inteligentes</h3>
+                <p class="bento-desc">A nossa IA lê os registos da semana e gera automaticamente um resumo executivo para os orientadores. Adeus relatórios manuais.</p>
+            </div>
+            <i class="fas fa-robot bento-visual"></i>
+        </div>
+
+        <div class="bento-card bento-tall">
+            <div>
+                <i class="fas fa-gamepad bento-icon"></i>
+                <h3 class="bento-title">Sistema RPG</h3>
+                <p class="bento-desc">Mantenha a motivação alta. Os bolsistas ganham XP, sobem de nível (Júnior -> Sénior) e desbloqueiam conquistas ao manterem a consistência.</p>
+            </div>
+            <div class="mt-auto pt-4">
+                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1);">
+                    <div class="progress-bar bg-success" style="width: 75%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2 small text-muted">
+                    <span>Nível 3</span>
+                    <span>750/1000 XP</span>
+                </div>
             </div>
         </div>
 
-        <div class="hero-visual">
-            <div class="glass-card">
-                <div class="d-flex align-items-center mb-4">
-                    <div style="width: 50px; height: 50px; background: #4ade80; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #022c16;">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="ms-3">
-                        <div style="font-weight: 700; font-size: 1.1rem;">Status do Sistema</div>
-                        <div style="color: #94a3b8; font-size: 0.9rem;">Operacional • v2.0</div>
-                    </div>
+        <div class="bento-card">
+            <i class="fas fa-globe bento-icon"></i>
+            <h3 class="bento-title">Portfólio Público</h3>
+            <p class="bento-desc">Gere páginas públicas e QR Codes para colar nos seus robôs.</p>
+        </div>
+
+        <div class="bento-card">
+            <i class="fas fa-tasks bento-icon"></i>
+            <h3 class="bento-title">Gestão Ágil</h3>
+            <p class="bento-desc">Controle de pendências, filtros de projetos e histórico completo.</p>
+        </div>
+    </div>
+</section>
+
+<section class="roles-section">
+    <div class="roles-grid">
+        <div class="role-col">
+            <h3 class="text-white"><i class="fas fa-user-graduate text-brand"></i> Para Bolsistas</h3>
+            <ul>
+                <li><i class="fas fa-check"></i> Registo de atividades em menos de 30 segundos.</li>
+                <li><i class="fas fa-check"></i> Histórico organizado para o TCC/Tese.</li>
+                <li><i class="fas fa-check"></i> Perfil profissional com Lattes e GitHub.</li>
+                <li><i class="fas fa-check"></i> Acompanhamento visual de progresso.</li>
+            </ul>
+        </div>
+        <div class="role-col">
+            <h3 class="text-white"><i class="fas fa-chalkboard-teacher text-brand"></i> Para Orientadores</h3>
+            <ul>
+                <li><i class="fas fa-check"></i> Visão raio-X de todo o laboratório.</li>
+                <li><i class="fas fa-check"></i> Alertas automáticos de alunos inativos.</li>
+                <li><i class="fas fa-check"></i> Resumos semanais prontos no e-mail.</li>
+                <li><i class="fas fa-check"></i> Gestão centralizada de projetos e equipa.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="faq-section">
+    <h2 class="faq-title">Perguntas Frequentes</h2>
+    <div class="faq-container">
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">Como faço para entrar? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">O sistema é restrito aos membros do laboratório. Clique em "Criar Conta" e aguarde a aprovação do professor coordenador.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">É gratuito? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Sim, o Logbook é uma ferramenta open-source desenvolvida internamente para apoiar a pesquisa.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">Os meus dados são públicos? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Por padrão, não. Apenas o seu perfil básico e projetos marcados explicitamente como públicos aparecem para quem não está logado. Os seus diários detalhados são privados da equipa.</div>
+        </div>
+    </div>
+</section>
+
+<section class="labs-section">
+    <div class="labs-header">
+        <span class="labs-tag">Ecossistema</span>
+        <h2 class="labs-title">Nossos Laboratórios</h2>
+        <p class="text-muted mt-2">Conheça as unidades de pesquisa que utilizam a plataforma.</p>
+    </div>
+
+    <div class="labs-grid">
+        {% for lab in labs %}
+        <a href="{{ url_for('main.public_lab', lab_id=lab.id) }}" class="lab-card">
+            
+            <div class="lab-logo-area">
+                <div class="lab-logo-bg">
+                    <img src="{{ url_for('static', filename='lab_logos/' + lab.image_file) }}" class="lab-img">
                 </div>
+            </div>
+
+            <div class="lab-body">
+                <span class="lab-acronym">{{ lab.acronym }}</span>
+                <h3 class="lab-name">{{ lab.name }}</h3>
                 
-                <div style="height: 8px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 10px;"></div>
-                <div style="height: 8px; width: 70%; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 10px;"></div>
-                <div style="height: 8px; width: 90%; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 20px;"></div>
-
-                <div class="d-flex justify-content-between align-items-end mt-4">
-                    <div>
-                        <div style="font-size: 2.5rem; font-weight: 800; color: #4ade80;">{{ total_logs }}</div>
-                        <div style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Atividades Registadas</div>
-                    </div>
+                <div class="lab-stats">
+                    <span><i class="fas fa-users"></i> {{ lab.users.count() }}</span>
+                    <span><i class="fas fa-project-diagram"></i> {{ lab.projects.count() }}</span>
                 </div>
-            </div>
-        </div>
 
-    </div>
-</section>
-
-<section class="stats-section">
-    <div class="stats-container">
-        <div>
-            <div class="stat-number">{{ total_projects }}</div>
-            <div class="stat-label">Projetos Ativos</div>
-        </div>
-        <div>
-            <div class="stat-number">{{ total_members }}</div>
-            <div class="stat-label">Investigadores</div>
-        </div>
-        <div>
-            <div class="stat-number">{{ total_logs }}+</div>
-            <div class="stat-label">Horas de Pesquisa</div>
-        </div>
-    </div>
-</section>
-
-<section class="projects-section" id="projetos">
-    <div class="section-header">
-        <span class="section-tag">Portfólio</span>
-        <h2 class="section-headline">Em Desenvolvimento</h2>
-        <p class="text-muted">Conheça os últimos avanços tecnológicos que a nossa equipa está a construir.</p>
-    </div>
-
-    <div class="projects-grid-home">
-        {% for project in featured_projects %}
-        <a href="{{ url_for('main.public_project', project_id=project.id) }}" class="project-card-home">
-            <img src="{{ url_for('static', filename='profile_pics/' + project.image_file) }}" class="p-img">
-            <div class="p-body">
-                <span class="p-cat">{{ project.category }}</span>
-                <h4 class="p-title">{{ project.name }}</h4>
-                <p class="p-desc">{{ project.description if project.description else 'Sem descrição.' }}</p>
+                <div class="lab-arrow">
+                    Visitar Página <i class="fas fa-arrow-right ms-1"></i>
+                </div>
             </div>
         </a>
         {% endfor %}
     </div>
-
-    {% if not featured_projects %}
-        <div class="text-center text-muted">
-            <p>Ainda não há projetos públicos para exibir.</p>
-        </div>
-    {% endif %}
 </section>
 
-<section style="background: #01552b; padding: 4rem 2rem; text-align: center; color: white;">
-    <h2 style="font-weight: 800; margin-bottom: 1rem;">Faça parte da inovação.</h2>
-    <p style="opacity: 0.8; margin-bottom: 2rem;">É estudante ou investigador? Solicite o seu acesso.</p>
-    <a href="{{ url_for('main.register') }}" class="btn btn-light rounded-pill px-5 py-3 fw-bold" style="color: #01552b;">
-        Solicitar Acesso
-    </a>
-</section>
-
+<script>
+    function toggleFaq(element) {
+        const answer = element.querySelector('.faq-answer');
+        const icon = element.querySelector('.fa-chevron-down');
+        
+        if (answer.style.display === 'block') {
+            answer.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            answer.style.display = 'block';
+            icon.style.transform = 'rotate(180deg)';
+        }
+    }
+</script>
 {% endblock %}

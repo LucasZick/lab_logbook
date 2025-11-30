@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .activate-card {
+        max-width: 500px; margin: 0 auto;
+        border-top: 5px solid #01552b;
+    }
+    .welcome-icon {
+        width: 80px; height: 80px; background: #dcfce7; color: #01552b;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; margin: 0 auto 1.5rem auto;
+    }
+</style>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="content-card activate-card">
+            
+            <div class="text-center mb-4">
+                <div class="welcome-icon animate__animated animate__bounceIn">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <h3 class="fw-bold text-dark">Bem-vindo, {{ user.username }}!</h3>
+                <p class="text-muted">
+                    Para concluir a sua entrada no laboratório, confirme os seus dados de acesso.
+                </p>
+            </div>
+
+            <form action="" method="post">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-floating mb-3">
+                    {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
+                    <label for="username">Como quer ser chamado? (Usuário)</label>
+                    {% for error in form.username.errors %}
+                        <div class="text-danger small mt-1 ms-1">{{ error }}</div>
+                    {% endfor %}
+                    <div class="form-text small">Este será o seu login no sistema.</div>
+                </div>
+
+                <hr class="my-4 opacity-10">
+
+                <div class="mb-3">
+                    <div class="form-floating">
+                        {{ form.password(class="form-control", id="password", placeholder="Senha") }}
+                        <label for="password">Crie uma Senha</label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-floating">
+                        {{ form.password2(class="form-control", id="password2", placeholder="Confirmar") }}
+                        <label for="password2">Confirme a Senha</label>
+                    </div>
+                    {% for error in form.password2.errors %}
+                        <div class="text-danger small mt-1 ms-1">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-success py-3 fw-bold", style="background: #01552b; border: none;") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

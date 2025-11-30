@@ -17,6 +17,7 @@ class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(message='Este campo é obrigatório.'), Email(message='Email inválido.')])
     password = PasswordField('Senha', validators=[DataRequired(message='Este campo é obrigatório.')])
     password2 = PasswordField('Repita a Senha', validators=[DataRequired(message='Este campo é obrigatório.'), EqualTo('password', message='As senhas devem ser iguais.')])
+    lab_select = SelectField('Laboratório', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Registrar')
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
@@ -122,3 +123,32 @@ class ProjectForm(FlaskForm):
             project = Project.query.filter_by(name=name.data).first()
             if project:
                 raise ValidationError('Já existe um projeto com esse nome.')
+
+class LabForm(FlaskForm):
+    name = StringField('Nome do Laboratório', validators=[DataRequired()])
+    acronym = StringField('Sigla (Ex: LAR)', validators=[DataRequired()])
+    
+    prof_name = StringField('Usuário de Acesso (Login)', validators=[DataRequired()], render_kw={"placeholder": "ex: joao_silva"})
+    prof_email = StringField('E-mail do Professor', validators=[DataRequired(), Email()])
+    submit = SubmitField('Criar Laboratório')
+
+class EditLabForm(FlaskForm):
+    name = StringField('Nome do Laboratório', validators=[DataRequired()])
+    acronym = StringField('Sigla (Ex: LAR)', validators=[DataRequired()])
+    description = TextAreaField('Descrição / Missão', render_kw={"rows": 3})
+    logo = FileField('Logótipo do Laboratório', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
+    submit = SubmitField('Salvar Configurações')
+
+class ActivateAccountForm(FlaskForm):
+    username = StringField('Escolha seu Usuário', validators=[DataRequired()])
+    password = PasswordField('Crie sua Senha', validators=[DataRequired()])
+    password2 = PasswordField('Confirmar Senha', validators=[DataRequired(), EqualTo('password', message='As senhas devem ser iguais.')])
+    submit = SubmitField('Ativar Minha Conta')
+
+    def validate_username(self, username):
+        # Verifica se o nome já existe (excluindo o próprio usuário temporário)
+        user = User.query.filter_by(username=username.data).first()
+        if user:
+            # Aqui precisamos de um truque: como saber se é o próprio usuário?
+            # Na rota vamos tratar o erro de duplicidade se for outro ID
+            pass

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="content-card">
+            <div class="text-center mb-4">
+                <div style="width: 60px; height: 60px; background: #dbeafe; color: #1e40af; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.5rem;">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <h3 class="fw-bold">{{ 'Editar Laboratório' if is_edit else 'Novo Laboratório' }}</h3>
+                <p class="text-muted">
+                    {% if is_edit %}
+                        Atualize as informações ou altere o responsável.
+                    {% else %}
+                        Cadastre um novo ambiente e defina o responsável.
+                    {% endif %}
+                </p>
+            </div>
+
+            <form action="" method="post">
+                {{ form.hidden_tag() }}
+                
+                <h6 class="text-uppercase text-muted fw-bold small mb-3">Dados do Lab</h6>
+                <div class="form-floating mb-3">
+                    {{ form.name(class="form-control", placeholder="Nome") }}
+                    <label>Nome do Laboratório</label>
+                </div>
+                <div class="form-floating mb-4">
+                    {{ form.acronym(class="form-control", placeholder="Sigla") }}
+                    <label>Sigla (Ex: LAR)</label>
+                </div>
+
+                <h6 class="text-uppercase text-muted fw-bold small mb-3">Responsável Técnico</h6>
+                
+                <div class="mb-3">
+                    <div class="form-floating">
+                        {{ form.prof_name(class="form-control", placeholder="usuario") }}
+                        <label>Usuário de Acesso (Login)</label>
+                    </div>
+                    <div class="form-text text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Use letras minúsculas e sem espaços (ex: <strong>pedro_alberto</strong>).
+                    </div>
+                </div>
+
+                <div class="form-floating mb-4">
+                    {{ form.prof_email(class="form-control", placeholder="Email") }}
+                    <label>E-mail Institucional</label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    {{ form.submit(class="btn btn-success py-3 fw-bold", value="Guardar Alterações" if is_edit else "Criar Laboratório") }}
+                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-light">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

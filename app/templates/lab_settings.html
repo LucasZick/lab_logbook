@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="content-card">
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">Perfil do Laboratório</h3>
+                    <p class="text-muted mb-0 small">Personalize como a equipa vê o sistema.</p>
+                </div>
+            </div>
+            <hr class="mb-4">
+
+            <form action="" method="post" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-4 text-center">
+                        <img src="{{ image_file }}" class="rounded-circle border p-1 mb-2" style="width: 120px; height: 120px; object-fit: contain; background: #f8f9fa;">
+                        <p class="small text-muted">Logo Atual</p>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Alterar Logótipo</label>
+                        {{ form.logo(class="form-control") }}
+                        <div class="form-text">Recomendado: PNG transparente ou JPG quadrado.</div>
+                        {% for error in form.logo.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <div class="form-floating">
+                            {{ form.name(class="form-control", placeholder="Nome") }}
+                            <label>Nome do Laboratório</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ form.acronym(class="form-control", placeholder="Sigla") }}
+                            <label>Sigla (Ex: LAR)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-floating mb-4">
+                    {{ form.description(class="form-control", placeholder="Desc", style="height: 100px") }}
+                    <label>Descrição / Missão</label>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">Voltar</a>
+                    {{ form.submit(class="btn btn-primary fw-bold px-4") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

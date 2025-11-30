@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- 1. FUNDO E ESTRUTURA --- */
+    body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+
+    /* Notificações */
+    #flash-messages-container {
+        position: fixed; top: 20px; right: 20px; z-index: 9999; width: 350px; pointer-events: none;
+    }
+    .alert {
+        pointer-events: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border: none; border-left: 5px solid; backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.95);
+    }
+    .alert-success { border-color: #10b981; color: #064e3b; }
+    .alert-warning { border-color: #f59e0b; color: #78350f; }
+    .alert-danger  { border-color: #ef4444; color: #7f1d1d; }
+    .alert-info    { border-color: #3b82f6; color: #1e3a8a; }
+
+    /* --- 2. CABEÇALHO --- */
+    .admin-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white; padding: 3rem 2rem 8rem 2rem;
+        border-radius: 0 0 40px 40px; margin: -1.5rem -0.75rem 4rem -0.75rem;
+        position: relative; overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.5);
+    }
+    .admin-bg-grid {
+        position: absolute; inset: 0; opacity: 0.05;
+        background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
+        background-size: 50px 50px; animation: panGrid 60s linear infinite;
+    }
+    @keyframes panGrid { from { background-position: 0 0; } to { background-position: 50px 50px; } }
+    .header-content { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; max-width: 1200px; margin: 0 auto; }
+    
+    .admin-badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 50rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: #94a3b8; }
+    
+    .btn-new-lab {
+        background: #3b82f6; color: white; padding: 0.8rem 2rem; border-radius: 14px;
+        font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); border: none; transition: all 0.2s;
+    }
+    .btn-new-lab:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4); color: white; }
+
+    /* --- 3. STATS FLUTUANTES (CORRIGIDO) --- */
+    .stats-container {
+        max-width: 1200px; margin: -6rem auto 3rem auto;
+        padding: 0 1rem; position: relative; z-index: 10;
+    }
+    
+    /* Grid forçado para ficar lado a lado */
+    .stats-row {
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); /* 4 colunas iguais */
+        gap: 1.5rem;
+    }
+    
+    /* Responsividade para telas menores */
+    @media (max-width: 992px) {
+        .stats-row { grid-template-columns: repeat(2, 1fr); } /* 2 por linha em tablets */
+    }
+    @media (max-width: 576px) {
+        .stats-row { grid-template-columns: 1fr; } /* 1 por linha em celular */
+    }
+
+    .stat-card-admin {
+        background: white; border-radius: 16px; padding: 1.5rem;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; border-left: 5px solid #0f172a;
+        transition: transform 0.2s; display: flex; flex-direction: column; justify-content: center;
+        min-height: 140px; /* Altura mínima para ficarem iguais */
+    }
+    .stat-card-admin:hover { transform: translateY(-5px); }
+    .stat-title { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 2.5rem; font-weight: 800; color: #0f172a; line-height: 1; }
+    .stat-icon { float: right; font-size: 2rem; opacity: 0.15; margin-top: -10px; }
+
+    /* --- 4. LISTA DE LABS --- */
+    .lab-list-container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+    
+    .lab-row {
+        background: white; border-radius: 16px; padding: 1.5rem;
+        margin-bottom: 1rem; border: 1px solid #e2e8f0;
+        display: grid; grid-template-columns: 60px 2fr 2.5fr 1.5fr 100px; 
+        align-items: center; gap: 1rem; transition: all 0.2s;
+    }
+    .lab-row:hover { border-color: #3b82f6; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1); transform: scale(1.005); z-index: 5; position: relative; }
+
+    .lab-icon { width: 50px; height: 50px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 800; font-size: 0.9rem; }
+    .lab-name { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 0.2rem; }
+    .lab-sigla { font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+
+    /* Professor Area */
+    .prof-wrapper { display: flex; align-items: center; gap: 12px; }
+    
+    /* MUDANÇA AQUI: A classe trigger vai só na imagem */
+    .prof-img-trigger { 
+        width: 45px; height: 45px; border-radius: 50%; object-fit: cover; 
+        border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s;
+        cursor: help; /* Cursor de ajuda para indicar hover */
+    }
+    .prof-img-trigger:hover { transform: scale(1.1); border-color: #3b82f6; }
+    
+    .prof-name { font-size: 0.95rem; font-weight: 600; color: #334155; }
+    
+    /* Botão Copiar Email */
+    .btn-copy { 
+        font-size: 0.85rem; color: #94a3b8; cursor: pointer; transition: color 0.2s; 
+        background: none; border: none; padding: 2px 5px; margin-left: 5px;
+    }
+    .btn-copy:hover { color: #3b82f6; background-color: #eff6ff; border-radius: 4px; }
+
+    .lab-metrics { display: flex; gap: 1.5rem; }
+    .metric { text-align: center; }
+    .m-val { display: block; font-weight: 800; font-size: 1.1rem; color: #334155; line-height: 1; }
+    .m-lbl { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+
+    .btn-icon { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #e2e8f0; background: white; color: #64748b; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; text-decoration: none; }
+    .btn-icon:hover { background: #f1f5f9; color: #0f172a; }
+    .btn-delete:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+
+    .empty-admin { text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; margin-top: 2rem; }
+
+    /* --- TOOLTIP HOVER CARD --- */
+    .admin-tooltip-card {
+        position: fixed; background: white; border-radius: 16px; width: 260px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 9999; pointer-events: none; opacity: 0;
+        transform: translateY(10px) scale(0.95); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid #e2e8f0; overflow: hidden;
+    }
+    .admin-tooltip-card.visible { opacity: 1; transform: translateY(0) scale(1); }
+    
+    .tooltip-banner { height: 80px; width: 100%; background-size: cover; background-position: center; }
+    .tooltip-content { padding: 0 1.5rem 1.5rem 1.5rem; text-align: center; margin-top: -35px; position: relative; }
+    .tooltip-avatar { width: 70px; height: 70px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); object-fit: cover; margin-bottom: 0.5rem; }
+    .tooltip-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.2rem; }
+    .tooltip-role { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #01552b; background: #f0fdf4; padding: 3px 10px; border-radius: 50rem; display: inline-block; margin-bottom: 0.5rem; }
+    .tooltip-status { font-size: 0.75rem; color: #64748b; }
+</style>
+
+<div class="admin-header">
+    <div class="admin-bg-grid"></div>
+    <div class="header-content">
+        <div class="admin-title">
+            <span class="admin-badge"><i class="fas fa-shield-alt me-1"></i> Super Admin</span>
+            <h1>Visão Geral</h1>
+            <p style="opacity: 0.7; margin-bottom: 0;">Gestão centralizada de laboratórios e acessos.</p>
+        </div>
+        <a href="{{ url_for('main.new_lab') }}" class="btn-new-lab">
+            <i class="fas fa-plus-circle"></i> Novo Laboratório
+        </a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="stats-container">
+        <div class="stats-row">
+            <div class="stat-card-admin" style="border-left-color: #2563eb;">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="stat-title">Laboratórios</div>
+                        <div class="stat-value">{{ labs|length }}</div>
+                        <small class="text-muted">Ativos</small>
+                    </div>
+                    <i class="fas fa-flask stat-icon text-primary"></i>
+                </div>
+            </div>
+
+            <div class="stat-card-admin" style="border-left-color: #10b981;">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="stat-title">Pesquisadores</div>
+                        <div class="stat-value">{{ total_users }}</div>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <i class="fas fa-users stat-icon text-success"></i>
+                </div>
+            </div>
+
+            <div class="stat-card-admin" style="border-left-color: #f59e0b;">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="stat-title">Projetos</div>
+                        <div class="stat-value">{{ total_projects }}</div>
+                        <small class="text-muted">Dev</small>
+                    </div>
+                    <i class="fas fa-project-diagram stat-icon text-warning"></i>
+                </div>
+            </div>
+
+            <div class="stat-card-admin" style="border-left-color: #6366f1;">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="stat-title">Total de Logs</div>
+                        <div class="stat-value">{{ total_logs }}</div>
+                        <small class="text-muted">Histórico</small>
+                    </div>
+                    <i class="fas fa-file-alt stat-icon text-indigo"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="lab-list-container">
+        <div class="d-flex justify-content-between align-items-center p-4 border-bottom bg-white rounded-top-4">
+            <h5 class="fw-bold mb-0 text-dark">Laboratórios Registados</h5>
+            <div class="input-group input-group-sm" style="width: 250px;">
+                <span class="input-group-text bg-light border-end-0"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control bg-light border-start-0" placeholder="Filtrar laboratórios...">
+            </div>
+        </div>
+
+        {% if labs %}
+            {% for lab in labs %}
+            <div class="lab-row">
+                <div class="lab-icon">#{{ lab.id }}</div>
+                
+                <div>
+                    <div class="lab-name">{{ lab.name }}</div>
+                    <span class="lab-sigla">{{ lab.acronym }}</span>
+                </div>
+                
+                <div>
+                    {% set prof = lab.users.filter_by(role='professor').first() %}
+                    {% if prof %}
+                        <div class="prof-wrapper">
+                            <img src="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}" 
+                                 class="prof-img prof-img-trigger"
+                                 data-name="{{ prof.username }}"
+                                 data-avatar="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}"
+                                 data-cover="{{ url_for('static', filename='profile_pics/' + prof.cover_file) }}"
+                                 data-status="{{ 'Ativo' if prof.invite_status == 'accepted' else 'Pendente' }}">
+                            
+                            <div class="prof-info">
+                                <div class="prof-name">
+                                    {{ prof.username }} 
+                                </div>
+                                <div class="text-muted small d-flex align-items-center">
+                                    {{ prof.email }}
+                                    <button class="btn-copy" onclick="copyToClipboard('{{ prof.email }}', this)" title="Copiar Email">
+                                        <i class="far fa-copy"></i>
+                                    </button>
+                                </div>
+                                
+                                {% if prof.invite_status == 'pending' %}
+                                    <span class="badge badge-soft-warning mt-1" style="font-size: 0.6rem;">Aguardando Aceite</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <span class="text-danger small fw-bold"><i class="fas fa-exclamation-circle"></i> Sem Professor</span>
+                    {% endif %}
+                </div>
+                
+                <div class="lab-metrics">
+                    <div class="metric">
+                        <span class="m-val">{{ lab.users.count() }}</span>
+                        <span class="m-lbl">Membros</span>
+                    </div>
+                    <div class="metric">
+                        <span class="m-val">{{ lab.projects.count() }}</span>
+                        <span class="m-lbl">Projetos</span>
+                    </div>
+                </div>
+                
+                <div class="lab-actions">
+                    <a href="{{ url_for('main.edit_lab', lab_id=lab.id) }}" 
+                           class="btn-icon me-1" 
+                           title="Editar Detalhes">
+                            <i class="fas fa-pen"></i>
+                    </a>
+                    <a href="{{ url_for('main.delete_lab', lab_id=lab.id) }}" 
+                       class="btn-icon btn-delete" 
+                       onclick="return confirm('PERIGO: Isso apagará o laboratório e TODOS os seus dados. Continuar?');"
+                       title="Apagar Definitivamente">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-admin">
+                <i class="fas fa-flask fa-3x mb-3 opacity-25"></i>
+                <h5>Nenhum laboratório encontrado</h5>
+                <a href="{{ url_for('main.new_lab') }}" class="btn btn-outline-primary btn-sm mt-2">Criar Laboratório</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function copyToClipboard(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+            setTimeout(() => { btn.innerHTML = originalIcon; }, 2000);
+        });
+    }
+
+    // Tooltip Lógica
+    document.addEventListener('DOMContentLoaded', () => {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'admin-tooltip-card';
+        tooltip.innerHTML = `
+            <div class="tooltip-banner" id="atp-banner"></div>
+            <div class="tooltip-content">
+                <img src="" class="tooltip-avatar" id="atp-avatar">
+                <div><span class="tooltip-role" id="atp-role">Admin Responsável</span></div>
+                <div class="tooltip-name" id="atp-name"></div>
+                <div class="tooltip-status" id="atp-status"></div>
+            </div>
+        `;
+        document.body.appendChild(tooltip);
+
+        const triggers = document.querySelectorAll('.prof-img-trigger');
+        const tpBanner = document.getElementById('atp-banner');
+        const tpAvatar = document.getElementById('atp-avatar');
+        const tpName = document.getElementById('atp-name');
+        const tpStatus = document.getElementById('atp-status');
+
+        triggers.forEach(trigger => {
+            trigger.addEventListener('mouseenter', (e) => {
+                tpBanner.style.backgroundImage = `url('${trigger.getAttribute('data-cover')}')`;
+                tpAvatar.src = trigger.getAttribute('data-avatar');
+                tpName.textContent = trigger.getAttribute('data-name');
+                tpStatus.innerHTML = `<i class="fas fa-circle me-1" style="font-size:0.6rem; color:${trigger.getAttribute('data-status') === 'Ativo' ? '#22c55e' : '#f59e0b'}"></i> ${trigger.getAttribute('data-status')}`;
+
+                const rect = trigger.getBoundingClientRect();
+                const tooltipX = rect.left + (rect.width / 2) - 130; 
+                const tooltipY = rect.top - 220; 
+
+                tooltip.style.left = `${tooltipX}px`;
+                tooltip.style.top = `${tooltipY}px`;
+                tooltip.classList.add('visible');
+            });
+
+            trigger.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+        });
+    });
+</script>
+{% endblock %}
