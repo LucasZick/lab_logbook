@@ -772,7 +772,7 @@ def tv_mode():
     ).order_by(LogEntry.entry_date.desc()).limit(20).all()
     
     # Fallback: Se não houver NADA na última semana (ex: férias), 
-    # mostra os 5 últimos registos da história para a TV não ficar preta.
+    # mostra os 5 últimos registros da história para a TV não ficar preta.
     if not logs:
         logs = LogEntry.query.order_by(LogEntry.entry_date.desc()).limit(5).all()
 
