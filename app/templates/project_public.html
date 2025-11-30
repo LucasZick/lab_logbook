@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- RESET & GERAL --- */
+    nav, footer { display: none !important; }
+    body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #334155; }
+    main.container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+
+    /* --- 1. HERO SECTION --- */
+    .public-hero {
+        height: 45vh;
+        position: relative;
+        overflow: hidden;
+        background-color: #0f172a;
+    }
+    .hero-bg {
+        width: 100%; height: 100%; object-fit: cover; opacity: 0.8;
+        animation: slowZoom 20s infinite alternate;
+    }
+    @keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.15); } }
+
+    .hero-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(15, 23, 42, 1));
+    }
+
+    /* --- 2. CARTÃO FLUTUANTE --- */
+    .main-card {
+        background: white;
+        border-radius: 32px 32px 0 0;
+        margin-top: -60px;
+        position: relative;
+        z-index: 10;
+        padding: 2.5rem 1.5rem 6rem 1.5rem;
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+        min-height: 60vh;
+        max-width: 900px;
+        margin-left: auto; margin-right: auto;
+    }
+
+    /* Cabeçalho */
+    .project-header { text-align: center; margin-bottom: 2rem; }
+    .category-badge {
+        background: #dcfce7; color: #166534;
+        padding: 6px 16px; border-radius: 50rem;
+        font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px;
+        display: inline-block; margin-bottom: 1rem;
+        border: 1px solid #bbf7d0;
+    }
+    .project-title {
+        font-size: 2.5rem; font-weight: 900; color: #0f172a; line-height: 1.1; margin-bottom: 0.5rem;
+        letter-spacing: -0.03em;
+    }
+    
+    /* Stats */
+    .quick-stats {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        background: #f8fafc; border: 1px solid #e2e8f0;
+        border-radius: 20px; padding: 1.5rem; margin-bottom: 2.5rem;
+    }
+    .stat-box { text-align: center; border-right: 1px solid #e2e8f0; }
+    .stat-box:last-child { border-right: none; }
+    .stat-value { font-size: 1.5rem; font-weight: 800; color: #01552b; display: block; line-height: 1; margin-bottom: 5px; }
+    .stat-label { font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px; }
+
+    /* Descrição */
+    .desc-box {
+        font-size: 1.1rem; line-height: 1.8; color: #475569;
+        margin-bottom: 3rem; text-align: center; max-width: 750px; margin-left: auto; margin-right: auto;
+    }
+
+    /* Títulos */
+    .section-label {
+        font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;
+        color: #94a3b8; font-weight: 800; margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 15px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 2px; background: #f1f5f9; border-radius: 2px; }
+
+    /* --- 3. EQUIPA --- */
+    .team-scroller {
+        display: flex; gap: 1.8rem; overflow-x: auto; padding: 1rem 0.5rem 2rem 0.5rem;
+        scrollbar-width: none; -ms-overflow-style: none;
+        mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
+    .team-scroller::-webkit-scrollbar { display: none; }
+    
+    .team-member { 
+        text-align: center; flex-shrink: 0; position: relative; cursor: pointer;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .team-member:hover { transform: translateY(-8px) scale(1.05); }
+
+    .team-avatar {
+        width: 75px; height: 75px; border-radius: 50%; object-fit: cover;
+        border: 3px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        margin-bottom: 0.8rem; transition: all 0.3s;
+    }
+    .team-member:hover .team-avatar { border-color: #01552b; box-shadow: 0 12px 25px rgba(1, 85, 43, 0.2); }
+    .team-name { font-size: 0.85rem; font-weight: 700; color: #1e293b; display: block; }
+
+    /* Tooltip */
+    .member-tooltip-card {
+        position: fixed; background: white; border-radius: 20px;
+        width: 280px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.25); z-index: 9999;
+        pointer-events: none; opacity: 0;
+        transform: translateY(20px) scale(0.9);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid #f1f5f9; overflow: hidden;
+    }
+    .member-tooltip-card.visible { opacity: 1; transform: translateY(0) scale(1); }
+    
+    .tooltip-banner { height: 100px; width: 100%; background-size: cover; background-position: center; position: relative; }
+    .tooltip-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent); }
+    .tooltip-content { padding: 0 1.5rem 1.5rem 1.5rem; text-align: center; margin-top: -40px; position: relative; z-index: 2; }
+    .tooltip-avatar { width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.15); object-fit: cover; margin-bottom: 0.5rem; }
+    .tooltip-role-badge { 
+        font-size: 0.65rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;
+        color: white; background: #01552b; padding: 4px 12px; border-radius: 50rem;
+        display: inline-block; margin-bottom: 0.8rem; box-shadow: 0 4px 10px rgba(1, 85, 43, 0.3);
+    }
+    .tooltip-name { font-size: 1.2rem; font-weight: 900; color: #0f172a; margin-bottom: 0.5rem; line-height: 1.2; }
+    .tooltip-bio { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+
+    /* --- 4. TIMELINE REFINADA --- */
+    .timeline-wrapper { margin-top: 1rem; padding-left: 10px; }
+    .timeline-item { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; position: relative; }
+    .timeline-item:not(:last-child)::before {
+        content: ''; position: absolute; left: 27px; top: 60px; bottom: -40px;
+        width: 2px; background: #e2e8f0; z-index: 0; background: linear-gradient(to bottom, #e2e8f0 60%, transparent);
+    }
+    
+    .log-date-badge {
+        width: 56px; height: 60px; flex-shrink: 0; background: white;
+        border: 1px solid #e2e8f0; border-radius: 14px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03); z-index: 1; overflow: hidden;
+    }
+    .badge-month { width: 100%; background: #f8fafc; color: #94a3b8; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; text-align: center; padding: 4px 0; }
+    .badge-day { font-size: 1.5rem; font-weight: 800; color: #0f172a; padding: 2px 0 4px 0; line-height: 1; }
+
+    .timeline-item:first-child .log-date-badge { border-color: #01552b; }
+    .timeline-item:first-child .badge-month { background: #01552b; color: white; }
+    .timeline-item:first-child .badge-day { color: #01552b; }
+
+    .log-card {
+        flex-grow: 1; background: white; border: 1px solid #f1f5f9;
+        border-radius: 16px; padding: 1.5rem; position: relative;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: transform 0.2s;
+    }
+    .log-card:hover { box-shadow: 0 15px 30px -5px rgba(0,0,0,0.08); transform: translateY(-3px); border-color: #e2e8f0; }
+    .log-card::before {
+        content: ''; position: absolute; top: 22px; left: -9px; width: 18px; height: 18px;
+        background: white; transform: rotate(45deg); border-left: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;
+        border-radius: 0 0 0 4px;
+    }
+
+    .log-author { display: flex; align-items: center; gap: 10px; margin-bottom: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid #f8fafc; }
+    .log-avatar-mini { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+    .log-author-name { font-size: 0.8rem; font-weight: 700; color: #475569; }
+    
+    .log-text { font-size: 1rem; line-height: 1.6; color: #334155; margin: 0; white-space: pre-wrap; }
+
+    /* Box de Info Extra (Apenas Obs) */
+    .log-extras {
+        background-color: #fffbeb; border-radius: 10px; padding: 1rem; margin-top: 1rem; border: 1px solid #fef3c7;
+        border-left: 3px solid #f59e0b;
+    }
+    .log-extra-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: #b45309; display: block; margin-bottom: 4px; }
+    .log-extra-text { font-size: 0.9rem; color: #92400e; line-height: 1.4; }
+
+    /* FAB */
+    .fab-access {
+        position: fixed; bottom: 25px; right: 25px; z-index: 100;
+        background: #0f172a; color: white;
+        padding: 12px 24px; border-radius: 50rem;
+        font-weight: 700; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
+        text-decoration: none; display: flex; align-items: center; gap: 10px;
+        transition: transform 0.2s;
+    }
+    .fab-access:hover { transform: translateY(-3px); color: #4ade80; }
+    
+    .animate-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px); }
+    .d-1 { animation-delay: 0.1s; }
+    .d-2 { animation-delay: 0.2s; }
+    .d-3 { animation-delay: 0.3s; }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="public-hero" style="background-image: url('{{ url_for('static', filename='profile_pics/' + project.image_file) }}');">
+    <div class="hero-overlay"></div>
+</div>
+
+<div class="container pb-5">
+    <div class="main-card animate-up">
+        
+        <div class="project-header">
+            <span class="category-badge">{{ project.category }}</span>
+            <h1 class="project-title">{{ project.name }}</h1>
+        </div>
+
+        <div class="quick-stats animate-up d-1">
+            <div class="stat-box">
+                <i class="fas fa-history stat-icon"></i>
+                <span class="stat-value">{{ recent_logs|length }}</span>
+                <span class="stat-label">Updates Visíveis</span>
+            </div>
+            <div class="stat-box">
+                <i class="fas fa-users stat-icon"></i>
+                <span class="stat-value">{{ contributors|length }}</span>
+                <span class="stat-label">Membros</span>
+            </div>
+            <div class="stat-box">
+                <i class="far fa-clock stat-icon"></i>
+                {% if recent_logs %}
+                    {% set days = (now_date - recent_logs[0].entry_date).days %}
+                    <span class="stat-value">{{ days }} dias</span>
+                    <span class="stat-label">Última Ativ.</span>
+                {% else %}
+                    <span class="stat-value">-</span>
+                    <span class="stat-label">Inativo</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="desc-box animate-up d-2">
+            {{ project.description if project.description else 'Sem descrição pública disponível.' }}
+        </div>
+
+        <div class="animate-up d-2">
+            <div class="section-label">Equipe Responsável</div>
+            <div class="team-scroller">
+                {% for user in contributors %}
+                <div class="team-member" 
+                     data-name="{{ user.username }}"
+                     data-role="{{ 'Professor' if user.role == 'professor' else 'Bolsista' }}"
+                     data-bio="{{ user.bio if user.bio else 'Membro da equipe.' }}"
+                     data-avatar="{{ url_for('static', filename='profile_pics/' + user.image_file) }}"
+                     data-cover="{{ url_for('static', filename='profile_pics/' + user.cover_file) }}">
+                    <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="team-avatar">
+                    <span class="team-name">{{ user.username.split()[0] }}</span>
+                </div>
+                {% else %}
+                <span class="text-muted fst-italic small ms-2">Equipa não definida.</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="animate-up d-3">
+            <div class="section-label" style="margin-top: 3rem;">Últimas Atualizações</div>
+
+            <div class="timeline-wrapper">
+                {% if recent_logs %}
+                    {% for log in recent_logs %}
+                    <div class="timeline-item">
+                        <div class="log-date-badge">
+                            <span class="badge-month">{{ log.entry_date.strftime('%b') }}</span>
+                            <span class="badge-day">{{ log.entry_date.day }}</span>
+                        </div>
+                        
+                        <div class="log-card">
+                            <div class="log-author">
+                                <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="log-avatar-mini">
+                                <span class="log-author-name">{{ log.author.username }}</span>
+                            </div>
+                            <p class="log-text">{{ log.tasks_completed | truncate(140) }}</p>
+
+                            {% if log.observations %}
+                                <div class="log-extras">
+                                    <span class="log-extra-label"><i class="fas fa-lightbulb me-1"></i> Observação</span>
+                                    <div class="log-extra-text">{{ log.observations }}</div>
+                                </div>
+                            {% endif %}
+                            </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5 text-muted small opacity-75">
+                        <i class="far fa-clock mb-3 fs-1"></i><br>Sem atualizações recentes.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% if current_user.is_anonymous %}
+    <a href="{{ url_for('main.login') }}" class="fab-access">
+        <i class="fas fa-sign-in-alt"></i> Sou Membro
+    </a>
+{% else %}
+    <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="fab-access">
+        <i class="fas fa-lock-open"></i> Acesso Completo
+    </a>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'member-tooltip-card';
+        tooltip.innerHTML = `
+            <div class="tooltip-banner" id="tp-banner"></div>
+            <div class="tooltip-content">
+                <img src="" class="tooltip-avatar" id="tp-avatar">
+                <div><span class="tooltip-role-badge" id="tp-role"></span></div>
+                <div class="tooltip-name" id="tp-name"></div>
+                <div class="tooltip-bio" id="tp-bio"></div>
+            </div>
+        `;
+        document.body.appendChild(tooltip);
+
+        const members = document.querySelectorAll('.team-member');
+        const tpBanner = document.getElementById('tp-banner');
+        const tpAvatar = document.getElementById('tp-avatar');
+        const tpRole = document.getElementById('tp-role');
+        const tpName = document.getElementById('tp-name');
+        const tpBio = document.getElementById('tp-bio');
+
+        members.forEach(member => {
+            member.addEventListener('mouseenter', (e) => {
+                tpBanner.style.backgroundImage = `url('${member.getAttribute('data-cover')}')`;
+                tpAvatar.src = member.getAttribute('data-avatar');
+                tpRole.textContent = member.getAttribute('data-role');
+                tpName.textContent = member.getAttribute('data-name');
+                tpBio.textContent = member.getAttribute('data-bio');
+
+                const rect = member.getBoundingClientRect();
+                const tooltipX = rect.left + (rect.width / 2) - 140; 
+                const tooltipY = rect.top - 220; 
+
+                tooltip.style.left = `${tooltipX}px`;
+                tooltip.style.top = `${tooltipY}px`;
+                tooltip.classList.add('visible');
+            });
+            member.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+        });
+    });
+</script>
+{% endblock %}

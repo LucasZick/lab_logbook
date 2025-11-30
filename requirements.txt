@@ -25,6 +25,8 @@ email_validator
 
 Pillow
 
+qrcode[pil]
+
 holidays
 
 PyJWT

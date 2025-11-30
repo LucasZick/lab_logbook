@@ -51,7 +51,12 @@
     <div class="row mt-5">
         <div class="col-lg-4 order-lg-2">
             <div class="info-card" style="margin-top: 1rem;">
-                <h5 class="fw-bold mb-3">Sobre o Projeto</h5>
+                <div class="d-grid mb-4">
+                <a href="{{ url_for('main.project_label', project_id=project.id) }}" class="btn btn-outline-dark btn-sm">
+                    <i class="fas fa-qrcode me-2"></i> Gerar Etiqueta QR
+                </a>
+            </div>
+            <h5 class="fw-bold mb-3">Sobre o Projeto</h5>
                 <p class="text-muted">{{ project.description }}</p>
                 
                 <hr class="my-4">

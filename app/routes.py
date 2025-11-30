@@ -18,6 +18,9 @@ from sqlalchemy import func, or_
 from functools import wraps
 import google.generativeai as genai
 import markdown
+import qrcode
+from io import BytesIO
+import base64
 
 bp = Blueprint('main', __name__)
 
@@ -202,7 +205,39 @@ def pending_logs():
     
     return render_template('pending_logs.html', title='Pendências', missing_dates=missing)
 
-@bp.route('/', methods=['GET', 'POST'])
+# --- ROTA DA LANDING PAGE (PÚBLICA) ---
+@bp.route('/')
+def landing():
+    # Se o usuário já estiver logado, mandamos para o painel interno
+    if current_user.is_authenticated:
+        if current_user.role == 'professor':
+            return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.index'))
+
+    # --- DADOS PARA A VITRINE ---
+    
+    # 1. Estatísticas de Impacto
+    total_projects = Project.query.count()
+    total_logs = LogEntry.query.count()
+    total_members = User.query.filter_by(is_active=True).count()
+    
+    # 2. Projetos em Destaque (Os 3 com mais atividade recente)
+    # (Simplificando: pegamos os 3 últimos criados ou atualizados)
+    featured_projects = Project.query.order_by(Project.created_at.desc()).limit(3).all()
+
+    # 3. Membros em Destaque (Para o carrossel de equipe)
+    # Pegamos 5 aleatórios ou os mais ativos
+    team_members = User.query.filter_by(is_active=True, is_approved=True).limit(6).all()
+
+    return render_template('landing.html', 
+                           title='Bem-vindo',
+                           total_projects=total_projects,
+                           total_logs=total_logs,
+                           total_members=total_members,
+                           featured_projects=featured_projects,
+                           team_members=team_members)
+
+@bp.route('/app', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
@@ -371,7 +406,7 @@ def dashboard():
         LogEntry.project, func.count(LogEntry.id)
     ).filter(
         LogEntry.entry_date >= start_date_projects # <--- FILTRO NOVO
-    ).group_by(LogEntry.project).order_by(func.count(LogEntry.id).desc()).limit(5).all()
+    ).group_by(LogEntry.project).order_by(func.count(LogEntry.id).desc()).all()
     
     project_labels = [p[0] for p in projects_data]
     project_counts = [p[1] for p in projects_data]
@@ -876,3 +911,39 @@ def project_details(project_id):
                            project=project, 
                            logs=logs, 
                            contributors=contributors)
+
+@bp.route('/project/<int:project_id>/label')
+@login_required
+def project_label(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # MUDANÇA AQUI: Aponta para 'main.public_project'
+    project_url = url_for('main.public_project', project_id=project.id, _external=True)
+    
+    # ... (o resto do código de geração do QR code mantém-se igual) ...
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(project_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    
+    return render_template('project_label.html', title=f'Etiqueta - {project.name}', project=project, qr_code=img_str)
+
+@bp.route('/p/<int:project_id>')
+def public_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # Busca contribuidores (para mostrar a equipa)
+    contributors = User.query.join(LogEntry).filter(LogEntry.project_id == project.id).distinct().all()
+    
+    # Busca os logs mais recentes
+    recent_logs = project.logs.order_by(LogEntry.entry_date.desc()).all()
+    
+    return render_template('project_public.html', 
+                           title=project.name, 
+                           project=project, 
+                           contributors=contributors, 
+                           recent_logs=recent_logs,
+                           now_date=date.today())

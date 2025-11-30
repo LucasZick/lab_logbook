@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- ESTILOS DE TELA --- */
+    .label-preview-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        background-color: #f3f4f6;
+        padding: 2rem;
+        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+
+    /* --- A ETIQUETA FÍSICA (Asset Tag Style) --- */
+    .lab-sticker {
+        width: 350px;
+        background: white;
+        border: 2px solid #111827; /* Borda preta sólida */
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        position: relative;
+        font-family: 'Inter', sans-serif;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Topo Sólido */
+    .sticker-header-block {
+        background-color: #01552b; /* Verde Marca */
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-bottom: 2px solid #111827;
+    }
+
+    .sticker-body {
+        padding: 1.5rem;
+        text-align: center;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Rótulo técnico */
+    .sticker-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: #6b7280;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-bottom: 0.2rem;
+    }
+
+    .sticker-title {
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: #111827;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+    }
+
+    .qr-wrapper {
+        padding: 5px;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+    }
+
+    .qr-image {
+        width: 160px;
+        height: 160px;
+        display: block;
+    }
+
+    .sticker-footer {
+        margin-top: auto;
+        font-size: 0.75rem;
+        color: #111827;
+        font-weight: 600;
+        background-color: #f9fafb;
+        width: 100%;
+        padding: 0.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* --- BOTÕES DE AÇÃO --- */
+    .action-area {
+        margin-top: 2.5rem;
+        display: flex;
+        gap: 1rem;
+    }
+
+    /* --- MODO IMPRESSÃO (Configurado para Etiquetas) --- */
+    @media print {
+        @page { margin: 0; }
+        body { 
+            background: white; 
+            visibility: hidden; 
+            -webkit-print-color-adjust: exact !important; /* Garante cores de fundo */
+            print-color-adjust: exact !important;
+        }
+        
+        /* Esconde tudo que não é a etiqueta */
+        nav, footer, .action-area, .btn-back { display: none !important; }
+        
+        /* Mostra e posiciona a etiqueta */
+        .lab-sticker {
+            visibility: visible;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: none;
+            width: 80mm; /* Largura padrão de etiquetas térmicas */
+            border: 2px solid black;
+        }
+        
+        /* Ajustes de cor para impressão P&B se necessário */
+        .sticker-header-block {
+            background-color: #000 !important; /* Preto puro sai melhor em impressoras térmicas */
+            color: #fff !important;
+        }
+    }
+</style>
+
+<div class="label-preview-container">
+    
+    <div class="lab-sticker">
+        <div class="sticker-header-block">
+            <i class="fas fa-robot"></i> LABORATÓRIO DE ROBÓTICA
+        </div>
+        
+        <div class="sticker-body">
+            <div class="sticker-label">PROJETO ATIVO</div>
+            <div class="sticker-title">
+                {{ project.name }}
+            </div>
+            
+            <div class="qr-wrapper">
+                <img src="data:image/png;base64,{{ qr_code }}" class="qr-image">
+            </div>
+        </div>
+
+        <div class="sticker-footer">
+            <i class="fas fa-mobile-alt me-1"></i> Escaneie para acessar o histórico
+        </div>
+    </div>
+
+    <div class="action-area">
+        <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="fas fa-arrow-left me-2"></i> Voltar
+        </a>
+        <button onclick="window.print()" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fas fa-print me-2"></i> Imprimir Etiqueta
+        </button>
+    </div>
+
+</div>
+{% endblock %}

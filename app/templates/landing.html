@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- AJUSTES GERAIS PARA LANDING --- */
+    /* Remove padding do container principal para ocupar largura total */
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    
+    /* Esconde a Navbar padrão se quiser uma navbar específica, 
+       ou ajusta-a para ser transparente (vamos manter a padrão por simplicidade, mas transparente seria top) */
+    
+    /* --- 1. HERO SECTION --- */
+    .hero-section {
+        background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+        position: relative;
+        overflow: hidden;
+        padding: 8rem 2rem 6rem 2rem;
+        color: white;
+    }
+    
+    /* Background Animado (Grid) */
+    .hero-bg {
+        position: absolute; inset: 0; opacity: 0.2;
+        background-image: radial-gradient(#01552b 1px, transparent 1px);
+        background-size: 40px 40px;
+        animation: moveGrid 60s linear infinite;
+    }
+    @keyframes moveGrid { from { transform: translateY(0); } to { transform: translateY(40px); } }
+
+    .hero-content { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+
+    .hero-tag {
+        display: inline-block; background: rgba(74, 222, 128, 0.1); color: #4ade80;
+        padding: 8px 16px; border-radius: 50rem; font-weight: 700; font-size: 0.8rem;
+        text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem;
+        border: 1px solid rgba(74, 222, 128, 0.2);
+    }
+
+    .hero-title {
+        font-size: 4rem; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem;
+        background: linear-gradient(to right, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-text { font-size: 1.25rem; color: #94a3b8; line-height: 1.6; margin-bottom: 2.5rem; max-width: 500px; }
+
+    .hero-btns { display: flex; gap: 1rem; }
+    .btn-cta {
+        padding: 1rem 2rem; border-radius: 12px; font-weight: 700; text-decoration: none; transition: all 0.3s;
+        display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-primary-cta { background: #01552b; color: white; border: 1px solid #01552b; box-shadow: 0 10px 25px -5px rgba(1, 85, 43, 0.4); }
+    .btn-primary-cta:hover { transform: translateY(-3px); box-shadow: 0 20px 30px -5px rgba(1, 85, 43, 0.6); color: white; }
+    
+    .btn-secondary-cta { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+    .btn-secondary-cta:hover { background: rgba(255,255,255,0.1); color: white; }
+
+    /* Hero Image (Direita) */
+    .hero-visual {
+        position: relative;
+    }
+    .glass-card {
+        background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
+        padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        transform: rotate(-2deg); transition: transform 0.5s ease;
+    }
+    .hero-visual:hover .glass-card { transform: rotate(0deg) scale(1.02); }
+
+    /* --- 2. NUMBERS SECTION --- */
+    .stats-section { background: white; padding: 4rem 2rem; border-bottom: 1px solid #e5e7eb; }
+    .stats-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; text-align: center; }
+    .stat-number { font-size: 3.5rem; font-weight: 900; color: #0f172a; line-height: 1; margin-bottom: 0.5rem; }
+    .stat-label { font-size: 1rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 1px; }
+
+    /* --- 3. FEATURED PROJECTS --- */
+    .projects-section { padding: 6rem 2rem; background-color: #f8fafc; }
+    .section-header { text-align: center; max-width: 700px; margin: 0 auto 4rem auto; }
+    .section-tag { color: #01552b; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 1rem; display: block; }
+    .section-headline { font-size: 2.5rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem; }
+    
+    .projects-grid-home {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto;
+    }
+    .project-card-home {
+        background: white; border-radius: 20px; overflow: hidden;
+        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); transition: all 0.3s;
+        text-decoration: none; color: inherit; border: 1px solid #e2e8f0;
+    }
+    .project-card-home:hover { transform: translateY(-10px); box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); border-color: #01552b; }
+    
+    .p-img { height: 200px; width: 100%; object-fit: cover; }
+    .p-body { padding: 1.5rem; }
+    .p-cat { font-size: 0.7rem; font-weight: 800; color: #01552b; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+    .p-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+    .p-desc { font-size: 0.9rem; color: #64748b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .hero-content { grid-template-columns: 1fr; text-align: center; }
+        .hero-visual { display: none; } /* Esconde a imagem no mobile para limpar */
+        .hero-btns { justify-content: center; }
+        .stats-container { grid-template-columns: 1fr; gap: 3rem; }
+        .hero-title { font-size: 3rem; }
+    }
+</style>
+
+<section class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+        
+        <div>
+            <span class="hero-tag">Inovação & Pesquisa</span>
+            <h1 class="hero-title">O Futuro da Robótica começa aqui.</h1>
+            <p class="hero-text">
+                Plataforma oficial de gestão de conhecimento, projetos e atividades do nosso Laboratório. Conectando pessoas, robôs e dados.
+            </p>
+            <div class="hero-btns">
+                <a href="{{ url_for('main.login') }}" class="btn-cta btn-primary-cta">
+                    <i class="fas fa-sign-in-alt"></i> Acesso Membro
+                </a>
+                <a href="#projetos" class="btn-cta btn-secondary-cta">
+                    Explorar Projetos
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="glass-card">
+                <div class="d-flex align-items-center mb-4">
+                    <div style="width: 50px; height: 50px; background: #4ade80; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #022c16;">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div style="font-weight: 700; font-size: 1.1rem;">Status do Sistema</div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">Operacional • v2.0</div>
+                    </div>
+                </div>
+                
+                <div style="height: 8px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 10px;"></div>
+                <div style="height: 8px; width: 70%; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 10px;"></div>
+                <div style="height: 8px; width: 90%; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 20px;"></div>
+
+                <div class="d-flex justify-content-between align-items-end mt-4">
+                    <div>
+                        <div style="font-size: 2.5rem; font-weight: 800; color: #4ade80;">{{ total_logs }}</div>
+                        <div style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Atividades Registadas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<section class="stats-section">
+    <div class="stats-container">
+        <div>
+            <div class="stat-number">{{ total_projects }}</div>
+            <div class="stat-label">Projetos Ativos</div>
+        </div>
+        <div>
+            <div class="stat-number">{{ total_members }}</div>
+            <div class="stat-label">Investigadores</div>
+        </div>
+        <div>
+            <div class="stat-number">{{ total_logs }}+</div>
+            <div class="stat-label">Horas de Pesquisa</div>
+        </div>
+    </div>
+</section>
+
+<section class="projects-section" id="projetos">
+    <div class="section-header">
+        <span class="section-tag">Portfólio</span>
+        <h2 class="section-headline">Em Desenvolvimento</h2>
+        <p class="text-muted">Conheça os últimos avanços tecnológicos que a nossa equipa está a construir.</p>
+    </div>
+
+    <div class="projects-grid-home">
+        {% for project in featured_projects %}
+        <a href="{{ url_for('main.public_project', project_id=project.id) }}" class="project-card-home">
+            <img src="{{ url_for('static', filename='profile_pics/' + project.image_file) }}" class="p-img">
+            <div class="p-body">
+                <span class="p-cat">{{ project.category }}</span>
+                <h4 class="p-title">{{ project.name }}</h4>
+                <p class="p-desc">{{ project.description if project.description else 'Sem descrição.' }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if not featured_projects %}
+        <div class="text-center text-muted">
+            <p>Ainda não há projetos públicos para exibir.</p>
+        </div>
+    {% endif %}
+</section>
+
+<section style="background: #01552b; padding: 4rem 2rem; text-align: center; color: white;">
+    <h2 style="font-weight: 800; margin-bottom: 1rem;">Faça parte da inovação.</h2>
+    <p style="opacity: 0.8; margin-bottom: 2rem;">É estudante ou investigador? Solicite o seu acesso.</p>
+    <a href="{{ url_for('main.register') }}" class="btn btn-light rounded-pill px-5 py-3 fw-bold" style="color: #01552b;">
+        Solicitar Acesso
+    </a>
+</section>
+
+{% endblock %}
