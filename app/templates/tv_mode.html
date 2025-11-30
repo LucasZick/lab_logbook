@@ -1,173 +1,160 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{% set meses = ['', 'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'] %}
+
 <style>
-    /* --- 1. CONFIGURAÇÃO GERAL DO MODO TV --- */
+    /* --- 1. FUNDO E ESTRUTURA GLOBAL --- */
     nav, footer { display: none !important; }
     main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; height: 100vh; }
     
     body { 
-        background-color: #0f172a; /* Azul muito escuro (quase preto) */
+        background: radial-gradient(circle at top right, #1e3a8a, #0f172a 60%, #020617);
+        background-size: 400% 400%;
+        animation: gradientBG 60s ease infinite;
         color: white; 
         overflow: hidden; 
         font-family: 'Inter', sans-serif;
     }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
 
-    /* --- 2. O CARTÃO GIGANTE (TV CARD) --- */
     .carousel-item { 
         height: 100vh; 
-        padding: 2rem; /* Margem da borda da TV */
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-    }
-    
-    .tv-card {
-        background: #1e293b; /* Cinza azulado escuro */
-        border-radius: 32px;
-        width: 100%;
-        max-width: 1600px;
-        height: 90vh; /* Ocupa 90% da altura */
+        padding: 0; 
         display: flex;
         flex-direction: column;
-        overflow: hidden; /* Para a capa não sair das bordas arredondadas */
-        box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
-        border: 1px solid #334155;
+    }
+    
+    .tv-slide-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
         position: relative;
     }
 
-    /* --- 3. A NOVA CAPA (BANNER) --- */
-    .tv-cover {
-        height: 25vh; /* Ocupa 25% da altura do cartão */
+    /* --- 2. O BANNER HERO (CAPA + PROJETO) --- */
+    .tv-hero-banner {
+        height: 40vh;
         width: 100%;
         background-size: cover;
         background-position: center;
         position: relative;
-    }
-    /* Overlay escuro na capa para garantir que textos brancos (se houver) se leiam */
-    .tv-cover::after {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(30, 41, 59, 1));
-    }
-
-    /* --- 4. CABEÇALHO (AVATAR + NOME) --- */
-    .tv-header {
-        padding: 0 4rem;
-        margin-top: -80px; /* Puxa para cima da capa */
         display: flex;
         align-items: flex-end;
-        position: relative;
-        z-index: 10;
-        margin-bottom: 2rem;
-    }
-
-    .tv-avatar {
-        width: 180px; height: 180px;
-        border-radius: 50%;
-        border: 6px solid #1e293b; /* Borda da mesma cor do fundo do cartão para "cortar" a capa */
-        object-fit: cover;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        background-color: #fff;
-    }
-
-    .tv-identity {
-        margin-left: 2rem;
-        margin-bottom: 1rem;
-    }
-
-    .tv-author { 
-        font-size: 3.5rem; 
-        font-weight: 800; 
-        color: #ffffff; 
-        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        line-height: 1;
+        padding: 3rem 5rem;
     }
     
-    .tv-role {
-        font-size: 1.4rem;
-        color: #94a3b8; /* Cinza claro legível */
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-top: 0.5rem;
+    .tv-hero-banner::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(to top, #0f172a 10%, rgba(15, 23, 42, 0.8) 50%, rgba(15, 23, 42, 0.4) 100%);
+        z-index: 1;
     }
 
-    /* --- 5. CONTEÚDO E LEGIBILIDADE --- */
-    .tv-body {
-        padding: 0 4rem 3rem 4rem;
+    .tv-project-info {
+        position: relative; z-index: 10;
+        width: 100%;
+        padding-left: 240px; /* Espaço para o avatar */
+    }
+    .tv-project-label { font-size: 1.2rem; text-transform: uppercase; color: #4ade80; letter-spacing: 3px; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; }
+    .tv-project-title { 
+        font-size: 4rem; font-weight: 900; color: white; line-height: 1.1; 
+        text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    /* --- 3. CORPO DO CONTEÚDO --- */
+    .tv-content-body {
         flex-grow: 1;
-        display: flex;
+        background: #0f172a;
+        padding: 2rem 5rem 5rem 5rem;
+        display: grid;
+        grid-template-columns: 250px 1fr 400px;
         gap: 4rem;
+        position: relative;
     }
 
-    /* Colunas */
-    .col-left { flex: 2; } /* 66% largura */
-    .col-right { 
-        flex: 1; 
-        background: rgba(255, 255, 255, 0.03); /* Fundo sutil */
-        border-radius: 20px;
-        padding: 2rem;
-        border: 1px solid rgba(255,255,255,0.05);
-    }
-
-    /* Títulos das Secções */
-    .tv-label { 
-        font-size: 1.2rem; 
-        text-transform: uppercase; 
-        color: #4ade80; /* Verde Neon para alto contraste */
-        font-weight: 700; 
-        margin-bottom: 1rem; 
-        letter-spacing: 1px;
-        display: flex; align-items: center;
-    }
-
-    /* Texto do Log (CORRIGIDO PARA LEGIBILIDADE) */
-    .tv-text { 
-        font-size: 1.6rem; 
-        line-height: 1.6; 
-        white-space: pre-wrap; 
-        color: #f1f5f9; /* Branco quase puro */
-        font-weight: 400;
-    }
-
-    /* Data e Projeto */
-    .tv-meta {
+    /* Coluna 1: Autor */
+    .col-author { position: relative; }
+    
+    .tv-avatar-floating {
+        width: 220px; height: 220px;
+        border-radius: 20%;
+        border: 8px solid #0f172a;
+        object-fit: cover;
         position: absolute;
-        top: 2rem;
-        right: 4rem;
-        text-align: right;
+        top: -110px;
+        left: 0;
         z-index: 20;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
-    .tv-date { 
-        font-size: 1.5rem; 
-        color: rgba(255,255,255,0.9); 
-        font-weight: 700; 
-        background: rgba(0,0,0,0.4);
-        padding: 0.5rem 1rem;
-        border-radius: 10px;
-        backdrop-filter: blur(5px);
-        margin-bottom: 0.5rem;
-        display: inline-block;
+    
+    .tv-author-info { margin-top: 130px; }
+    .tv-username { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .tv-role { font-size: 1.1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 2rem; }
+    
+    .tv-date-box {
+        background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;
+        display: flex; align-items: center; gap: 1rem; border: 1px solid rgba(255,255,255,0.1);
     }
-    .tv-project {
-        font-size: 1.8rem;
-        color: #fff;
-        font-weight: 800;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-    }
+    .tv-date-day { font-size: 2.5rem; font-weight: 900; color: #4ade80; line-height: 1; }
+    .tv-date-month { font-size: 1.2rem; color: #cbd5e1; text-transform: uppercase; font-weight: 700; line-height: 1; }
 
-    /* Botão Sair */
+    /* Coluna 2: O Que Foi Feito */
+    .col-done {
+        padding-top: 2rem;
+        border-left: 1px solid rgba(255,255,255,0.1);
+        padding-left: 3rem;
+    }
+    .section-label { font-size: 1.4rem; color: #4ade80; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; text-transform: uppercase; letter-spacing: 1px;}
+    .main-text { font-size: 1.9rem; line-height: 1.5; color: #f1f5f9; white-space: pre-wrap; font-weight: 400; }
+    
+    /* Coluna 3: Próximos Passos */
+    .col-next {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+        border-radius: 24px;
+        padding: 3rem;
+        border: 2px solid rgba(251, 191, 36, 0.3);
+        display: flex; flex-direction: column;
+        height: fit-content;
+        align-self: center;
+    }
+    .next-label { color: #fbbf24; font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; }
+    .next-text { font-size: 1.6rem; line-height: 1.5; color: #fef3c7; white-space: pre-wrap; }
+
+    /* Utilitários */
     .btn-exit { 
-        position: fixed; top: 20px; left: 20px; 
-        background: rgba(255,255,255,0.1); color: white; border: none;
-        padding: 10px 25px; border-radius: 50rem; transition: 0.3s;
-        z-index: 9999; text-decoration: none; font-weight: 600;
+        position: fixed; top: 30px; right: 30px; 
+        background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); 
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 12px 30px; border-radius: 50rem; transition: 0.3s;
+        z-index: 9999; text-decoration: none; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; font-size: 0.8rem;
         backdrop-filter: blur(5px);
     }
-    .btn-exit:hover { background: rgba(255,255,255,0.25); color: white; }
+    .btn-exit:hover { background: rgba(255,255,255,0.2); color: white; transform: scale(1.05); }
+
+    .obs-box {
+        margin-top: 2rem; padding: 1.5rem; background: rgba(245, 158, 11, 0.1);
+        border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0;
+    }
+    .obs-label { font-size: 1.1rem; color: #fbbf24; font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase; }
+    .obs-text { font-size: 1.4rem; color: #fef3c7; }
+
+    /* Animações */
+    .fade-up { opacity: 0; transform: translateY(30px); animation: fadeInUp 0.8s ease-out forwards; }
+    .delay-1 { animation-delay: 0.3s; }
+    .delay-2 { animation-delay: 0.5s; }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+    .progress-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 6px; background-color: rgba(0,0,0,0.3); z-index: 9999; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e); width: 0%; box-shadow: 0 0 20px rgba(74, 222, 128, 0.5); }
 </style>
 
-<a href="{{ url_for('main.dashboard') }}" class="btn-exit"><i class="fas fa-arrow-left me-2"></i> Voltar</a>
+<a href="{{ url_for('main.dashboard') }}" class="btn-exit">SAIR DO MODO TV</a>
 
 <div id="tvCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="15000" data-bs-pause="false">
     <div class="carousel-inner h-100">
@@ -175,68 +162,81 @@
         {% if logs %}
             {% for log in logs %}
             <div class="carousel-item {% if loop.first %}active{% endif %}">
-                <div class="container-fluid p-0 d-flex align-items-center justify-content-center h-100">
+                
+                <div class="tv-slide-container">
+                    <div class="tv-hero-banner" style="background-image: url('{{ url_for('static', filename='profile_pics/' + log.author.cover_file) }}');">
+                        <div class="tv-project-info">
+                            <div class="tv-project-label"><i class="fas fa-rocket me-3"></i> Projeto em Foco</div>
+                            <div class="tv-project-title">{{ log.project }}</div>
+                        </div>
+                    </div>
                     
-                    <div class="tv-card">
+                    <div class="tv-content-body">
                         
-                        <div class="tv-cover" 
-                             style="background-image: url('{{ url_for('static', filename='profile_pics/' + log.author.cover_file) }}');">
-                        </div>
-
-                        <div class="tv-meta">
-                            <div class="tv-date"><i class="far fa-calendar-alt me-2"></i>{{ log.entry_date.strftime('%d/%m/%Y') }}</div>
-                            <div class="tv-project">{{ log.project }}</div>
-                        </div>
-
-                        <div class="tv-header">
-                            <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="tv-avatar">
-                            <div class="tv-identity">
-                                <div class="tv-author">{{ log.author.username }}</div>
+                        <div class="col-author">
+                            <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="tv-avatar-floating">
+                            <div class="tv-author-info">
+                                <div class="tv-username">{{ log.author.username }}</div>
                                 <div class="tv-role">{{ log.author.role }}</div>
+                                <div class="tv-date-box mt-4">
+                                    <i class="far fa-calendar-alt fa-2x" style="color: rgba(255,255,255,0.3);"></i>
+                                    <div>
+                                        <div class="tv-date-day">{{ log.entry_date.strftime('%d') }}</div>
+                                        <div class="tv-date-month">{{ meses[log.entry_date.month] }}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="tv-body">
-                            <div class="col-left">
-                                <div class="tv-label"><i class="fas fa-check-circle me-2"></i> Realizado</div>
-                                <div class="tv-text">{{ log.tasks_completed | truncate(400) }}</div>
-                                
-                                {% if log.observations %}
-                                    <div class="mt-4 p-3 rounded" style="background: rgba(245, 158, 11, 0.1); border-left: 5px solid #f59e0b;">
-                                        <div class="tv-label" style="color: #fbbf24; font-size: 1rem; margin-bottom: 0.5rem;">
-                                            <i class="fas fa-lightbulb me-2"></i> Observação
-                                        </div>
-                                        <div class="tv-text" style="font-size: 1.3rem;">{{ log.observations }}</div>
-                                    </div>
-                                {% endif %}
+                        <div class="col-done">
+                            <div class="section-label"><i class="fas fa-check-circle me-3"></i> Atividades Realizadas</div>
+                            <div class="main-text">{{ log.tasks_completed | truncate(450) }}</div>
+
+                            {% if log.observations %}
+                            <div class="obs-box fade-up delay-2">
+                                <div class="obs-label"><i class="fas fa-lightbulb me-2"></i> Observação</div>
+                                <div class="obs-text">{{ log.observations }}</div>
                             </div>
-                            
-                            <div class="col-right">
-                                <div class="tv-label"><i class="fas fa-forward me-2"></i> Próximos Passos</div>
-                                <div class="tv-text" style="color: #cbd5e1;">{{ log.next_steps | truncate(150) }}</div>
-                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-next">
+                            <div class="next-label"><i class="fas fa-forward me-3"></i> Próximos Passos</div>
+                            <div class="next-text">{{ log.next_steps | truncate(200) }}</div>
                         </div>
 
                     </div>
                 </div>
+
             </div>
             {% endfor %}
         {% else %}
             <div class="carousel-item active">
-                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center">
-                    <i class="fas fa-moon fa-6x text-secondary mb-4"></i>
-                    <h1 class="display-1 fw-bold text-white">Modo de Espera</h1>
-                    <h3 class="text-muted">Sem registos recentes para exibir.</h3>
+                <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center" style="background: #0f172a;">
+                    <i class="fas fa-satellite-dish fa-8x text-secondary mb-5 opacity-50"></i>
+                    <h1 class="display-3 fw-bold text-white mb-3">Em Standby</h1>
+                    <h3 class="text-muted font-monospace">A aguardar novos registros da equipe...</h3>
                 </div>
             </div>
         {% endif %}
 
     </div>
-    
-    <div style="position: absolute; bottom: 0; left: 0; height: 5px; background: #01552b; width: 100%; animation: progress 15s linear infinite;"></div>
 </div>
 
-<style>
-    @keyframes progress { from { width: 0; } to { width: 100%; } }
-</style>
+<div class="progress-container"><div class="progress-bar-fill" id="tvProgressBar"></div></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const carousel = document.getElementById('tvCarousel');
+        const progressBar = document.getElementById('tvProgressBar');
+        const intervalTime = 15000;
+
+        function startProgress() {
+            progressBar.style.transition = 'none'; progressBar.style.width = '0%'; void progressBar.offsetWidth; 
+            progressBar.style.transition = `width ${intervalTime}ms linear`; progressBar.style.width = '100%';
+        }
+        startProgress();
+        carousel.addEventListener('slide.bs.carousel', startProgress);
+    });
+</script>
 {% endblock %}

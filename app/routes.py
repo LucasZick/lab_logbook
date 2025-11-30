@@ -5,13 +5,13 @@ from PIL import Image
 import itertools
 from datetime import date, timedelta
 import calendar
-from flask import render_template, flash, redirect, url_for, request, Blueprint, abort, current_app
+from flask import jsonify, render_template, flash, redirect, url_for, request, Blueprint, abort, current_app
 from app import db
 # Importar o novo formulário
 from app.email import send_password_reset_email
-from app.forms import ChangePasswordForm, LoginForm, RegistrationForm, LogEntryForm, EditProfileForm, ResetPasswordForm, ResetPasswordRequestForm
+from app.forms import ChangePasswordForm, LoginForm, ProjectForm, RegistrationForm, LogEntryForm, EditProfileForm, ResetPasswordForm, ResetPasswordRequestForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, LogEntry
+from app.models import Project, User, LogEntry
 from urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, or_
@@ -210,19 +210,47 @@ def index():
         return redirect(url_for('main.dashboard'))
 
     form = LogEntryForm()
-
+    
+    # --- 1. POPULAR O SELECT ---
+    # Busca projetos reais
+    projects = Project.query.order_by(Project.name).all()
+    
+    # Cria a lista de tuplas (Valor, Texto)
+    project_choices = [(p.id, p.name) for p in projects]
+    
+    # ADICIONA A OPÇÃO "GERAL" NO TOPO COM ID 0
+    project_choices.insert(0, (0, 'Geral / Outros (Sem Projeto Específico)'))
+    
+    # Atribui ao formulário
+    form.project_select.choices = project_choices
+    
+    # (Lógica de preenchimento por data na URL - Mantém igual)
     if request.method == 'GET' and request.args.get('fill_date'):
         try:
             fill_date = date.fromisoformat(request.args.get('fill_date'))
             form.entry_date.data = fill_date
-            flash(f'Data selecionada para preenchimento: {fill_date.strftime("%d/%m/%Y")}', 'info')
-        except ValueError:
-            pass
+            flash(f'Data selecionada: {fill_date.strftime("%d/%m/%Y")}', 'info')
+        except ValueError: pass
 
     if form.validate_on_submit():
+        # --- 2. LÓGICA DE SALVAR ---
+        selected_id = form.project_select.data
+        
+        # Valores padrão para "Geral"
+        project_name_str = "Geral / Outros"
+        project_db_id = None 
+
+        # Se o usuário escolheu um projeto real (ID > 0)
+        if selected_id and selected_id > 0:
+            proj = Project.query.get(selected_id)
+            if proj:
+                project_name_str = proj.name
+                project_db_id = proj.id
+        
         log_entry = LogEntry(
             entry_date=form.entry_date.data,
-            project=form.project.data,
+            project=project_name_str,    # Salva o nome (Real ou "Geral")
+            project_id=project_db_id,    # Salva o ID (Real ou None)
             tasks_completed=form.tasks_completed.data,
             observations=form.observations.data,
             next_steps=form.next_steps.data,
@@ -235,80 +263,37 @@ def index():
         except IntegrityError:
             db.session.rollback()
             flash('Você já possui um registro para esta data.', 'danger')
-        # Redireciona de volta para a mesma página (index)
         return redirect(url_for('main.index'))
 
-    # --- LÓGICA DA PÁGINA (GET) ---
-
-    # 1. LÓGICA DO "REGISTRO DE HOJE"
     today = date.today()
-    has_log_today = LogEntry.query.filter_by(
-        author=current_user,
-        entry_date=today
-    ).first() is not None
-
-    # 2. LÓGICA DO CALENDÁRIO E HISTÓRICO (UNIFICADA)
-    # A página inteira (calendário e histórico) será controlada por estes parâmetros
+    has_log_today = LogEntry.query.filter_by(author=current_user, entry_date=today).first() is not None
     year = request.args.get('ano', default=today.year, type=int)
     month = request.args.get('mes', default=today.month, type=int)
-
-    # 3. Calcula as datas para os botões de navegação
     current_date = date(year, month, 1)
     prev_month_date = current_date - timedelta(days=1)
     next_month_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
-    
-    # 4. Busca os registros do utilizador para o mês/ano selecionado
     _, num_days_in_month = calendar.monthrange(year, month)
     start_date = date(year, month, 1)
     end_date = date(year, month, num_days_in_month)
-    
-    # Busca os logs UMA SÓ VEZ
-    logs_in_month = LogEntry.query.filter_by(author=current_user).filter(
-        LogEntry.entry_date >= start_date,
-        LogEntry.entry_date <= end_date
-    ).order_by(LogEntry.entry_date.desc()).all() # Ordena descendentemente para o histórico
-
-    # 5. Prepara os dados para a grelha do calendário
+    logs_in_month = LogEntry.query.filter_by(author=current_user).filter(LogEntry.entry_date >= start_date, LogEntry.entry_date <= end_date).order_by(LogEntry.entry_date.desc()).all()
     logs_lookup = {log.entry_date.day for log in logs_in_month}
     days_status_list = []
     for day in range(1, num_days_in_month + 1):
         current_day_date = date(year, month, day)
         is_weekend_day = current_day_date.weekday() >= 5
         has_log = day in logs_lookup
-        
-        show_icon = True
-        icon_type = 'none'
-        if has_log:
-            icon_type = 'check'
-        elif current_day_date > today:
-            show_icon = False
-        elif is_weekend_day:
-            show_icon = False
-        else:
-            icon_type = 'times'
-            
-        days_status_list.append({
-            'day': day, 'show_icon': show_icon, 'icon_type': icon_type, 'is_weekend': is_weekend_day
-        })
-    
-    # 6. Prepara o cabeçalho da tabela
+        show_icon = True; icon_type = 'none'
+        if has_log: icon_type = 'check'
+        elif current_day_date > today: show_icon = False
+        elif is_weekend_day: show_icon = False
+        else: icon_type = 'times'
+        days_status_list.append({'day': day, 'show_icon': show_icon, 'icon_type': icon_type, 'is_weekend': is_weekend_day})
     days_header_list = []
     for day in range(1, num_days_in_month + 1):
         is_weekend_day = date(year, month, day).weekday() >= 5
         days_header_list.append({'day': day, 'is_weekend': is_weekend_day})
-
     current_month_name = f"{meses[month]} de {year}"
-    
-    return render_template('index.html', 
-                           title='Meu Painel',
-                           form=form,
-                           has_log_today=has_log_today,
-                           days_status=days_status_list,
-                           days_header=days_header_list,
-                           logs_to_display=logs_in_month, # Passa os logs para o histórico
-                           current_month_name=current_month_name,
-                           prev_month={'ano': prev_month_date.year, 'mes': prev_month_date.month},
-                           next_month={'ano': next_month_date.year, 'mes': next_month_date.month})
+    return render_template('index.html', title='Página Inicial', form=form, logs_to_display=logs_in_month, available_months=[], current_month_name=current_month_name, has_log_today=has_log_today, days_status=days_status_list, days_header=days_header_list, prev_month={'ano': prev_month_date.year, 'mes': prev_month_date.month}, next_month={'ano': next_month_date.year, 'mes': next_month_date.month})
 
 # --- ROTA DE LOGIN ATUALIZADA ---
 @bp.route('/login', methods=['GET', 'POST'])
@@ -763,26 +748,131 @@ def community():
     
     for user in users:
         last_log = user.logs.order_by(LogEntry.entry_date.desc()).first()
-        user.last_project = last_log.project if last_log else None
-        user.last_active_date = last_log.entry_date if last_log else None
+        if last_log:
+            user.last_project_name = last_log.project      # Nome (para exibir)
+            user.last_project_id = last_log.project_id     # ID (para o link funcionar)
+            user.last_active_date = last_log.entry_date
+        else:
+            user.last_project_name = None
+            user.last_project_id = None
+            user.last_active_date = None
 
-    # ADICIONADO: Passamos 'today' e 'timedelta' para o template usar na lógica do ponto verde
-    return render_template('community.html', 
-                           title='Equipe do Laboratório', 
-                           users=users, 
-                           today=date.today(), 
-                           timedelta=timedelta)
+    return render_template('community.html', title='Comunidade', users=users, today=date.today(), timedelta=timedelta)
 
 @bp.route('/tv_mode')
+def tv_mode():
+    # Define a janela de tempo para 7 dias atrás
+    today = date.today()
+    week_ago = today - timedelta(days=7)
+    
+    # Busca logs da última semana
+    # Adicionamos .limit(20) para garantir que o carrossel não fica infinito
+    logs = LogEntry.query.join(User).filter(
+        LogEntry.entry_date >= week_ago
+    ).order_by(LogEntry.entry_date.desc()).limit(20).all()
+    
+    # Fallback: Se não houver NADA na última semana (ex: férias), 
+    # mostra os 5 últimos registos da história para a TV não ficar preta.
+    if not logs:
+        logs = LogEntry.query.order_by(LogEntry.entry_date.desc()).limit(5).all()
+
+    return render_template('tv_mode.html', title='Modo TV', logs=logs)
+
+@bp.route('/projects/new', methods=['GET', 'POST'])
+@login_required
+def new_project():
+    form = ProjectForm()
+    if form.validate_on_submit():
+        # LÓGICA DE IMAGEM PADRÃO
+        image_file = 'default_project.jpg' # Valor padrão inicial
+        
+        if form.image.data:
+            # Se o usuário enviou algo, substitui o padrão
+            image_file = save_cover(form.image.data)
+        
+        project = Project(
+            name=form.name.data,
+            description=form.description.data,
+            category=form.category.data,
+            image_file=image_file # Usa a variável calculada acima
+        )
+        db.session.add(project)
+        db.session.commit()
+        flash('Projeto criado com sucesso!', 'success')
+        return redirect(url_for('main.gallery'))
+        
+    return render_template('create_project.html', title='Novo Projeto', form=form)
+
+# --- EDITAR PROJETO ---
+@bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required
 @professor_required
-def tv_mode():
-    # Busca logs dos últimos 2 dias (para garantir que temos algo para mostrar)
-    today = date.today()
-    start_date = today - timedelta(days=1) # Ontem e Hoje
+def edit_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    form = ProjectForm(original_name=project.name)
     
-    recent_logs = LogEntry.query.filter(
-        LogEntry.entry_date >= start_date
-    ).order_by(LogEntry.entry_date.desc()).all()
+    if form.validate_on_submit():
+        project.name = form.name.data
+        project.description = form.description.data
+        project.category = form.category.data # <--- ATUALIZA A CATEGORIA
+        
+        if form.image.data:
+            project.image_file = save_cover(form.image.data)
+            
+        db.session.commit()
+        flash('Projeto atualizado!', 'success')
+        return redirect(url_for('main.gallery'))
     
-    return render_template('tv_mode.html', title='Modo Apresentação', logs=recent_logs)
+    elif request.method == 'GET':
+        form.name.data = project.name
+        form.description.data = project.description
+        form.category.data = project.category
+
+    # ADICIONADO: Passamos a image_file atual para o template
+    image_file = url_for('static', filename='profile_pics/' + project.image_file)
+    
+    return render_template('create_project.html', title='Editar Projeto', 
+                           form=form, legend='Editar Projeto', is_edit=True, 
+                           image_file=image_file) # <--- AQUI
+
+# --- APAGAR PROJETO ---
+@bp.route('/project/<int:project_id>/delete')
+@login_required
+@professor_required
+def delete_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # Opcional: Verificar se tem logs associados antes de apagar
+    # Se apagar, os logs ficam com project_id=NULL (se configurado) ou dá erro.
+    # Vamos assumir que você quer apagar mesmo assim.
+    
+    db.session.delete(project)
+    db.session.commit()
+    flash('Projeto removido com sucesso.', 'success')
+    return redirect(url_for('main.gallery'))
+
+@bp.route('/gallery')
+@login_required
+def gallery():
+    # Busca projetos e conta quantos logs cada um tem
+    projects = Project.query.order_by(Project.name).all()
+    return render_template('gallery.html', title='Galeria de Projetos', projects=projects)
+
+# --- DETALHES DO PROJETO ---
+@bp.route('/project/<int:project_id>')
+@login_required
+def project_details(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # 1. Busca logs deste projeto
+    logs = project.logs.order_by(LogEntry.entry_date.desc()).all()
+    
+    # 2. Descobre quem trabalhou neste projeto (Contribuidores únicos)
+    # Faz um join para pegar usuários que têm logs neste projeto
+    contributors = User.query.join(LogEntry).filter(LogEntry.project_id == project.id).distinct().all()
+    
+    return render_template('project_details.html', 
+                           title=project.name, 
+                           project=project, 
+                           logs=logs, 
+                           contributors=contributors)

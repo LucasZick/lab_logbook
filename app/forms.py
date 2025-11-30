@@ -1,10 +1,10 @@
 from flask_wtf import FlaskForm
 # Adicionado FileField e FileAllowed
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, DateField
+from wtforms import SelectField, StringField, PasswordField, BooleanField, SubmitField, TextAreaField, DateField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from datetime import date
-from app.models import User
+from app.models import Project, User
 
 class LoginForm(FlaskForm):
     username = StringField('Usuário', validators=[DataRequired(message='Este campo é obrigatório.')])
@@ -26,12 +26,17 @@ class RegistrationForm(FlaskForm):
         if user is not None: raise ValidationError('Este e-mail já está em uso.')
 
 class LogEntryForm(FlaskForm):
-    entry_date = DateField('Data do Registro', format='%Y-%m-%d', validators=[DataRequired(message='Você precisa selecionar uma data.')], default=date.today)
-    project = StringField('Projeto ou Robô', validators=[DataRequired(message='O campo de projeto é obrigatório.'), Length(max=140)])
-    tasks_completed = TextAreaField('Tarefas Realizadas', validators=[DataRequired(message='Você precisa descrever as tarefas realizadas.')], render_kw={"placeholder": "O que foi feito hoje? (Use tópicos)", "rows": 5})
-    observations = TextAreaField('Observações (Resultados, Dificuldades, Ideias)', render_kw={"placeholder": "(Opcional) Algum resultado importante? Algum problema? Uma nova ideia?", "rows": 4})
-    next_steps = TextAreaField('Próximos Passos', validators=[DataRequired(message='Você precisa planejar os próximos passos.')], render_kw={"placeholder": "Qual o plano para amanhã?", "rows": 3})
+    entry_date = DateField('Data do Registro', format='%Y-%m-%d', validators=[DataRequired()], default=date.today)
+    
+    # MUDANÇA AQUI: Removemos o validator=[DataRequired()]
+    # O coerce=int garante que recebemos um número (0 ou ID)
+    project_select = SelectField('Projeto', coerce=int)
+    
+    tasks_completed = TextAreaField('Tarefas Realizadas', validators=[DataRequired()], render_kw={"rows": 5})
+    observations = TextAreaField('Observações', render_kw={"rows": 4})
+    next_steps = TextAreaField('Próximos Passos', validators=[DataRequired()], render_kw={"rows": 3})
     submit = SubmitField('Salvar Registro')
+    
     def validate_entry_date(self, field):
         if field.data > date.today(): raise ValidationError('Não é permitido criar registros para datas futuras.')
 
@@ -87,3 +92,33 @@ class ResetPasswordForm(FlaskForm):
     password = PasswordField('Nova Senha', validators=[DataRequired()])
     password2 = PasswordField('Confirmar Senha', validators=[DataRequired(), EqualTo('password', message='As senhas devem ser iguais.')])
     submit = SubmitField('Definir Nova Senha')
+
+class ProjectForm(FlaskForm):
+    name = StringField('Nome do Projeto', validators=[DataRequired(), Length(max=100)])
+    
+    # Seletor de Categoria (Mantido)
+    category = SelectField('Categoria Principal', choices=[
+        ('Geral', 'Geral / Outros'),
+        ('Robotica', 'Robótica Móvel & Manipuladores'),
+        ('IA', 'Inteligência Artificial & Visão'),
+        ('Embedded', 'Sistemas Embarcados & IoT'),
+        ('3D', 'Impressão 3D & Prototipagem'),
+        ('Software', 'Software & Interfaces'),
+        ('Eletronica', 'Eletrónica & Circuitos')
+    ], validators=[DataRequired()])
+
+    description = TextAreaField('Descrição', validators=[Length(max=500)], render_kw={"rows": 3})
+    image = FileField('Imagem do Projeto', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
+    submit = SubmitField('Salvar Projeto')
+
+    # --- LÓGICA DE VALIDAÇÃO INTELIGENTE ---
+    def __init__(self, original_name=None, *args, **kwargs):
+        super(ProjectForm, self).__init__(*args, **kwargs)
+        self.original_name = original_name
+
+    def validate_name(self, name):
+        # Só verifica no banco se o nome for DIFERENTE do original
+        if name.data != self.original_name:
+            project = Project.query.filter_by(name=name.data).first()
+            if project:
+                raise ValidationError('Já existe um projeto com esse nome.')

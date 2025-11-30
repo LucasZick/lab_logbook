@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- 1. HERO SECTION --- */
+    .gallery-hero {
+        background: linear-gradient(135deg, #003319 0%, #01552b 100%);
+        border-radius: 24px;
+        padding: 4rem 2rem 7rem 2rem;
+        text-align: center;
+        color: white;
+        margin-bottom: 4rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(1, 85, 43, 0.3);
+    }
+    .gallery-hero::before {
+        content: ''; position: absolute; top: -50%; right: -10%; width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+        border-radius: 50%; pointer-events: none;
+    }
+
+    .hero-btn {
+        background-color: rgba(255, 255, 255, 0.15);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.8rem 2rem;
+        border-radius: 50rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex; align-items: center; gap: 10px;
+        margin-top: 1.5rem; backdrop-filter: blur(5px);
+        position: relative; z-index: 5; /* Garante que é clicável */
+    }
+    .hero-btn:hover {
+        background-color: white; color: #01552b; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    /* --- 2. BARRA DE CONTROLO --- */
+    .controls-container {
+        max-width: 800px;
+        margin: -6rem auto 3rem auto;
+        position: relative; z-index: 10; padding: 0 1rem;
+    }
+
+    .search-wrapper { position: relative; margin-bottom: 1.5rem; }
+    .search-input {
+        padding: 1.2rem 1.5rem; padding-left: 3.5rem;
+        border-radius: 50rem; border: none;
+        box-shadow: 0 15px 35px -5px rgba(0,0,0,0.15);
+        font-size: 1.1rem; width: 100%; transition: all 0.3s ease;
+    }
+    .search-input:focus { outline: none; box-shadow: 0 15px 40px rgba(1, 85, 43, 0.2); }
+    .search-icon { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: #01552b; font-size: 1.3rem; }
+
+    .category-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .filter-btn {
+        background: white; border: 1px solid #e5e7eb; color: #64748b;
+        padding: 0.6rem 1.2rem; border-radius: 50rem; font-weight: 600; font-size: 0.85rem;
+        transition: all 0.2s; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    .filter-btn:hover, .filter-btn.active {
+        background: #01552b; color: white; border-color: #01552b; box-shadow: 0 5px 15px rgba(1, 85, 43, 0.2);
+    }
+
+    /* --- 3. CARTÕES DE PROJETO (ESTRUTURA CORRIGIDA) --- */
+    .projects-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;
+    }
+
+    /* Agora é uma DIV, não um Link */
+    .project-card {
+        background: #fff; border: 1px solid #f3f4f6; border-radius: 20px;
+        overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex; flex-direction: column; height: 100%;
+        position: relative; top: 0;
+    }
+    .project-card:hover {
+        top: -5px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); border-color: #e5e7eb;
+    }
+
+    /* Link Invisível (Cobre o cartão todo) */
+    .stretched-link {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 1; /* Fica acima do conteúdo base */
+    }
+
+    /* Imagem */
+    .card-image-box { height: 200px; width: 100%; position: relative; overflow: hidden; }
+    .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+    .project-card:hover .card-img { transform: scale(1.05); }
+    .card-img-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%); pointer-events: none; }
+
+    /* Badges */
+    .category-badge {
+        position: absolute; top: 15px; left: 15px; z-index: 2;
+        background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px);
+        padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; 
+        text-transform: uppercase; color: #01552b; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .logs-badge {
+        position: absolute; top: 15px; right: 15px; z-index: 2;
+        background: rgba(0, 0, 0, 0.6); color: white; backdrop-filter: blur(4px);
+        padding: 6px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 600;
+    }
+
+    /* Corpo */
+    .card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
+    .card-title { font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; line-height: 1.3; }
+    .card-desc { font-size: 0.9rem; color: #6b7280; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1.5rem; }
+    
+    .card-meta { margin-top: auto; padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; }
+    .action-text { color: #01552b; font-weight: 700; transition: gap 0.2s; display: flex; align-items: center; gap: 5px; }
+    .project-card:hover .action-text { gap: 10px; }
+
+    /* --- CONTROLES DE ADMINISTRAÇÃO (CORRIGIDOS) --- */
+    .admin-controls {
+        position: absolute; bottom: 15px; right: 15px;
+        display: flex; gap: 8px;
+        z-index: 20; /* CRUCIAL: Maior que o z-index do stretched-link (1) */
+        opacity: 0; transition: opacity 0.2s ease;
+    }
+    .card-image-box:hover .admin-controls { opacity: 1; }
+
+    .btn-admin {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: white; border: 1px solid #e5e7eb;
+        color: #4b5563; display: flex; align-items: center; justify-content: center;
+        text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-size: 0.9rem; transition: all 0.2s;
+        cursor: pointer; /* Garante cursor de mão */
+    }
+    .btn-admin:hover { background: #01552b; color: white; transform: scale(1.1); }
+    .btn-admin.delete:hover { background: #ef4444; border-color: #ef4444; }
+
+    .empty-gallery { grid-column: 1 / -1; text-align: center; padding: 4rem; background: white; border-radius: 16px; border: 2px dashed #e5e7eb; }
+    .animate-card { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="container pb-5">
+    
+    <div class="gallery-hero">
+        <h1 class="display-4 fw-bold mb-2">Projetos do Laboratório</h1>
+        <p class="opacity-75 mb-4" style="font-size: 1.1rem;">Explore o portfólio de inovações e pesquisas.</p>
+        
+        {% if current_user.role == 'professor' %}
+            <a href="{{ url_for('main.new_project') }}" class="hero-btn">
+                <i class="fas fa-plus-circle"></i> Adicionar Novo Projeto
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="controls-container">
+        <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="projectSearch" class="form-control search-input" placeholder="Pesquisar projeto por nome ou descrição...">
+        </div>
+
+        <div class="category-filters">
+            <button class="filter-btn active" onclick="filterCategory('all', this)">Todos</button>
+            <button class="filter-btn" onclick="filterCategory('Robotica', this)">Robótica</button>
+            <button class="filter-btn" onclick="filterCategory('IA', this)">IA & Visão</button>
+            <button class="filter-btn" onclick="filterCategory('Embedded', this)">Embedded</button>
+            <button class="filter-btn" onclick="filterCategory('3D', this)">Impressão 3D</button>
+            <button class="filter-btn" onclick="filterCategory('Software', this)">Software</button>
+        </div>
+    </div>
+
+    <div class="projects-grid" id="projectsGrid">
+        {% for project in projects %}
+        <div class="project-item animate-card"
+             style="animation-delay: {{ loop.index0 * 0.05 }}s;"
+             data-name="{{ project.name|lower }}"
+             data-desc="{{ project.description|lower }}"
+             data-cat="{{ project.category }}">
+            
+            <div class="project-card">
+                
+                <div class="card-image-box">
+                    <img src="{{ url_for('static', filename='profile_pics/' + project.image_file) }}" class="card-img">
+                    <div class="card-img-overlay"></div>
+                    
+                    <span class="category-badge">{{ project.category }}</span>
+                    
+                    <div class="logs-badge">
+                        <i class="fas fa-history me-1"></i> {{ project.logs.count() }}
+                    </div>
+
+                    {% if current_user.role == 'professor' %}
+                    <div class="admin-controls"> 
+                        <a href="{{ url_for('main.edit_project', project_id=project.id) }}" class="btn-admin" title="Editar">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <a href="{{ url_for('main.delete_project', project_id=project.id) }}" 
+                           class="btn-admin delete" 
+                           title="Apagar"
+                           onclick="return confirm('Tem certeza que deseja apagar este projeto?');">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-content">
+                    <h3 class="card-title">{{ project.name }}</h3>
+                    
+                    <p class="card-desc">
+                        {% if project.description %}
+                            {{ project.description }}
+                        {% else %}
+                            <span class="fst-italic text-muted opacity-50">Sem descrição disponível.</span>
+                        {% endif %}
+                    </p>
+
+                    <div class="card-meta">
+                        <span class="text-muted">Ver detalhes</span>
+                        <div class="action-text">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="stretched-link"></a>
+
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div id="noResults" class="text-center py-5 d-none">
+        <i class="fas fa-search fa-3x text-muted mb-3 opacity-25"></i>
+        <h5 class="text-muted">Nenhum projeto encontrado</h5>
+        <p class="text-muted small">Tente ajustar os filtros ou a pesquisa.</p>
+    </div>
+
+    {% if not projects %}
+    <div class="empty-gallery text-center">
+        <i class="fas fa-folder-open fa-3x text-muted mb-3 opacity-25"></i>
+        <h5 class="text-muted">A galeria está vazia</h5>
+        {% if current_user.role == 'professor' %}
+            <p class="text-muted small">Comece por criar o primeiro projeto!</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    let currentCatFilter = 'all';
+
+    document.getElementById('projectSearch').addEventListener('keyup', applyFilters);
+
+    function filterCategory(cat, btn) {
+        currentCatFilter = cat;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        let textFilter = document.getElementById('projectSearch').value.toLowerCase();
+        let items = document.querySelectorAll('.project-item');
+        let visibleCount = 0;
+
+        items.forEach(function(item) {
+            let name = item.getAttribute('data-name');
+            let desc = item.getAttribute('data-desc');
+            let cat = item.getAttribute('data-cat');
+
+            let textMatch = name.includes(textFilter) || desc.includes(textFilter);
+            let catMatch = (currentCatFilter === 'all') || (cat === currentCatFilter);
+
+            if (textMatch && catMatch) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        document.getElementById('noResults').classList.toggle('d-none', visibleCount > 0);
+    }
+</script>
+{% endblock %}

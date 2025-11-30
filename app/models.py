@@ -12,6 +12,20 @@ import holidays
 def load_user(id):
     return User.query.get(int(id))
 
+class Project(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.Text)
+    image_file = db.Column(db.String(100), nullable=False, default='default_project.jpg')
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    category = db.Column(db.String(50), nullable=False, default='Geral')
+    
+    # Relação com os logs
+    logs = db.relationship('LogEntry', backref='parent_project', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Project {self.name}>'
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
@@ -138,10 +152,17 @@ class User(UserMixin, db.Model):
 class LogEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     entry_date = db.Column(db.Date, index=True, nullable=False, default=date.today)
-    project = db.Column(db.String(140))
+    
+    # Mantemos 'project' como string para histórico, mas vamos tentar usar o ID
+    project = db.Column(db.String(140)) 
+    
+    # NOVO CAMPO: Ligação ao Projeto Real (pode ser nulo para "Geral")
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=True)
+
     tasks_completed = db.Column(db.Text)
     observations = db.Column(db.Text, nullable=True)
     next_steps = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=db.func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
     __table_args__ = (db.UniqueConstraint('user_id', 'entry_date', name='_user_date_uc'),)

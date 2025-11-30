@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- 1. HERO SECTION (Consistência) --- */
+    .manage-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); /* Um tom mais sóbrio/admin */
+        border-radius: 24px;
+        padding: 4rem 2rem 6rem 2rem;
+        text-align: center;
+        color: white;
+        margin-bottom: 4rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Decoração */
+    .manage-hero::before {
+        content: ''; position: absolute; top: -50%; right: -10%; width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+        border-radius: 50%; pointer-events: none;
+    }
+
+    /* --- 2. BARRA DE AÇÃO FLUTUANTE --- */
+    .admin-toolbar {
+        max-width: 900px;
+        margin: -5rem auto 2rem auto;
+        position: relative;
+        z-index: 10;
+        background: white;
+        padding: 1.5rem 2rem;
+        border-radius: 16px;
+        box-shadow: 0 15px 35px -5px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #f3f4f6;
+    }
+
+    .btn-add-project {
+        background: #01552b;
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 50rem;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex; align-items: center; gap: 8px;
+        box-shadow: 0 4px 12px rgba(1, 85, 43, 0.3);
+        transition: all 0.2s;
+    }
+    .btn-add-project:hover { transform: translateY(-2px); background: #014421; color: white; }
+
+    /* --- 3. LISTAGEM RICA (TABELA ESTILIZADA) --- */
+    .project-table {
+        border-collapse: separate;
+        border-spacing: 0 1rem; /* Espaço entre as linhas */
+        width: 100%;
+    }
+
+    .project-row {
+        background: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .project-row td {
+        padding: 1rem;
+        border-top: 1px solid #f3f4f6;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+    }
+    
+    /* Arredondar os cantos da linha */
+    .project-row td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-left: 1px solid #f3f4f6; }
+    .project-row td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-right: 1px solid #f3f4f6; }
+
+    .project-row:hover {
+        transform: scale(1.01);
+        box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
+        position: relative;
+        z-index: 5;
+    }
+
+    /* Imagem */
+    .table-img {
+        width: 60px; height: 60px;
+        border-radius: 10px;
+        object-fit: cover;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* Texto */
+    .project-name-link {
+        font-size: 1.1rem; font-weight: 700; color: #1f2937; text-decoration: none; display: block;
+    }
+    .project-name-link:hover { color: #01552b; text-decoration: underline; }
+
+    /* Badges */
+    .cat-badge {
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        background: #f3f4f6; color: #64748b; padding: 4px 8px; border-radius: 6px;
+        letter-spacing: 0.5px;
+    }
+
+    /* Ações */
+    .action-btn {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid #e5e7eb;
+        background: white; color: #6b7280;
+        transition: all 0.2s;
+        margin-left: 5px;
+        text-decoration: none;
+    }
+    .btn-view:hover { background: #eff6ff; color: #2563eb; border-color: #2563eb; }
+    .btn-edit:hover { background: #f0fdf4; color: #01552b; border-color: #01552b; }
+    .btn-del:hover { background: #fef2f2; color: #dc2626; border-color: #dc2626; }
+
+</style>
+
+<div class="container pb-5">
+    
+    <div class="manage-hero">
+        <h1 class="fw-bold mb-2">Gestão de Projetos</h1>
+        <p class="opacity-75 mb-0">Administre o portfólio, edite detalhes e organize o laboratório.</p>
+    </div>
+
+    <div class="admin-toolbar">
+        <div>
+            <h5 class="mb-0 fw-bold text-dark">{{ projects|length }} Projetos Cadastrados</h5>
+            <small class="text-muted">Base de dados ativa</small>
+        </div>
+        <a href="{{ url_for('main.new_project') }}" class="btn-add-project">
+            <i class="fas fa-plus-circle"></i> Novo Projeto
+        </a>
+    </div>
+
+    {% if projects %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <table class="project-table">
+                <tbody>
+                    {% for project in projects %}
+                    <tr class="project-row">
+                        
+                        <td style="width: 80px; padding-left: 1.5rem;">
+                            <a href="{{ url_for('main.project_details', project_id=project.id) }}">
+                                <img src="{{ url_for('static', filename='profile_pics/' + project.image_file) }}" class="table-img">
+                            </a>
+                        </td>
+
+                        <td>
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="cat-badge me-2">{{ project.category }}</span>
+                                <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> {{ project.created_at.strftime('%d/%m/%Y') if project.created_at else 'Data N/A' }}</small>
+                            </div>
+                            
+                            <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="project-name-link">
+                                {{ project.name }}
+                            </a>
+                            
+                            <p class="text-muted small mb-0 text-truncate" style="max-width: 400px;">
+                                {{ project.description }}
+                            </p>
+                        </td>
+
+                        <td class="text-center" style="width: 120px;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="h5 fw-bold mb-0 text-dark">{{ project.logs.count() }}</span>
+                                <small class="text-muted" style="font-size: 0.7rem; text-transform: uppercase;">Registos</small>
+                            </div>
+                        </td>
+
+                        <td class="text-end pe-4" style="width: 160px;">
+                            
+                            <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="action-btn btn-view" title="Ver Detalhes">
+                                <i class="fas fa-eye"></i>
+                            </a>
+
+                            <a href="{{ url_for('main.edit_project', project_id=project.id) }}" class="action-btn btn-edit" title="Editar">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            
+                            <a href="{{ url_for('main.delete_project', project_id=project.id) }}" 
+                               class="action-btn btn-del" 
+                               onclick="return confirm('Tem certeza? Ao apagar o projeto, os logs associados perderão o vínculo (mas não serão apagados).');" 
+                               title="Apagar">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-folder-open fa-4x text-muted mb-3 opacity-25"></i>
+            <h4 class="text-muted">Nenhum projeto encontrado</h4>
+            <p class="text-muted small">Use o botão acima para criar o primeiro.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

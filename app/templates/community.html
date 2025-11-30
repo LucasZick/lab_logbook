@@ -2,54 +2,43 @@
 
 {% block content %}
 <style>
-    /* --- 1. HERO SECTION (Cabeçalho com Fundo) --- */
+    /* --- 1. HERO SECTION (Consistente com Projetos) --- */
     .community-hero {
         background: linear-gradient(135deg, #003319 0%, #01552b 100%);
         border-radius: 24px;
-        padding: 4rem 2rem;
+        padding: 4rem 2rem 7rem 2rem; /* Espaço para a barra flutuar */
         text-align: center;
         color: white;
-        margin-bottom: 3rem;
+        margin-bottom: 4rem;
         position: relative;
         overflow: hidden;
         box-shadow: 0 20px 40px -10px rgba(1, 85, 43, 0.3);
     }
-    
-    /* Decoração de fundo abstrata */
     .community-hero::before {
-        content: ''; position: absolute; top: -50%; left: -10%; width: 500px; height: 500px;
+        content: ''; position: absolute; top: -50%; right: -10%; width: 500px; height: 500px;
         background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
         border-radius: 50%; pointer-events: none;
     }
 
-    /* Barra de Busca Flutuante */
-    .search-container {
-        max-width: 600px;
-        margin: -2.5rem auto 0 auto; 
-        position: relative;
-        z-index: 10;
-    }
-    
-    /* MUDANÇA AQUI: Adicionei margem em baixo para separar dos cartões */
+    /* --- 2. CONTROLOS FLUTUANTES --- */
     .controls-container {
-        max-width: 600px;
-        margin: -2.5rem auto 2rem auto; /* Alterado de 0 para 4rem no bottom */
+        max-width: 800px;
+        margin: -6rem auto 3rem auto; /* Flutua sobre o Hero */
         position: relative;
         z-index: 10;
+        padding: 0 1rem;
     }
-    
+
+    .search-wrapper { position: relative; margin-bottom: 1.5rem; }
     .search-input {
-        padding: 1.2rem 1.5rem;
-        padding-left: 3.5rem;
-        border-radius: 50rem;
-        border: none;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
+        padding: 1.2rem 1.5rem; padding-left: 3.5rem;
+        border-radius: 50rem; border: none;
+        box-shadow: 0 15px 35px -5px rgba(0,0,0,0.15);
+        font-size: 1.1rem; width: 100%;
+        transition: all 0.2s;
     }
     .search-input:focus {
-        box-shadow: 0 15px 40px rgba(1, 85, 43, 0.15);
-        transform: translateY(-2px);
+        outline: none; box-shadow: 0 15px 40px rgba(1, 85, 43, 0.2);
     }
     .search-icon {
         position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%);
@@ -57,157 +46,65 @@
     }
 
     .filter-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-top: 1.5rem; /* Aumentei um pouco o espaço da busca */
-        margin-bottom: 1rem;
+        display: flex; justify-content: center; gap: 10px; margin-top: 1rem;
     }
     .filter-btn {
-        background: white;
-        border: 1px solid #e5e7eb;
-        color: #64748b;
-        padding: 0.5rem 1.5rem;
-        border-radius: 50rem;
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: all 0.2s;
-        cursor: pointer;
+        background: white; border: 1px solid #e5e7eb; color: #64748b;
+        padding: 0.6rem 1.2rem; border-radius: 50rem;
+        font-weight: 600; font-size: 0.85rem;
+        transition: all 0.2s; cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
     .filter-btn:hover, .filter-btn.active {
-        background: #01552b;
-        color: white;
-        border-color: #01552b;
-        box-shadow: 0 4px 10px rgba(1, 85, 43, 0.2);
+        background: #01552b; color: white; border-color: #01552b;
+        box-shadow: 0 5px 15px rgba(1, 85, 43, 0.2);
     }
 
-    /* --- 2. CARTÕES DE MEMBRO (Redesign) --- */
+    /* --- 3. CARTÕES DE MEMBRO (Estilo Clean Grid) --- */
     .member-card {
-        background: #fff;
-        border: 1px solid #f3f4f6;
-        border-radius: 20px;
-        text-align: center;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        text-decoration: none;
-        color: inherit;
+        background: #fff; border: 1px solid #f3f4f6; border-radius: 16px;
+        overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex; flex-direction: column; height: 100%;
+        text-decoration: none; color: inherit; position: relative; top: 0;
     }
     
     .member-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
-        border-color: #e5e7eb;
+        top: -5px; /* Efeito de elevação sutil */
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        border-color: #01552b;
     }
-    
-    /* Efeito de Borda Verde no Hover */
-    .member-card::after {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-        background: #01552b; border-radius: 20px 20px 0 0;
-        opacity: 0; transition: opacity 0.3s;
-    }
-    .member-card:hover::after { opacity: 1; }
 
-    /* Avatar */
+    /* Capa do Usuário */
+    .card-cover-box {
+        height: 120px; width: 100%; position: relative; overflow: hidden;
+        background-color: #f3f4f6;
+    }
+    .card-cover-img {
+        width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;
+    }
+    .member-card:hover .card-cover-img { transform: scale(1.05); }
+    
+    /* Overlay na capa para contraste */
+    .card-cover-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.05) 100%);
+    }
+
+    /* Avatar "Furado" */
     .avatar-wrapper {
         position: relative;
-        margin: 0 auto 1rem auto;
+        margin: -50px auto 0.5rem auto; /* Sobe para cima da capa */
         width: 100px; height: 100px;
+        z-index: 2;
     }
     .member-avatar {
-        width: 100%; height: 100%;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid #f8fafc;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        transition: transform 0.3s;
-    }
-    .member-card:hover .member-avatar { transform: scale(1.05); border-color: #fff; }
-
-    /* Role Badge */
-    .role-badge {
-        position: absolute; bottom: 0; right: 0;
-        background: #fff;
-        border: 2px solid #f8fafc;
-        border-radius: 50rem;
-        padding: 4px 10px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #4b5563;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .role-badge.professor { color: #01552b; background-color: #e6f4ea; border-color: #e6f4ea; }
-
-    /* Botão de Email Flutuante */
-    .email-btn {
-        position: absolute; top: 15px; right: 15px; z-index: 5;
-        width: 32px; height: 32px; border-radius: 50%;
-        background: #f1f5f9; color: #64748b;
-        display: flex; align-items: center; justify-content: center;
-        transition: all 0.2s; text-decoration: none;
-    }
-    .email-btn:hover { background: #01552b; color: white; }
-
-    /* Corpo do Cartão */
-    .member-body {
-        padding: 3rem 1.5rem 1.5rem 1.5rem; /* Padding top maior para a foto */
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
+        width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        background-color: #fff;
     }
 
-    /* Texto */
-    .member-name { font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 0.25rem; }
-    .member-course { font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem; min-height: 1.2em; }
-    
-    .member-bio {
-        font-size: 0.9rem; color: #4b5563; line-height: 1.5;
-        margin-bottom: 1.5rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 3; /* Limita a 3 linhas */
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        flex-grow: 1; /* Empurra o footer para baixo */
-    }
-
-    /* Link genérico */
-    .member-link { text-decoration: none; color: inherit; }
-
-    /* Skills */
-    .skills-container {
-        display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
-        margin-top: auto; /* Empurra para o fundo do body */
-    }
-    .skill-tag {
-        font-size: 0.75rem;
-        padding: 4px 10px;
-        background-color: #f1f5f9;
-        color: #475569;
-        border-radius: 8px;
-        font-weight: 500;
-    }
-    
-    /* Rodapé do Cartão */
-    .member-footer {
-        background-color: #f8fafc;
-        padding: 1rem;
-        border-top: 1px solid #f1f5f9;
-        text-align: left;
-    }
-    .last-project-label {
-        font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 2px;
-    }
-    .project-link { 
-        font-size: 0.85rem; color: #334155; font-weight: 600; text-decoration: none;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
-        transition: color 0.2s;
-    }
-    .project-link:hover { color: #01552b; text-decoration: underline; }
-
-    /* Ponto de Status "Ativo Recentemente" */
+    /* Ponto de Atividade (Status Dot) */
     .status-dot {
         position: absolute; bottom: 5px; right: 5px;
         width: 18px; height: 18px;
@@ -220,25 +117,81 @@
         70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
         100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
+
+    /* Botão de Email Flutuante */
+    .email-btn {
+        position: absolute; top: 10px; right: 10px; z-index: 5;
+        width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(255,255,255,0.9); color: #01552b;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s; text-decoration: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        font-size: 0.9rem;
+    }
+    .email-btn:hover { transform: scale(1.1); background: white; color: #014421; }
+
+    /* Corpo do Cartão */
+    .member-body {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+        flex-grow: 1; display: flex; flex-direction: column; text-align: center;
+    }
+
+    .member-name { font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 0.2rem; }
     
-    /* Animação de Entrada */
+    .role-badge {
+        font-size: 0.7rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;
+        color: #6b7280; background-color: #f3f4f6; padding: 4px 10px; border-radius: 50rem;
+        display: inline-block; margin-bottom: 1rem;
+    }
+    .role-badge.professor { color: #01552b; background-color: #e6f4ea; }
+
+    .member-bio {
+        font-size: 0.9rem; color: #4b5563; line-height: 1.5;
+        margin-bottom: 1.5rem;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        overflow: hidden; flex-grow: 1;
+    }
+
+    /* Skills */
+    .skills-container {
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+        margin-bottom: 1rem;
+    }
+    .skill-tag {
+        font-size: 0.7rem; padding: 3px 8px; background-color: #f1f5f9;
+        color: #475569; border-radius: 6px; font-weight: 600;
+    }
+
+    /* Rodapé do Cartão (Projeto) */
+    .member-footer {
+        background-color: #f8fafc; padding: 1rem; border-top: 1px solid #f1f5f9;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center;
+    }
+    .last-project-label {
+        font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: #94a3b8; margin-bottom: 2px;
+    }
+    .project-link { 
+        font-size: 0.85rem; color: #334155; font-weight: 600; text-decoration: none;
+        display: flex; align-items: center; gap: 5px; transition: color 0.2s;
+    }
+    .project-link:hover { color: #01552b; text-decoration: underline; }
+    
     .animate-card { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <div class="container pb-5">
     
-    <!-- 1. Hero Header -->
     <div class="community-hero">
-        <h1 class="fw-bold mb-2">Equipe do Laboratório</h1>
-        <p class="opacity-75 mb-0" style="font-size: 1.1rem;">Conecte-se, colabore e descubra talentos.</p>
+        <h1 class="display-4 fw-bold mb-2">Equipa do Laboratório</h1>
+        <p class="opacity-75 mb-0" style="font-size: 1.1rem;">Conecte-se com quem está a construir o futuro.</p>
     </div>
 
-    <!-- 2. Controlos (Busca e Filtro) -->
     <div class="controls-container">
-        <div class="position-relative">
+        <div class="search-wrapper">
             <i class="fas fa-search search-icon"></i>
-            <input type="text" id="memberSearch" class="form-control search-input" placeholder="Pesquisar por nome, curso ou habilidade (ex: Python)...">
+            <input type="text" id="memberSearch" class="form-control search-input" placeholder="Pesquisar membro, skill ou projeto...">
         </div>
         
         <div class="filter-buttons">
@@ -248,7 +201,6 @@
         </div>
     </div>
 
-    <!-- 3. Grid de Membros -->
     <div class="row g-4" id="membersGrid">
         {% for user in users %}
         <div class="col-md-6 col-lg-4 member-item animate-card" 
@@ -256,90 +208,76 @@
              data-name="{{ user.username|lower }}" 
              data-role="{{ user.role }}"
              data-skills="{{ user.skills|lower if user.skills else '' }}"
-             data-project="{{ user.last_project|lower if user.last_project else '' }}">
+             data-project="{{ user.last_project_name|lower if user.last_project_name else '' }}">
             
             <div class="member-card">
                 
-                <!-- Botão de Email Rápido -->
-                <a href="mailto:{{ user.email }}" class="email-btn" title="Enviar email para {{ user.username }}">
-                    <i class="far fa-envelope"></i>
-                </a>
+                <div class="card-cover-box">
+                    <img src="{{ url_for('static', filename='profile_pics/' + user.cover_file) }}" class="card-cover-img">
+                    <div class="card-cover-overlay"></div>
+                    
+                    <a href="mailto:{{ user.email }}" class="email-btn" title="Enviar email">
+                        <i class="far fa-envelope"></i>
+                    </a>
+                </div>
 
-                <!-- Área Clicável que leva ao Perfil -->
-                <a href="{{ url_for('main.user_profile', username=user.username) }}" class="member-link h-100 d-flex flex-column">
+                <a href="{{ url_for('main.user_profile', username=user.username) }}" style="text-decoration: none; color: inherit; flex-grow: 1; display: flex; flex-direction: column;">
                     
                     <div class="member-body">
                         <div class="avatar-wrapper">
-                            <!-- Avatar -->
-                            {% if user.image_file == 'default.jpg' %}
-                                <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=01552b&color=fff&size=200" class="member-avatar">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="member-avatar">
-                            {% endif %}
+                            <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="member-avatar">
                             
-                            <!-- Badge de Função -->
-                            <span class="role-badge {% if user.role == 'professor' %}professor{% endif %}">
-                                {{ user.role }}
-                            </span>
-
-                            <!-- Ponto de Atividade (Se log < 3 dias) -->
-                            {% if user.last_active_date %}
-                                {% set days_diff = (today - user.last_active_date).days %}
-                                {% if days_diff < 3 %}
-                                    <span class="status-dot active" title="Ativo recentemente"></span>
-                                {% endif %}
+                            {% if user.last_active_date and (today - user.last_active_date).days < 3 %}
+                                <span class="status-dot active" title="Ativo recentemente"></span>
                             {% endif %}
                         </div>
 
                         <h5 class="member-name">{{ user.username }}</h5>
-                        <div class="member-course">
-                            {% if user.course %}
-                                <i class="fas fa-graduation-cap me-1 text-muted" style="font-size: 0.8em;"></i> {{ user.course }}
-                            {% endif %}
-                        </div>
                         
+                        <div>
+                            <span class="role-badge {% if user.role == 'professor' %}professor{% endif %}">
+                                {{ user.role }}
+                            </span>
+                        </div>
+
                         <div class="member-bio">
                             {% if user.bio %}
                                 {{ user.bio }}
                             {% else %}
-                                <span class="text-muted fst-italic opacity-50">Membro da equipe.</span>
+                                <span class="text-muted fst-italic opacity-50">Membro da equipa.</span>
                             {% endif %}
                         </div>
 
-                        <!-- Skills -->
                         <div class="skills-container">
                             {% if user.skills %}
                                 {% for skill in user.skills.split(',')[:3] %}
-                                    {% if skill|trim %}
-                                        <span class="skill-tag">{{ skill|trim }}</span>
-                                    {% endif %}
+                                    {% if skill|trim %}<span class="skill-tag">{{ skill|trim }}</span>{% endif %}
                                 {% endfor %}
                                 {% if user.skills.split(',')|length > 3 %}
                                     <span class="skill-tag" style="background-color: #e6f4ea; color: #01552b;">+{{ user.skills.split(',')|length - 3 }}</span>
                                 {% endif %}
-                            {% else %}
-                                <span class="skill-tag opacity-50">--</span>
                             {% endif %}
                         </div>
                     </div>
                 </a>
 
-                <!-- Rodapé: Último Projeto (SÓ PARA BOLSISTAS) -->
                 {% if user.role == 'bolsista' %}
-                    {% if user.last_project %}
                     <div class="member-footer">
-                        <span class="last-project-label"><i class="fas fa-history me-1"></i> Trabalhou recentemente em:</span>
-                        <!-- Link direto para a Busca Global -->
-                        <a href="{{ url_for('main.search', q=user.last_project) }}" class="project-link" title="Ver todos os logs deste projeto">
-                            {{ user.last_project }} <i class="fas fa-external-link-alt ms-1 small opacity-50"></i>
-                        </a>
+                        {% if user.last_project_name %}
+                            <span class="last-project-label"><i class="fas fa-history me-1"></i> Recentemente em:</span>
+                            {% if user.last_project_id %}
+                                <a href="{{ url_for('main.project_details', project_id=user.last_project_id) }}" class="project-link">
+                                    {{ user.last_project_name }} <i class="fas fa-arrow-right ms-1 small opacity-50"></i>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('main.search', q=user.last_project_name) }}" class="project-link">
+                                    {{ user.last_project_name }}
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-muted small fw-normal">Sem registos recentes</div>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <div class="member-footer">
-                        <span class="last-project-label">Atividade Recente</span>
-                        <div class="text-muted small fw-normal">Sem registros recentes</div>
-                    </div>
-                    {% endif %}
                 {% endif %}
 
             </div>
@@ -348,11 +286,10 @@
         {% endfor %}
     </div>
     
-    <!-- Estado Vazio da Busca -->
     <div id="noResults" class="text-center py-5 d-none">
         <i class="fas fa-search fa-3x text-muted mb-3 opacity-25"></i>
         <h5 class="text-muted">Ninguém encontrado</h5>
-        <p class="text-muted small">Tente pesquisar por outro termo.</p>
+        <p class="text-muted small">Tente ajustar a pesquisa.</p>
     </div>
 
 </div>
@@ -361,7 +298,6 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    // Script de Filtro em Tempo Real
     let currentRoleFilter = 'all';
     document.getElementById('memberSearch').addEventListener('keyup', applyFilters);
 

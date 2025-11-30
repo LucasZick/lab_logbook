@@ -35,13 +35,10 @@
     .log-summary:hover { background-color: #f8fafc; }
     .log-details { background-color: #f8fafc; padding: 1.5rem; border-top: 1px solid #e5e7eb; }
     
-    /* Rotação do ícone */
     .log-summary[aria-expanded="true"] .chevron-icon { transform: rotate(180deg); }
     .chevron-icon { transition: transform 0.2s ease-in-out; color: #9ca3af; }
     
     .log-content { white-space: pre-wrap; word-wrap: break-word; color: #4b5563; }
-    
-    /* Ícones de Status na Tabela */
     .status-icon { font-size: 1.1rem; }
 </style>
 
@@ -50,12 +47,12 @@
         <h2 class="fw-bold text-dark">
             Olá, <span style="color: #01552b;">{{ current_user.username }}</span>! 👋
         </h2>
-        <p class="text-muted mb-0">Vamos registrar o progresso de hoje?</p>
+        <p class="text-muted mb-0">Vamos registar o progresso de hoje?</p>
     </div>
     <div class="col-md-4 text-md-end mt-3 mt-md-0">
         {% if has_log_today %}
             <span class="badge badge-soft-success p-2 px-3 rounded-pill">
-                <i class="fas fa-check-circle me-2"></i> Registro de hoje completo
+                <i class="fas fa-check-circle me-2"></i> Registo de hoje completo
             </span>
         {% else %}
             <span class="badge badge-soft-warning p-2 px-3 rounded-pill animate__animated animate__pulse animate__infinite">
@@ -73,7 +70,7 @@
                 <div class="bg-success bg-opacity-10 text-success rounded p-2 me-3">
                     <i class="fas fa-pen-nib"></i>
                 </div>
-                <h4 class="mb-0">Novo Registro</h4>
+                <h4 class="mb-0">Novo Registo</h4>
             </div>
             <hr class="mb-4">
             
@@ -83,14 +80,21 @@
                 <div class="mb-3">
                     {{ form.entry_date.label(class="form-label fw-bold small text-uppercase text-muted") }}
                     {{ form.entry_date(class="form-control form-control-lg" + (" is-invalid" if form.entry_date.errors else "")) }}
-                    <div class="form-text text-muted small"><i class="far fa-calendar-alt me-1"></i> Confirme a data do registro.</div>
+                    <div class="form-text text-muted small"><i class="far fa-calendar-alt me-1"></i> Confirme a data.</div>
                     {% for error in form.entry_date.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
                 </div>
 
                 <div class="mb-3">
-                    {{ form.project.label(class="form-label fw-bold small text-uppercase text-muted") }}
-                    {{ form.project(class="form-control" + (" is-invalid" if form.project.errors else "")) }}
-                    {% for error in form.project.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        {{ form.project_select.label(class="form-label fw-bold small text-uppercase text-muted mb-0") }}
+                        
+                        <a href="{{ url_for('main.new_project') }}" class="text-decoration-none small fw-bold" style="color: #01552b; font-size: 0.8rem;">
+                            <i class="fas fa-plus-circle"></i> Novo Projeto
+                        </a>
+                    </div>
+                    
+                    {{ form.project_select(class="form-select" + (" is-invalid" if form.project_select.errors else "")) }}
+                    {% for error in form.project_select.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
                 </div>
 
                 <div class="mb-3">
@@ -111,7 +115,7 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
-                    <i class="fas fa-save me-2"></i> Salvar Registro
+                    <i class="fas fa-save me-2"></i> Salvar Registo
                 </button>
             </form>
         </div>
@@ -213,7 +217,7 @@
             {% else %}
                 <div class="empty-state">
                     <i class="far fa-calendar-times"></i>
-                    <h5>Nenhum registro encontrado</h5>
+                    <h5>Nenhum registo encontrado</h5>
                     <p>Ainda não há registros para este mês.</p>
                 </div>
             {% endif %}

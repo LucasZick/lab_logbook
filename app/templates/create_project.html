@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Estilo do Card de Preview (Imita a Galeria) */
+    .preview-card {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        position: relative;
+        background-color: #f8fafc;
+        height: 280px; /* Altura fixa para a capa */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        group: preview;
+    }
+    
+    .preview-card:hover {
+        border-color: #01552b;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    /* A Imagem */
+    #image-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Overlay de Upload (Aparece no Hover ou se não tiver imagem) */
+    .upload-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6); /* Fundo escuro semi-transparente */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.2s;
+        backdrop-filter: blur(2px);
+    }
+    
+    /* Se não tiver imagem (src vazio ou #), mostra o overlay sempre */
+    .preview-card.no-image .upload-overlay,
+    .preview-card:hover .upload-overlay {
+        opacity: 1;
+    }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: #4ade80; /* Verde Neon */
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">{{ legend if legend else 'Criar Novo Projeto' }}</h3>
+                    <p class="text-muted mb-0 small">Defina a identidade e o escopo do projeto.</p>
+                </div>
+            </div>
+            <a href="{{ url_for('main.gallery') }}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+        </div>
+
+        <div class="content-card">
+            <form action="" method="post" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+
+                <div class="row g-4">
+                    
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Capa do Projeto</label>
+                        
+                        <div class="preview-card {% if not image_file %}no-image{% endif %}" onclick="document.getElementById('project_image_input').click();">
+                            
+                            <img id="image-preview" src="{{ image_file if image_file else '#' }}" 
+                                 style="display: {{ 'block' if image_file else 'none' }};">
+                            
+                            <div class="upload-overlay">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <h6 class="fw-bold mb-0">Carregar Imagem</h6>
+                                <small class="text-light opacity-75">JPG ou PNG (Max 2MB)</small>
+                            </div>
+                        </div>
+
+                        {{ form.image(class="d-none", id="project_image_input", onchange="previewImage(this)") }}
+                        
+                        {% for error in form.image.errors %}
+                            <div class="text-danger small mt-2 text-center"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                        {% endfor %}
+                        
+                        <div class="text-center mt-2">
+                            <small class="text-muted fst-italic">Esta imagem será o destaque na galeria.</small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+                        <div class="ps-md-3">
+                            
+                            <div class="form-floating mb-3">
+                                {{ form.name(class="form-control", id="projectName", placeholder="Nome do Projeto") }}
+                                <label for="projectName">Nome do Projeto</label>
+                            </div>
+                            {% for error in form.name.errors %}
+                                <div class="text-danger small mb-3">{{ error }}</div>
+                            {% endfor %}
+
+                            <div class="form-floating mb-3">
+                                {{ form.category(class="form-select", id="projectCategory") }}
+                                <label for="projectCategory">Categoria Principal</label>
+                            </div>
+
+                            <div class="form-floating mb-4">
+                                {{ form.description(class="form-control", id="projectDesc", placeholder="Descrição", style="height: 140px") }}
+                                <label for="projectDesc">Descrição (Objetivos e Tecnologias)</label>
+                            </div>
+                            {% for error in form.description.errors %}
+                                <div class="text-danger small mb-3">{{ error }}</div>
+                            {% endfor %}
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success py-3 fw-bold shadow-sm">
+                                    <i class="fas fa-save me-2"></i> {{ 'Guardar Alterações' if is_edit else 'Criar Projeto' }}
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function previewImage(input) {
+        const preview = document.getElementById('image-preview');
+        const card = document.querySelector('.preview-card');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                
+                // Remove a classe 'no-image' para que o overlay só apareça no hover
+                card.classList.remove('no-image');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+{% endblock %}
