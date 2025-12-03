@@ -6,7 +6,7 @@
     .gallery-hero {
         background: linear-gradient(135deg, #003319 0%, #01552b 100%);
         border-radius: 24px;
-        padding: 4rem 2rem 7rem 2rem;
+        padding: 4rem 2rem 5rem 2rem;
         text-align: center;
         color: white;
         margin-bottom: 4rem;
@@ -31,7 +31,7 @@
         transition: all 0.3s ease;
         display: inline-flex; align-items: center; gap: 10px;
         margin-top: 1.5rem; backdrop-filter: blur(5px);
-        position: relative; z-index: 5; /* Garante que é clicável */
+        position: relative; z-index: 20; /* Botão clicável */
     }
     .hero-btn:hover {
         background-color: white; color: #01552b; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2);
@@ -39,9 +39,11 @@
 
     /* --- 2. BARRA DE CONTROLO --- */
     .controls-container {
-        max-width: 800px;
-        margin: -6rem auto 3rem auto;
-        position: relative; z-index: 10; padding: 0 1rem;
+        max-width: 900px;
+        margin: -6rem auto 3rem auto; /* Sobe para cima do Hero */
+        position: relative;
+        z-index: 10;
+        padding: 0 1rem;
     }
 
     .search-wrapper { position: relative; margin-bottom: 1.5rem; }
@@ -49,7 +51,8 @@
         padding: 1.2rem 1.5rem; padding-left: 3.5rem;
         border-radius: 50rem; border: none;
         box-shadow: 0 15px 35px -5px rgba(0,0,0,0.15);
-        font-size: 1.1rem; width: 100%; transition: all 0.3s ease;
+        font-size: 1.1rem; width: 100%;
+        transition: all 0.3s ease;
     }
     .search-input:focus { outline: none; box-shadow: 0 15px 40px rgba(1, 85, 43, 0.2); }
     .search-icon { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: #01552b; font-size: 1.3rem; }
@@ -57,19 +60,21 @@
     .category-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .filter-btn {
         background: white; border: 1px solid #e5e7eb; color: #64748b;
-        padding: 0.6rem 1.2rem; border-radius: 50rem; font-weight: 600; font-size: 0.85rem;
-        transition: all 0.2s; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        padding: 0.6rem 1.2rem; border-radius: 50rem;
+        font-weight: 600; font-size: 0.85rem;
+        transition: all 0.2s; cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
     .filter-btn:hover, .filter-btn.active {
-        background: #01552b; color: white; border-color: #01552b; box-shadow: 0 5px 15px rgba(1, 85, 43, 0.2);
+        background: #01552b; color: white; border-color: #01552b;
+        box-shadow: 0 5px 15px rgba(1, 85, 43, 0.2);
     }
 
-    /* --- 3. CARTÕES DE PROJETO (ESTRUTURA CORRIGIDA) --- */
+    /* --- 3. CARTÕES DE PROJETO --- */
     .projects-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2.5rem;
     }
 
-    /* Agora é uma DIV, não um Link */
     .project-card {
         background: #fff; border: 1px solid #f3f4f6; border-radius: 20px;
         overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -77,22 +82,19 @@
         position: relative; top: 0;
     }
     .project-card:hover {
-        top: -5px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); border-color: #e5e7eb;
+        top: -8px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); border-color: #e5e7eb;
     }
 
-    /* Link Invisível (Cobre o cartão todo) */
     .stretched-link {
         position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        z-index: 1; /* Fica acima do conteúdo base */
+        z-index: 1; /* Cobre tudo exceto botões admin */
     }
 
-    /* Imagem */
-    .card-image-box { height: 200px; width: 100%; position: relative; overflow: hidden; }
+    .card-image-box { height: 220px; width: 100%; position: relative; overflow: hidden; }
     .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
     .project-card:hover .card-img { transform: scale(1.05); }
     .card-img-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 100%); pointer-events: none; }
 
-    /* Badges */
     .category-badge {
         position: absolute; top: 15px; left: 15px; z-index: 2;
         background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px);
@@ -102,23 +104,23 @@
     .logs-badge {
         position: absolute; top: 15px; right: 15px; z-index: 2;
         background: rgba(0, 0, 0, 0.6); color: white; backdrop-filter: blur(4px);
-        padding: 6px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 600;
+        padding: 6px 12px; border-radius: 50rem;
+        font-size: 0.75rem; font-weight: 600;
     }
 
-    /* Corpo */
     .card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-    .card-title { font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; line-height: 1.3; }
-    .card-desc { font-size: 0.9rem; color: #6b7280; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1.5rem; }
+    .card-title { font-size: 1.3rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; line-height: 1.3; }
+    .card-desc { font-size: 0.95rem; color: #6b7280; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1.5rem; }
     
-    .card-meta { margin-top: auto; padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; }
+    .card-meta { margin-top: auto; padding-top: 1rem; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; color: #9ca3af; }
     .action-text { color: #01552b; font-weight: 700; transition: gap 0.2s; display: flex; align-items: center; gap: 5px; }
     .project-card:hover .action-text { gap: 10px; }
 
-    /* --- CONTROLES DE ADMINISTRAÇÃO (CORRIGIDOS) --- */
+    /* Botões Admin Flutuantes */
     .admin-controls {
         position: absolute; bottom: 15px; right: 15px;
         display: flex; gap: 8px;
-        z-index: 20; /* CRUCIAL: Maior que o z-index do stretched-link (1) */
+        z-index: 20; /* Maior que stretched-link */
         opacity: 0; transition: opacity 0.2s ease;
     }
     .card-image-box:hover .admin-controls { opacity: 1; }
@@ -128,8 +130,7 @@
         background: white; border: 1px solid #e5e7eb;
         color: #4b5563; display: flex; align-items: center; justify-content: center;
         text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        font-size: 0.9rem; transition: all 0.2s;
-        cursor: pointer; /* Garante cursor de mão */
+        font-size: 0.9rem; transition: all 0.2s; cursor: pointer;
     }
     .btn-admin:hover { background: #01552b; color: white; transform: scale(1.1); }
     .btn-admin.delete:hover { background: #ef4444; border-color: #ef4444; }
@@ -145,26 +146,30 @@
         <h1 class="display-4 fw-bold mb-2">Projetos do Laboratório</h1>
         <p class="opacity-75 mb-4" style="font-size: 1.1rem;">Explore o portfólio de inovações e pesquisas.</p>
         
-        {% if current_user.role == 'professor' %}
-            <a href="{{ url_for('main.new_project') }}" class="hero-btn">
-                <i class="fas fa-plus-circle"></i> Adicionar Novo Projeto
-            </a>
-        {% endif %}
+        <a href="{{ url_for('main.new_project') }}" class="hero-btn">
+            <i class="fas fa-plus-circle"></i> Adicionar Novo Projeto
+        </a>
     </div>
 
     <div class="controls-container">
         <div class="search-wrapper">
             <i class="fas fa-search search-icon"></i>
-            <input type="text" id="projectSearch" class="form-control search-input" placeholder="Pesquisar projeto por nome ou descrição...">
+            <input type="text" id="projectSearch" class="search-input" placeholder="Pesquisar projeto por nome ou descrição...">
         </div>
 
         <div class="category-filters">
-            <button class="filter-btn active" onclick="filterCategory('all', this)">Todos</button>
-            <button class="filter-btn" onclick="filterCategory('Robotica', this)">Robótica</button>
-            <button class="filter-btn" onclick="filterCategory('IA', this)">IA & Visão</button>
-            <button class="filter-btn" onclick="filterCategory('Embedded', this)">Embedded</button>
-            <button class="filter-btn" onclick="filterCategory('3D', this)">Impressão 3D</button>
-            <button class="filter-btn" onclick="filterCategory('Software', this)">Software</button>
+            <button class="filter-btn active" onclick="filterCat('all', this)">Todos</button>
+            
+            {% set unique_cats = [] %}
+            {% for p in projects %}
+                {% if p.category not in unique_cats %}
+                    {% set _ = unique_cats.append(p.category) %}
+                {% endif %}
+            {% endfor %}
+
+            {% for cat in unique_cats %}
+                <button class="filter-btn" onclick="filterCat('{{ cat }}', this)">{{ cat }}</button>
+            {% endfor %}
         </div>
     </div>
 
@@ -205,7 +210,6 @@
 
                 <div class="card-content">
                     <h3 class="card-title">{{ project.name }}</h3>
-                    
                     <p class="card-desc">
                         {% if project.description %}
                             {{ project.description }}
@@ -240,9 +244,7 @@
     <div class="empty-gallery text-center">
         <i class="fas fa-folder-open fa-3x text-muted mb-3 opacity-25"></i>
         <h5 class="text-muted">A galeria está vazia</h5>
-        {% if current_user.role == 'professor' %}
-            <p class="text-muted small">Comece por criar o primeiro projeto!</p>
-        {% endif %}
+        <p class="text-muted small">Comece por criar o primeiro projeto!</p>
     </div>
     {% endif %}
 
@@ -253,10 +255,9 @@
 {{ super() }}
 <script>
     let currentCatFilter = 'all';
-
     document.getElementById('projectSearch').addEventListener('keyup', applyFilters);
 
-    function filterCategory(cat, btn) {
+    function filterCat(cat, btn) {
         currentCatFilter = cat;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');

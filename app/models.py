@@ -12,21 +12,48 @@ import holidays
 def load_user(id):
     return User.query.get(int(id))
 
-# --- NOVO: TABELA DE LABORATÓRIOS (O TEMA DO MULTI-TENANT) ---
+# --- TABELA DE LABORATÓRIOS (ATUALIZADA) ---
 class Laboratory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     acronym = db.Column(db.String(20))
     
-    # NOVOS CAMPOS
+    # Campos de Perfil Básico
     description = db.Column(db.Text)
     image_file = db.Column(db.String(100), nullable=False, default='default_lab.jpg')
+    cover_file = db.Column(db.String(100), nullable=False, default='default_lab_cover.jpg')
     
+    # NOVOS CAMPOS: Identidade Institucional
+    affiliation_name = db.Column(db.String(150)) # Ex: "UDESC - Centro de Ciências"
+    affiliation_logo = db.Column(db.String(100)) # Logo da instituição
+    
+    # NOVOS CAMPOS: Localização e Contato
+    address = db.Column(db.String(255))   # Endereço completo para GPS
+    location = db.Column(db.String(100))  # Localização interna (Bloco/Sala)
+    
+    contact_email = db.Column(db.String(120))
+    instagram_link = db.Column(db.String(256))
+    linkedin_link = db.Column(db.String(256))
+    website_link = db.Column(db.String(256))
+    
+    # Relacionamentos
     users = db.relationship('User', backref='laboratory', lazy='dynamic')
     projects = db.relationship('Project', backref='laboratory', lazy='dynamic')
+    
+    # NOVO: Tags personalizadas deste lab
+    tags = db.relationship('ProjectTag', backref='laboratory', lazy='dynamic')
 
     def __repr__(self):
         return f'<Lab {self.acronym}>'
+
+# --- NOVA TABELA: TAGS DE PROJETO ---
+class ProjectTag(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False) # Ex: "IA", "Química"
+    laboratory_id = db.Column(db.Integer, db.ForeignKey('laboratory.id'))
+
+    def __repr__(self):
+        return self.name
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +61,7 @@ class Project(db.Model):
     description = db.Column(db.Text)
     image_file = db.Column(db.String(100), nullable=False, default='default_project.jpg')
     created_at = db.Column(db.DateTime, default=db.func.now())
+    # Mantemos category como string, mas ela será preenchida com valores da ProjectTag
     category = db.Column(db.String(50), nullable=False, default='Geral')
 
     laboratory_id = db.Column(db.Integer, db.ForeignKey('laboratory.id'), nullable=True) # Nullable=True por enquanto para a migração

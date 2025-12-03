@@ -2,260 +2,294 @@
 
 {% block content %}
 <style>
-    /* --- Estilos Exclusivos do Perfil --- */
-    
-    /* Cartão de Identidade (Esquerda) */
-    .profile-card {
-        text-align: center;
+    /* --- 1. HEADER DO PERFIL --- */
+    .profile-header-wrapper {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
         position: relative;
+    }
+
+    /* Capa Panorâmica */
+    .profile-cover {
+        height: 250px;
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    .profile-cover::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 100%);
+    }
+
+    /* Barra de Informações */
+    .profile-bar {
+        padding: 0 2rem 2rem 2rem;
+        display: flex;
+        align-items: flex-end;
+        gap: 2rem;
+        margin-top: -60px; /* Faz subir */
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Avatar */
+    .profile-avatar-box {
+        width: 160px; height: 160px;
+        border-radius: 50%;
+        border: 5px solid white;
+        background: white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        flex-shrink: 0;
         overflow: hidden;
     }
-    
-    /* "Capa" colorida no topo do cartão (AGORA DINÂMICA) */
-    .profile-header-bg {
-        height: 150px; /* Aumentei para a capa aparecer melhor */
-        background-color: #e9ecef; /* Cor de fundo de fallback */
-        margin: -2rem -2rem 0 -2rem; /* Negativo para encostar nas bordas */
-        margin-bottom: 3rem; /* Espaço para a foto subir */
-        position: relative;
-    }
-    /* Overlay escuro suave para destacar a foto/texto se necessário */
-    .profile-header-bg::after {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.1);
-    }
+    .profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* A Foto de Perfil "Flutuante" */
-    .profile-avatar-container {
-        position: relative;
-        margin-top: -80px; /* Puxa a foto para cima da capa */
-        display: inline-block;
-        z-index: 2; /* Garante que fica acima da capa */
-    }
-    .profile-avatar {
-        width: 140px;
-        height: 140px;
-        border-radius: 50%;
-        border: 5px solid #ffffff; /* Borda branca grossa para separar do fundo */
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        object-fit: cover;
-        background-color: #fff;
+    /* Identidade */
+    .profile-identity { flex-grow: 1; padding-top: 70px; }
+    .profile-name { font-size: 2rem; font-weight: 800; color: #1e293b; line-height: 1.2; }
+    .profile-role { 
+        font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; 
+        color: #64748b; display: flex; align-items: center; gap: 8px; margin-top: 5px;
     }
     
-    /* Badge de Função */
-    .role-badge {
-        margin-top: 10px;
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-        border-radius: 50rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+    /* Redes */
+    .social-pills { display: flex; gap: 10px; margin-top: 1rem; }
+    .s-pill {
+        width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; color: #64748b;
+        display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        border: 1px solid #e2e8f0; text-decoration: none;
     }
+    .s-pill:hover { background: #01552b; color: white; transform: translateY(-2px); }
 
-    /* Links Sociais */
-    .social-btn {
-        width: 40px;
-        height: 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background-color: #f3f4f6;
-        color: #4b5563;
-        transition: all 0.2s;
-        margin: 0 5px;
-        text-decoration: none;
+    /* Botão Editar */
+    .btn-edit {
+        margin-bottom: 10px;
+        background: white; border: 1px solid #cbd5e1; color: #475569;
+        padding: 0.6rem 1.5rem; border-radius: 50rem; font-weight: 600;
+        transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
     }
-    .social-btn:hover {
-        background-color: #01552b;
-        color: white;
-        transform: translateY(-3px);
-    }
+    .btn-edit:hover { background: #f8fafc; color: #1e293b; border-color: #94a3b8; }
 
-    /* Cartões de Estatísticas */
-    .stat-box {
-        background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid #e5e7eb;
-        display: flex;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        transition: transform 0.2s;
-    }
-    .stat-box:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    
-    .stat-icon-wrapper {
-        width: 50px; height: 50px;
-        border-radius: 12px;
-        background: rgba(1, 85, 43, 0.1);
-        color: #01552b;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.5rem;
-        margin-right: 1rem;
-    }
+    /* --- 2. LAYOUT --- */
+    .profile-grid { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
 
-    /* Seções de Detalhes */
-    .detail-section {
+    /* Cartões */
+    .p-card {
+        background: white; border-radius: 20px; padding: 2rem;
+        border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         margin-bottom: 2rem;
     }
-    .detail-title {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        color: #9ca3af;
-        font-weight: 700;
-        margin-bottom: 0.8rem;
-        letter-spacing: 0.05em;
+    .p-card-title {
+        font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem;
+    }
+    .p-card-title i { color: #01552b; }
+
+    /* Info List */
+    .info-list { list-style: none; padding: 0; margin: 0; }
+    .info-li { margin-bottom: 1.2rem; font-size: 0.95rem; color: #475569; display: flex; gap: 12px; }
+    .info-li i { color: #94a3b8; width: 20px; text-align: center; margin-top: 3px; }
+    
+    /* Skills */
+    .skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .skill-badge {
+        background: #f0fdf4; color: #166534; padding: 5px 12px; border-radius: 8px;
+        font-size: 0.8rem; font-weight: 600; border: 1px solid #dcfce7;
     }
 
-    /* Barra de Progresso do Nível */
-    .level-progress { height: 6px; background-color: #e9ecef; border-radius: 3px; margin-top: 8px; overflow: hidden; }
-    .level-bar { height: 100%; background: linear-gradient(90deg, #01552b, #10b981); border-radius: 3px; transition: width 1s ease-in-out; }
+    /* --- GAMIFICATION CARD --- */
+    .level-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white; position: relative; overflow: hidden;
+    }
+    .level-bg-icon {
+        position: absolute; right: -20px; bottom: -20px; font-size: 8rem; 
+        color: white; opacity: 0.05; transform: rotate(-15deg);
+    }
+    
+    .level-row { display: flex; align-items: center; gap: 2rem; position: relative; z-index: 2; }
+    .level-icon-circle {
+        width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
+        border: 2px solid rgba(255,255,255,0.2); color: #4ade80;
+    }
+    
+    .level-info h4 { font-size: 2rem; font-weight: 900; margin: 0; line-height: 1; color: #4ade80; }
+    .level-info span { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 700; }
+    
+    .level-progress-wrapper { margin-top: 1.5rem; position: relative; z-index: 2; }
+    .xp-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+    .xp-fill { height: 100%; background: #4ade80; border-radius: 10px; box-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
+    .xp-text { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; margin-top: 5px; }
+
+    /* --- LOGS RECENTES --- */
+    .mini-log { padding: 1rem; border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
+    .mini-log:last-child { border-bottom: none; }
+    .mini-log:hover { background: #f8fafc; }
+    .ml-header { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.3rem; }
+    .ml-date { font-weight: 700; color: #01552b; }
+    .ml-proj { background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; }
+    .ml-text { font-size: 0.95rem; color: #334155; margin: 0; line-height: 1.4; }
+
+    @media (max-width: 992px) {
+        .profile-bar { flex-direction: column; align-items: center; text-align: center; margin-top: -80px; }
+        .profile-identity { padding-top: 10px; }
+        .profile-grid { grid-template-columns: 1fr; }
+        .social-pills { justify-content: center; }
+    }
 </style>
 
-<div class="row">
+<div class="profile-header-wrapper">
+    <div class="profile-cover" style="background-image: url('{{ url_for('static', filename='profile_pics/' + user.cover_file) }}');"></div>
     
-    <div class="col-lg-4 mb-4">
-        <div class="content-card profile-card h-100">
-            
-            <div class="profile-header-bg" 
-                 style="background: url('{{ url_for('static', filename='profile_pics/' + user.cover_file) }}') center center / cover no-repeat;">
-            </div>
-            
-            <div class="profile-avatar-container">
-                <img src="{{ image_file }}" class="profile-avatar" alt="Foto de Perfil">
-            </div>
-
-            <h3 class="fw-bold text-dark mt-2 mb-1">{{ user.username }}</h3>
-            <p class="text-muted mb-3">
-                <i class="far fa-envelope me-1"></i> {{ user.email }}
-            </p>
-            
-            <span class="badge role-badge {% if user.role == 'professor' %}badge-soft-primary{% else %}badge-soft-success{% endif %}">
-                {{ user.role }}
-            </span>
-
-            <hr class="my-4">
-
-            <div class="d-flex justify-content-center mb-4">
-                {% if user.github_link %}
-                    <a href="{{ user.github_link }}" target="_blank" class="social-btn" title="GitHub"><i class="fab fa-github"></i></a>
-                {% endif %}
-                {% if user.linkedin_link %}
-                    <a href="{{ user.linkedin_link }}" target="_blank" class="social-btn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                {% endif %}
-                {% if user.lattes_link %}
-                    <a href="{{ user.lattes_link }}" target="_blank" class="social-btn" title="Lattes"><i class="fas fa-scroll"></i></a>
-                {% endif %}
-                
-                {% if not user.github_link and not user.linkedin_link and not user.lattes_link %}
-                    <p class="text-muted small fst-italic">Sem redes sociais cadastradas.</p>
-                {% endif %}
-            </div>
-
-            {% if user == current_user %}
-                <a href="{{ url_for('main.edit_profile') }}" class="btn btn-outline-primary w-100 rounded-pill">
-                    <i class="fas fa-user-edit me-2"></i> Editar Perfil
-                </a>
-            {% endif %}
+    <div class="profile-bar">
+        <div class="profile-avatar-box">
+            <img src="{{ image_file }}" class="profile-avatar-img">
         </div>
+
+        <div class="profile-identity">
+            <h1 class="profile-name">{{ user.username }}</h1>
+            <div class="profile-role">
+                {% if user.role == 'professor' %}
+                    <i class="fas fa-chalkboard-teacher"></i> Coordenador / Professor
+                {% else %}
+                    <i class="fas fa-microscope"></i> Pesquisador / Bolsista
+                {% endif %}
+            </div>
+
+            <div class="social-pills">
+                {% if user.github_link %}<a href="{{ user.github_link }}" target="_blank" class="s-pill"><i class="fab fa-github"></i></a>{% endif %}
+                {% if user.linkedin_link %}<a href="{{ user.linkedin_link }}" target="_blank" class="s-pill"><i class="fab fa-linkedin-in"></i></a>{% endif %}
+                {% if user.lattes_link %}<a href="{{ user.lattes_link }}" target="_blank" class="s-pill"><i class="fas fa-scroll"></i></a>{% endif %}
+                {% if user.email %}<a href="mailto:{{ user.email }}" class="s-pill"><i class="fas fa-envelope"></i></a>{% endif %}
+            </div>
+        </div>
+
+        {% if user == current_user %}
+        <a href="{{ url_for('main.edit_profile') }}" class="btn-edit">
+            <i class="fas fa-pen"></i> Editar Perfil
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="profile-grid">
+    
+    <div class="left-col">
+        
+        <div class="p-card">
+            <div class="p-card-title"><i class="fas fa-user"></i> Sobre</div>
+            <p class="text-muted" style="white-space: pre-line; line-height: 1.6;">
+                {{ user.bio if user.bio else 'Nenhuma biografia informada.' }}
+            </p>
+        </div>
+
+        <div class="p-card">
+            <div class="p-card-title"><i class="fas fa-graduation-cap"></i> Dados Académicos</div>
+            <ul class="info-list">
+                <li class="info-li">
+                    <i class="fas fa-university"></i>
+                    <div>
+                        <strong>Curso / Vínculo</strong><br>
+                        {{ user.course if user.course else 'Não informado' }}
+                    </div>
+                </li>
+                <li class="info-li">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <strong>Contato</strong><br>
+                        {{ user.email }}
+                    </div>
+                </li>
+                {% if user.laboratory %}
+                <li class="info-li">
+                    <i class="fas fa-flask"></i>
+                    <div>
+                        <strong>Laboratório</strong><br>
+                        {{ user.laboratory.acronym }}
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="p-card">
+            <div class="p-card-title"><i class="fas fa-tools"></i> Competências</div>
+            <div class="skills-wrap">
+                {% if user.skills %}
+                    {% for skill in user.skills.split(',') %}
+                        {% if skill|trim != '' %}
+                        <span class="skill-badge">{{ skill|trim }}</span>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <span class="text-muted small">Nenhuma competência listada.</span>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
-    <div class="col-lg-8">
+    <div class="right-col">
         
-        <div class="row">
-            <div class="col-md-6">
-                <div class="stat-box">
-                    <div class="stat-icon-wrapper">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <div>
-                        <h3 class="fw-bold mb-0">{{ total_logs }}</h3>
-                        <span class="text-muted small">Registros Totais</span>
-                    </div>
+        {% set level_info = user.get_level_info() %}
+        <div class="p-card level-card">
+            <i class="{{ level_info.icon }} level-bg-icon"></i>
+            
+            <div class="level-row">
+                <div class="level-icon-circle">
+                    <i class="{{ level_info.icon }}"></i>
+                </div>
+                <div class="level-info">
+                    <span>Nível {{ level_info.level }}</span>
+                    <h4>{{ level_info.title }}</h4>
                 </div>
             </div>
-            
-            {% set level_info = user.get_level_info() %}
-            <div class="col-md-6">
-                <div class="stat-box flex-column align-items-start">
-                    <div class="d-flex align-items-center w-100 mb-2">
-                        <div class="stat-icon-wrapper {{ level_info.color }} bg-opacity-10" style="background-color: rgba(0,0,0,0.05);">
-                            <i class="{{ level_info.icon }}"></i>
-                        </div>
-                        <div>
-                            <h3 class="fw-bold mb-0">Nível {{ level_info.level }}</h3>
-                            <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.7rem;">{{ level_info.title }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="w-100">
-                        <div class="d-flex justify-content-between small text-muted mb-1">
-                            <span>XP: {{ level_info.count }}</span>
-                            {% if level_info.next_target != 'Max' %}
-                                <span>Próximo: {{ level_info.next_target }}</span>
-                            {% else %}
-                                <span>Lenda!</span>
-                            {% endif %}
-                        </div>
-                        <div class="level-progress">
-                            <div class="level-bar" style="width: {{ level_info.progress }}%"></div>
-                        </div>
-                    </div>
+
+            <div class="level-progress-wrapper">
+                <div class="xp-bar">
+                    <div class="xp-fill" style="width: {{ level_info.progress }}%"></div>
+                </div>
+                <div class="xp-text">
+                    <span>{{ level_info.count }} Registos Totais</span>
+                    <span>Próximo Nível: {{ level_info.next_target }}</span>
                 </div>
             </div>
         </div>
 
-        <div class="content-card">
+        <div class="p-card">
+            <div class="p-card-title"><i class="fas fa-history"></i> Atividade Recente</div>
             
-            <div class="detail-section">
-                <h6 class="detail-title"><i class="fas fa-user me-2"></i> Sobre</h6>
-                {% if user.bio %}
-                    <p class="text-dark" style="white-space: pre-line;">{{ user.bio }}</p>
+            <div class="recent-logs-list">
+                {% if recent_logs %}
+                    {% for log in recent_logs %}
+                    <div class="mini-log">
+                        <div class="ml-header">
+                            <span class="ml-date">{{ log.entry_date.strftime('%d/%m/%Y') }}</span>
+                            <span class="ml-proj">{{ log.project }}</span>
+                        </div>
+                        <p class="ml-text">{{ log.tasks_completed | truncate(100) }}</p>
+                    </div>
+                    {% endfor %}
                 {% else %}
-                    <p class="text-muted fst-italic">Nenhuma biografia adicionada ainda.</p>
+                    <div class="text-center py-3 text-muted">
+                        Sem atividades recentes.
+                    </div>
                 {% endif %}
             </div>
-
-            <hr class="my-4">
-
-            <div class="detail-section">
-                <h6 class="detail-title"><i class="fas fa-graduation-cap me-2"></i> Dados Académicos</h6>
-                <div class="row">
-                    <div class="col-md-6 mb-3 mb-md-0">
-                        <p class="mb-1 fw-bold text-dark">Curso / Vínculo</p>
-                        <p class="text-muted">{{ user.course if user.course else 'Não informado' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <p class="mb-1 fw-bold text-dark">E-mail de Contato</p>
-                        <p class="text-muted text-break">{{ user.email }}</p>
-                    </div>
-                </div>
+            
+            {% if total_logs > 5 %}
+            <div class="text-center mt-3">
+                <a href="{{ url_for('main.view_logs', student_id=user.id) }}" class="btn btn-sm btn-outline-primary rounded-pill">Ver Histórico Completo</a>
             </div>
-
-            <hr class="my-4">
-
-            <div class="detail-section mb-0">
-                <h6 class="detail-title"><i class="fas fa-tools me-2"></i> Competências & Habilidades</h6>
-                {% if user.skills %}
-                    <div class="d-flex flex-wrap gap-2">
-                        {% for skill in user.skills.split(',') %}
-                            {% if skill|trim != '' %}
-                                <span class="badge badge-soft-info rounded-pill px-3 py-2" style="font-size: 0.9rem;">
-                                    {{ skill }}
-                                </span>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted fst-italic">Nenhuma habilidade cadastrada.</p>
-                {% endif %}
-            </div>
-
+            {% endif %}
         </div>
+
     </div>
 </div>
 {% endblock %}

@@ -4,11 +4,11 @@
 <style>
     /* --- CONFIGURAÇÃO GERAL --- */
     main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-    /* nav { display: none !important; } */ /* Descomente se quiser remover a navbar */
+    /* nav { display: none !important; } */ 
 
     body {
-        background-color: #020617;
-        color: #f8fafc;
+        background-color: #0f172a;
+        color: white;
         font-family: 'Inter', sans-serif;
         overflow-x: hidden;
     }
@@ -21,45 +21,77 @@
     .text-brand { color: #4ade80; }
     .section-padding { padding: 8rem 2rem; }
 
-    /* --- 1. HERO SECTION (Refinada) --- */
-    .hero-section {
+    /* --- 1. HERO SECTION (O Impacto) --- */
+    .landing-hero {
         min-height: 90vh;
-        background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 70%);
-        position: relative; display: flex; align-items: center; justify-content: center; text-align: center;
-        overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.05);
+        background: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+        overflow: hidden;
     }
-    
-    /* Glow de fundo */
-    .hero-glow {
-        position: absolute; width: 800px; height: 600px; background: #01552b;
-        filter: blur(150px); opacity: 0.15; top: -200px; border-radius: 50%;
-        animation: breathe 10s infinite alternate;
+
+    /* Grelha de fundo animada */
+    .hero-grid {
+        position: absolute; inset: 0;
+        background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+        z-index: 1;
     }
-    @keyframes breathe { from { opacity: 0.15; transform: scale(1); } to { opacity: 0.25; transform: scale(1.1); } }
 
-    .hero-content { position: relative; z-index: 10; max-width: 900px; }
+    .hero-content { position: relative; z-index: 10; max-width: 900px; animation: fadeInUp 1s ease-out; }
 
-    .hero-badge {
-        background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 8px 16px; border-radius: 50rem; font-size: 0.8rem; font-weight: 600;
-        color: #cbd5e1; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 2rem;
-        backdrop-filter: blur(5px);
+    .badge-tech {
+        background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2);
+        padding: 8px 20px; border-radius: 50rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem;
+        margin-bottom: 2rem; display: inline-block; backdrop-filter: blur(5px);
     }
-    .hero-badge-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80; }
 
-    .hero-title { font-size: 5rem; font-weight: 900; line-height: 1.05; margin-bottom: 1.5rem; letter-spacing: -2px; }
-    .hero-desc { font-size: 1.3rem; color: #94a3b8; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }
-
-    /* Botões CTA */
-    .btn-hero-primary {
-        background: #22c55e; color: #022c16; padding: 1rem 2.5rem; border-radius: 12px;
-        font-weight: 700; text-decoration: none; transition: all 0.3s;
-        box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); display: inline-block;
+    .hero-title {
+        font-size: 4.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem;
+        background: linear-gradient(to right, #ffffff, #94a3b8);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 0 40px rgba(34, 197, 94, 0.5); color: #022c16; background: #4ade80; }
 
-    /* --- 2. BENTO GRID (A grande mudança visual) --- */
-    .bento-section { background: #0f172a; }
+    .hero-subtitle {
+        font-size: 1.4rem; color: #94a3b8; margin-bottom: 3rem; line-height: 1.6; font-weight: 300;
+    }
+
+    .cta-group { display: flex; gap: 1.5rem; justify-content: center; }
+
+    .btn-cta-primary {
+        background: #01552b; color: white; padding: 1rem 2.5rem; border-radius: 12px;
+        font-size: 1.1rem; font-weight: 700; text-decoration: none; transition: all 0.3s;
+        box-shadow: 0 0 30px rgba(1, 85, 43, 0.4); border: 1px solid #01552b;
+    }
+    .btn-cta-primary:hover { transform: translateY(-5px); box-shadow: 0 0 50px rgba(1, 85, 43, 0.6); color: white; }
+
+    .btn-cta-secondary {
+        background: rgba(255,255,255,0.05); color: white; padding: 1rem 2.5rem; border-radius: 12px;
+        font-size: 1.1rem; font-weight: 600; text-decoration: none; transition: all 0.3s;
+        border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);
+    }
+    .btn-cta-secondary:hover { background: rgba(255,255,255,0.1); color: white; }
+
+    /* --- 2. STATS STRIP --- */
+    .stats-strip {
+        border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);
+        background: rgba(15, 23, 42, 0.5); padding: 4rem 0;
+    }
+    .stats-container {
+        max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 2rem;
+    }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 3.5rem; font-weight: 900; color: white; display: block; margin-bottom: 0.5rem; }
+    .stat-text { text-transform: uppercase; letter-spacing: 2px; color: #64748b; font-weight: 700; font-size: 0.9rem; }
+
+    /* --- 3. BENTO GRID (A grande mudança visual) --- */
+    .bento-section { background: #020617; }
     .bento-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr); /* 3 colunas */
@@ -85,12 +117,11 @@
     .bento-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; color: white; }
     .bento-desc { font-size: 1rem; color: #94a3b8; line-height: 1.5; }
     
-    /* Imagens/Decorativo dentro do Bento */
     .bento-visual {
         position: absolute; right: -20px; bottom: -20px; opacity: 0.1; font-size: 10rem; transform: rotate(-15deg);
     }
 
-    /* --- 3. SPLIT SECTION (Para Quem é) --- */
+    /* --- 4. SPLIT SECTION (Para Quem é) --- */
     .roles-section { padding: 6rem 2rem; background: #020617; border-top: 1px solid rgba(255,255,255,0.05); }
     .roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; max-width: 1100px; margin: 0 auto; }
     
@@ -102,15 +133,149 @@
     }
     .role-col li i { color: #4ade80; margin-top: 5px; }
 
-    /* --- 4. FAQ SECTION (Conteúdo útil) --- */
+    /* --- 5. SECÇÃO DE LABORATÓRIOS --- */
+    .labs-header {
+        text-align: center; margin-bottom: 4rem;
+        max-width: 800px; margin-left: auto; margin-right: auto; /* Centraliza o bloco todo */
+    }
+    .labs-tag {
+        color: #01552b; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; 
+        font-size: 0.8rem; display: block; margin-bottom: 1rem;
+    }
+    .labs-title {
+        font-size: 3rem; /* Aumentei um pouco */
+        font-weight: 900; color: #0f172a; margin: 0;
+        line-height: 1.1;
+    }
+    
+    /* NOVO ESTILO PARA O TEXTO QUE ESTAVA "PERDIDO" */
+    .labs-subtitle {
+        font-size: 1.25rem;       /* Maior */
+        color: #475569;           /* Mais escuro e legível */
+        margin-top: 1rem;
+        line-height: 1.6;
+        font-weight: 400;
+        max-width: 600px;         /* Limita largura para leitura confortável */
+        margin-left: auto; margin-right: auto;
+    }
+
+    .labs-section {
+        padding: 6rem 2rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .labs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2.5rem;
+        max-width: 1200px; margin: 0 auto;
+    }
+
+    .lab-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+    }
+    .lab-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px -10px rgba(1, 85, 43, 0.15);
+        border-color: #01552b;
+    }
+
+    /* 1. A CAPA (Banner) */
+    .lab-cover-box {
+        height: 120px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: #0f172a;
+    }
+    .lab-cover-img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.5s ease;
+        opacity: 0.9;
+    }
+    .lab-card:hover .lab-cover-img { transform: scale(1.05); opacity: 1; }
+
+    /* 2. A LOGO PRINCIPAL (Flutuante) */
+    .lab-logo-wrapper {
+        margin-top: -50px; /* Puxa para cima da capa */
+        display: flex;
+        justify-content: center;
+        position: relative;
+        z-index: 2;
+    }
+    .lab-logo-circle {
+        width: 90px; height: 90px;
+        background: white;
+        border-radius: 20px; /* Quadrado arredondado moderno */
+        padding: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .lab-logo-img {
+        width: 100%; height: 100%; object-fit: contain;
+    }
+
+    /* Corpo */
+    .lab-body {
+        padding: 1rem 2rem 2rem 2rem;
+        text-align: center;
+        flex-grow: 1;
+        display: flex; flex-direction: column; align-items: center;
+    }
+
+    .lab-acronym {
+        color: #01552b; font-weight: 800; font-size: 0.75rem; letter-spacing: 1px;
+        text-transform: uppercase; margin-top: 0.5rem;
+    }
+    .lab-name {
+        font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-bottom: 0.2rem; line-height: 1.2;
+    }
+    
+    /* Afiliação */
+    .affiliation-badge {
+        display: flex; align-items: center; gap: 6px;
+        background: #f1f5f9; padding: 4px 10px; border-radius: 50rem;
+        font-size: 0.7rem; color: #64748b; font-weight: 600; margin-top: 0.5rem;
+    }
+    .aff-logo-mini {
+        width: 16px; height: 16px; object-fit: contain;
+        filter: grayscale(100%); opacity: 0.7; /* Discreto */
+    }
+
+    /* Stats */
+    .lab-stats {
+        margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;
+        width: 100%; display: flex; justify-content: center; gap: 1.5rem;
+        color: #64748b; font-size: 0.8rem; font-weight: 600;
+    }
+    .lab-stats i { color: #94a3b8; margin-right: 4px; }
+
+    /* Seta */
+    .lab-arrow {
+        margin-top: 1.5rem; color: #01552b; font-weight: 700; font-size: 0.85rem;
+        opacity: 0; transform: translateY(10px); transition: all 0.3s;
+    }
+    .lab-card:hover .lab-arrow { opacity: 1; transform: translateY(0); }
+
+    /* --- 6. FAQ SECTION --- */
     .faq-section { padding: 6rem 2rem; background: #0f172a; }
     .faq-container { max-width: 800px; margin: 0 auto; }
     .faq-title { text-align: center; font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; }
-    
     .faq-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 1.5rem 0; }
     .faq-question { font-size: 1.2rem; font-weight: 600; color: white; cursor: pointer; display: flex; justify-content: space-between; }
-    .faq-answer { margin-top: 1rem; color: #94a3b8; line-height: 1.6; display: none; } /* JS simples para abrir */
-    
+    .faq-answer { margin-top: 1rem; color: #94a3b8; line-height: 1.6; display: none; }
+
     /* --- FOOTER --- */
     footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 4rem 0; text-align: center; background: #020617; }
 
@@ -121,141 +286,46 @@
         .roles-grid { grid-template-columns: 1fr; }
         .hero-title { font-size: 3.5rem; }
     }
-
-    /* --- SECÇÃO DE LABORATÓRIOS (NOVO) --- */
-    .labs-section {
-        padding: 6rem 2rem;
-        background: #f8fafc; /* Fundo claro para contraste com o footer escuro */
-        border-top: 1px solid #e2e8f0;
-    }
-
-    .labs-header {
-        text-align: center; margin-bottom: 4rem;
-    }
-    .labs-tag {
-        color: #01552b; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem; display: block; margin-bottom: 1rem;
-    }
-    .labs-title {
-        font-size: 2.5rem; font-weight: 900; color: #0f172a; margin: 0;
-    }
-
-    .labs-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 2rem;
-        max-width: 1100px; margin: 0 auto;
-    }
-
-    /* O Cartão do Lab */
-    .lab-card {
-        background: white;
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
-        border: 1px solid #e2e8f0;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-decoration: none;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        position: relative;
-    }
-
-    .lab-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 40px -10px rgba(1, 85, 43, 0.15);
-        border-color: #01552b;
-    }
-
-    /* Área da Logo */
-    .lab-logo-area {
-        height: 140px;
-        background: #f1f5f9;
-        display: flex; align-items: center; justify-content: center;
-        position: relative;
-    }
-    /* Círculo branco atrás da logo */
-    .lab-logo-bg {
-        width: 80px; height: 80px;
-        background: white;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        transition: transform 0.3s;
-    }
-    .lab-card:hover .lab-logo-bg { transform: scale(1.1); }
-
-    .lab-img {
-        width: 50px; height: 50px; object-fit: contain;
-    }
-
-    /* Corpo */
-    .lab-body {
-        padding: 2rem; text-align: center; flex-grow: 1;
-        display: flex; flex-direction: column; align-items: center;
-    }
-
-    .lab-acronym {
-        background: #dcfce7; color: #166534;
-        padding: 4px 12px; border-radius: 6px;
-        font-size: 0.75rem; font-weight: 800;
-        margin-bottom: 1rem; display: inline-block;
-    }
-
-    .lab-name {
-        font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;
-        line-height: 1.3;
-    }
-
-    .lab-stats {
-        margin-top: auto;
-        padding-top: 1.5rem;
-        width: 100%;
-        display: flex; justify-content: center; gap: 1.5rem;
-        color: #64748b; font-size: 0.85rem; font-weight: 500;
-    }
-    .lab-stats span { display: flex; align-items: center; gap: 6px; }
-
-    /* Seta de Ação */
-    .lab-arrow {
-        margin-top: 1.5rem;
-        color: #01552b; font-weight: 700; font-size: 0.9rem;
-        opacity: 0; transform: translateX(-10px);
-        transition: all 0.3s;
-    }
-    .lab-card:hover .lab-arrow { opacity: 1; transform: translateX(0); }
+    
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-up { animation: fadeInUp 1s ease-out forwards; }
 </style>
 
-<section class="hero-section">
+<section class="landing-hero">
+    <div class="hero-grid"></div>
     <div class="hero-glow"></div>
+    
     <div class="hero-content animate-up">
-        <div class="hero-badge">
+        <div class="badge-tech">
             <div class="hero-badge-dot"></div> v1.0 Stable
         </div>
         <h1 class="hero-title">
-            Gestão de Laboratório <br>
-            <span class="text-gradient">Reinventada.</span>
+            A Inteligência do seu <br>
+            <span class="text-brand">Laboratório</span>
         </h1>
-        <p class="hero-desc">
+        <p class="hero-subtitle">
             Logbook integra registos diários, inteligência artificial e gestão de projetos numa única plataforma unificada para equipas de pesquisa.
         </p>
-        <div class="d-flex gap-3 justify-content-center">
-            <a href="{{ url_for('main.login') }}" class="btn-hero-primary">Aceder ao Sistema</a>
+        <div class="cta-group">
+            <a href="{{ url_for('main.login') }}" class="btn-cta-primary">Aceder ao Sistema</a>
+            <a href="{{ url_for('main.register') }}" class="btn-cta-secondary">Criar Conta</a>
         </div>
-        
-        <div class="d-flex justify-content-center gap-5 mt-5 pt-4 border-top border-white border-opacity-10">
-            <div>
-                <div class="fs-2 fw-bold text-white">{{ stats.projects }}</div>
-                <div class="text-uppercase fs-7 text-muted fw-bold ls-1">Projetos</div>
-            </div>
-            <div>
-                <div class="fs-2 fw-bold text-white">{{ stats.logs }}</div>
-                <div class="text-uppercase fs-7 text-muted fw-bold ls-1">Registos</div>
-            </div>
-            <div>
-                <div class="fs-2 fw-bold text-white">{{ stats.users }}</div>
-                <div class="text-uppercase fs-7 text-muted fw-bold ls-1">Membros</div>
-            </div>
+    </div>
+</section>
+
+<section class="stats-strip">
+    <div class="stats-container">
+        <div class="stat-item">
+            <span class="stat-num">{{ stats.logs }}</span>
+            <span class="stat-text">Registos Realizados</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">{{ stats.projects }}</span>
+            <span class="stat-text">Projetos Ativos</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">{{ stats.users }}</span>
+            <span class="stat-text">Pesquisadores</span>
         </div>
     </div>
 </section>
@@ -315,7 +385,6 @@
                 <li><i class="fas fa-check"></i> Registo de atividades em menos de 30 segundos.</li>
                 <li><i class="fas fa-check"></i> Histórico organizado para o TCC/Tese.</li>
                 <li><i class="fas fa-check"></i> Perfil profissional com Lattes e GitHub.</li>
-                <li><i class="fas fa-check"></i> Acompanhamento visual de progresso.</li>
             </ul>
         </div>
         <div class="role-col">
@@ -324,26 +393,7 @@
                 <li><i class="fas fa-check"></i> Visão raio-X de todo o laboratório.</li>
                 <li><i class="fas fa-check"></i> Alertas automáticos de alunos inativos.</li>
                 <li><i class="fas fa-check"></i> Resumos semanais prontos no e-mail.</li>
-                <li><i class="fas fa-check"></i> Gestão centralizada de projetos e equipa.</li>
             </ul>
-        </div>
-    </div>
-</section>
-
-<section class="faq-section">
-    <h2 class="faq-title">Perguntas Frequentes</h2>
-    <div class="faq-container">
-        <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-question">Como faço para entrar? <i class="fas fa-chevron-down"></i></div>
-            <div class="faq-answer">O sistema é restrito aos membros do laboratório. Clique em "Criar Conta" e aguarde a aprovação do professor coordenador.</div>
-        </div>
-        <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-question">É gratuito? <i class="fas fa-chevron-down"></i></div>
-            <div class="faq-answer">Sim, o Logbook é uma ferramenta open-source desenvolvida internamente para apoiar a pesquisa.</div>
-        </div>
-        <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-question">Os meus dados são públicos? <i class="fas fa-chevron-down"></i></div>
-            <div class="faq-answer">Por padrão, não. Apenas o seu perfil básico e projetos marcados explicitamente como públicos aparecem para quem não está logado. Os seus diários detalhados são privados da equipa.</div>
         </div>
     </div>
 </section>
@@ -352,22 +402,40 @@
     <div class="labs-header">
         <span class="labs-tag">Ecossistema</span>
         <h2 class="labs-title">Nossos Laboratórios</h2>
-        <p class="text-muted mt-2">Conheça as unidades de pesquisa que utilizam a plataforma.</p>
+        
+        <p class="labs-subtitle">
+            Conheça as unidades de pesquisa ativas que utilizam a plataforma para impulsionar a inovação.
+        </p>
     </div>
 
     <div class="labs-grid">
         {% for lab in labs %}
         <a href="{{ url_for('main.public_lab', lab_id=lab.id) }}" class="lab-card">
             
-            <div class="lab-logo-area">
-                <div class="lab-logo-bg">
-                    <img src="{{ url_for('static', filename='lab_logos/' + lab.image_file) }}" class="lab-img">
+            <div class="lab-cover-box">
+                <img src="{{ url_for('static', filename='profile_pics/' + lab.cover_file) }}" class="lab-cover-img">
+            </div>
+
+            <div class="lab-logo-wrapper">
+                <div class="lab-logo-circle">
+                    <img src="{{ url_for('static', filename='lab_logos/' + lab.image_file) }}" class="lab-logo-img">
                 </div>
             </div>
 
             <div class="lab-body">
                 <span class="lab-acronym">{{ lab.acronym }}</span>
                 <h3 class="lab-name">{{ lab.name }}</h3>
+                
+                {% if lab.affiliation_name %}
+                <div class="affiliation-badge">
+                    {% if lab.affiliation_logo %}
+                        <img src="{{ url_for('static', filename='lab_logos/' + lab.affiliation_logo) }}" class="aff-logo-mini">
+                    {% else %}
+                        <i class="fas fa-university text-muted"></i>
+                    {% endif %}
+                    {{ lab.affiliation_name }}
+                </div>
+                {% endif %}
                 
                 <div class="lab-stats">
                     <span><i class="fas fa-users"></i> {{ lab.users.count() }}</span>
@@ -383,17 +451,28 @@
     </div>
 </section>
 
+<section class="faq-section">
+    <h2 class="faq-title">Perguntas Frequentes</h2>
+    <div class="faq-container">
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">Como faço para entrar? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">O sistema é restrito aos membros do laboratório. Clique em "Criar Conta" e aguarde a aprovação.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">É gratuito? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Sim, o Logbook é uma ferramenta open-source desenvolvida internamente.</div>
+        </div>
+    </div>
+</section>
+
 <script>
     function toggleFaq(element) {
         const answer = element.querySelector('.faq-answer');
         const icon = element.querySelector('.fa-chevron-down');
-        
         if (answer.style.display === 'block') {
-            answer.style.display = 'none';
-            icon.style.transform = 'rotate(0deg)';
+            answer.style.display = 'none'; icon.style.transform = 'rotate(0deg)';
         } else {
-            answer.style.display = 'block';
-            icon.style.transform = 'rotate(180deg)';
+            answer.style.display = 'block'; icon.style.transform = 'rotate(180deg)';
         }
     }
 </script>

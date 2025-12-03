@@ -2,179 +2,176 @@
 
 {% block content %}
 <style>
-    /* --- TRUQUE PARA LIMPAR A TELA --- */
-    /* Esconde a Navbar e o Footer que vêm do base.html */
-    nav.navbar, footer {
-        display: none !important;
-    }
+    /* --- RESET & LAYOUT (Igual ao Registo) --- */
+    nav, footer { display: none !important; }
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; height: 100vh; }
     
-    /* Remove as margens padrão do container principal */
-    body, html {
-        height: 100%;
-        overflow-x: hidden;
-        background-color: #fff;
-    }
-    main.container {
-        margin: 0 !important;
-        padding: 0 !important;
-        max-width: 100% !important;
-        height: 100vh;
-    }
-    /* -------------------------------- */
-
-    .login-row {
-        height: 100vh;
-        margin: 0;
+    .auth-wrapper {
+        display: flex; min-height: 100vh; width: 100%; background: white;
     }
 
-    /* --- LADO ESQUERDO (Branding) --- */
-    .brand-col {
-        background: linear-gradient(135deg, #003319 0%, #01552b 100%);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 4rem;
-        position: relative;
-        overflow: hidden;
+    /* --- LADO ESQUERDO (Visual) --- */
+    .auth-visual {
+        flex: 1; background-color: #020617; position: relative;
+        display: flex; flex-direction: column; justify-content: center; padding: 4rem;
+        color: white; overflow: hidden;
     }
-
-    /* Decoração de fundo */
-    .brand-col::before {
-        content: ''; position: absolute; top: -10%; right: -10%; width: 300px; height: 300px;
-        background: rgba(255,255,255,0.05); border-radius: 50%;
+    .visual-bg {
+        position: absolute; inset: 0; opacity: 0.4;
+        /* Mesma imagem do registo para consistência, ou pode variar */
+        background-image: url('https://images.unsplash.com/photo-1535378437327-b7128d8de746?q=80&w=1974&auto=format&fit=crop');
+        background-size: cover; background-position: center;
     }
-    .brand-col::after {
-        content: ''; position: absolute; bottom: 10%; left: -5%; width: 200px; height: 200px;
-        background: rgba(255,255,255,0.05); border-radius: 50%;
+    .visual-overlay {
+        position: absolute; inset: 0;
+        /* Mesmo gradiente da marca */
+        background: linear-gradient(135deg, rgba(1, 85, 43, 0.9), rgba(2, 6, 23, 0.95));
     }
-
-    .brand-content { position: relative; z-index: 2; max-width: 500px; }
+    .visual-content { position: relative; z-index: 10; max-width: 500px; }
+    
+    .visual-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.8; color: #4ade80; }
+    .visual-title { font-size: 3.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; }
+    .visual-text { font-size: 1.2rem; color: #cbd5e1; line-height: 1.6; }
 
     /* --- LADO DIREITO (Formulário) --- */
-    .form-col {
-        display: flex; align-items: center; justify-content: center;
-        padding: 2rem; background-color: #ffffff; position: relative;
+    .auth-form-container {
+        width: 550px; display: flex; flex-direction: column; justify-content: center;
+        padding: 4rem; background: white; overflow-y: auto; position: relative;
     }
 
-    /* Área de Alertas (Reposicionada para ficar flutuando no topo direito) */
-    #flash-messages-container {
-        position: absolute; top: 20px; right: 20px; width: 350px; z-index: 1000;
+    /* Botão Voltar */
+    .btn-back-home {
+        position: absolute; top: 2rem; right: 2rem; color: #64748b; 
+        text-decoration: none; font-weight: 600; font-size: 0.9rem;
+        display: flex; align-items: center; gap: 8px; transition: 0.2s;
     }
+    .btn-back-home:hover { color: #01552b; }
 
-    .login-box { width: 100%; max-width: 400px; padding: 1rem; }
+    .form-header { margin-bottom: 2.5rem; }
+    .form-title { font-size: 2rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; }
+    .form-subtitle { color: #64748b; font-size: 1rem; }
 
-    /* Estilos dos Inputs */
+    /* Inputs Modernos */
     .form-floating > .form-control {
-        border: 2px solid #f3f4f6; border-radius: 12px; height: 3.5rem;
+        border-radius: 12px; border: 1px solid #e2e8f0; background-color: #f8fafc;
     }
     .form-floating > .form-control:focus {
-        border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
+        background-color: white; border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
     }
-    .form-floating > label { padding-left: 1rem; color: #6b7280; }
-    
-    /* Botão */
-    .btn-login {
-        background-color: #01552b; color: white; font-weight: 600; padding: 0.9rem;
-        border-radius: 12px; font-size: 1rem; width: 100%; border: none;
-        transition: all 0.3s ease;
-    }
-    .btn-login:hover {
-        background-color: #003319; transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(1, 85, 43, 0.2); color: white;
-    }
+    .form-floating > label { color: #94a3b8; }
 
-    .toggle-password {
+    /* Utilitários de Login (Senha/Lembrar) */
+    .password-wrapper { position: relative; }
+    .toggle-pass {
         position: absolute; top: 50%; right: 15px; transform: translateY(-50%);
-        cursor: pointer; color: #6b7280; z-index: 10;
+        color: #94a3b8; cursor: pointer; z-index: 5; padding: 5px;
     }
-    
-    .brand-link { color: #01552b; text-decoration: none; font-weight: bold; }
-    .brand-link:hover { text-decoration: underline; color: #003319; }
+    .toggle-pass:hover { color: #01552b; }
 
-    /* Animação */
-    .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
-    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    .login-meta {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; margin-top: 0.5rem;
+    }
+    .form-check-input:checked { background-color: #01552b; border-color: #01552b; }
+    .forgot-link { color: #01552b; font-weight: 600; text-decoration: none; font-size: 0.9rem; }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* Botão Principal */
+    .btn-submit {
+        background: #01552b; color: white; width: 100%; padding: 1rem;
+        border-radius: 12px; font-weight: 700; font-size: 1.1rem; border: none;
+        transition: 0.3s;
+    }
+    .btn-submit:hover { background: #014421; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(1, 85, 43, 0.3); }
+
+    .register-link { text-align: center; margin-top: 2rem; font-size: 0.9rem; color: #64748b; }
+    .register-link a { color: #01552b; font-weight: 700; text-decoration: none; }
+
+    /* Responsivo */
+    @media (max-width: 992px) {
+        .auth-wrapper { flex-direction: column; }
+        .auth-visual { display: none; }
+        .auth-form-container { width: 100%; padding: 2rem; }
+    }
 </style>
 
-<div class="row login-row g-0">
+<div class="auth-wrapper">
     
-    <div class="col-lg-6 d-none d-lg-flex brand-col">
-        <div class="brand-content fade-in-up">
-            <i class="fas fa-book-reader fa-3x mb-4" style="opacity: 0.9;"></i>
-            <h1 class="display-5 fw-bold mb-3">Diário de Bordo Digital.</h1>
-            <p class="lead" style="opacity: 0.9; font-size: 1.1rem;">
-                Plataforma centralizada para gestão de atividades e acompanhamento de progresso de laboratórios.
+    <div class="auth-visual">
+        <div class="visual-bg"></div>
+        <div class="visual-overlay"></div>
+        <div class="visual-content animate__animated animate__fadeInLeft">
+            <i class="fas fa-fingerprint visual-icon"></i>
+            <h1 class="visual-title">Acesso Seguro.</h1>
+            <p class="visual-text">
+                Bem-vindo de volta ao ecossistema de gestão do seu laboratório. Acompanhe projetos, equipas e resultados num só lugar.
             </p>
         </div>
     </div>
 
-    <div class="col-lg-6 form-col">
-        <div class="login-box fade-in-up" style="animation-delay: 0.1s;">
+    <div class="auth-form-container">
+        <a href="{{ url_for('main.landing') }}" class="btn-back-home">
+            <i class="fas fa-arrow-left"></i> Voltar ao Início
+        </a>
+
+        <div class="form-header animate__animated animate__fadeIn">
+            <h2 class="form-title">Entrar</h2>
+            <p class="form-subtitle">Insira as suas credenciais para continuar.</p>
+        </div>
+
+        <form action="" method="post" novalidate class="animate__animated animate__fadeInUp animate__delay-1s">
+            {{ form.hidden_tag() }}
             
-            <div class="d-lg-none text-center mb-4">
-                <i class="fas fa-robot fa-3x" style="color: #01552b;"></i>
+            <div class="form-floating mb-3">
+                {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
+                <label for="username">Nome de Usuário</label>
+                {% for error in form.username.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
             </div>
 
-            <h2 class="fw-bold mb-2" style="color: #1f2937;">Bem-vindo</h2>
-            <p class="text-muted mb-4">Insira as suas credenciais para entrar.</p>
-
-            <form action="" method="post" novalidate>
-                {{ form.hidden_tag() }}
-                
-                <div class="form-floating mb-3">
-                    {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
-                    <label for="username">Nome de Usuário</label>
-                    {% for error in form.username.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
-                    {% endfor %}
+            <div class="password-wrapper mb-3">
+                <div class="form-floating">
+                    {{ form.password(class="form-control", id="password", placeholder="Senha") }}
+                    <label for="password">Senha</label>
+                    <i class="far fa-eye toggle-pass" onclick="togglePassword()"></i>
                 </div>
-
-                <div class="password-wrapper mb-3 position-relative">
-                    <div class="form-floating">
-                        {{ form.password(class="form-control", id="password", placeholder="Senha") }}
-                        <label for="password">Senha</label>
-                        <i class="far fa-eye toggle-password" id="togglePassword" onclick="togglePass()"></i>
-                    </div>
-                    {% for error in form.password.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="form-check">
-                        {{ form.remember_me(class="form-check-input") }}
-                        <label class="form-check-label text-muted small" for="remember_me">Lembrar-me</label>
-                    </div>
-                    <a href="{{ url_for('main.reset_password_request') }}" class="text-decoration-none small fw-bold" style="color: #01552b;">
-                        Esqueceu a senha?
-                    </a>
-                </div>
-
-                <div class="d-grid">
-                    {{ form.submit(class="btn btn-login", value="Acessar") }}
-                </div>
-            </form>
-
-            <div class="text-center mt-5">
-                <p class="text-muted small">Não tem conta? 
-                    <a href="{{ url_for('main.register') }}" class="brand-link">Solicitar Acesso</a>
-                </p>
+                {% for error in form.password.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
             </div>
+
+            <div class="login-meta">
+                <div class="form-check">
+                    {{ form.remember_me(class="form-check-input") }}
+                    <label class="form-check-label text-muted small" for="remember_me">Manter conectado</label>
+                </div>
+                <a href="{{ url_for('main.reset_password_request') }}" class="forgot-link">Esqueceu a senha?</a>
+            </div>
+
+            {{ form.submit(class="btn-submit", value="Aceder ao Sistema") }}
+
+        </form>
+
+        <div class="register-link animate__animated animate__fadeIn animate__delay-1s">
+            Ainda não tem conta? <a href="{{ url_for('main.register') }}">Solicitar Acesso</a>
         </div>
     </div>
-</div>
 
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
 <script>
-    function togglePass() {
-        const passwordInput = document.getElementById('password');
-        const icon = document.getElementById('togglePassword');
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.querySelector('.toggle-pass');
+        if (input.type === 'password') {
+            input.type = 'text';
             icon.classList.remove('fa-eye');
             icon.classList.add('fa-eye-slash');
         } else {
-            passwordInput.type = 'password';
+            input.type = 'password';
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         }

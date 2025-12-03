@@ -2,346 +2,336 @@
 
 {% block content %}
 <style>
-    /* --- RESET & GERAL --- */
+    /* --- GERAL --- */
     nav, footer { display: none !important; }
-    body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #334155; }
-    main.container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    body { background-color: #0f172a; font-family: 'Inter', sans-serif; color: #e2e8f0; overflow-x: hidden; }
 
-    /* --- 1. HERO SECTION --- */
-    .public-hero {
-        height: 45vh;
+    /* --- 1. HERO SPLIT (DIVISÃO TELA) --- */
+    .project-wrapper {
+        display: grid;
+        grid-template-columns: 40% 60%; /* Esquerda fixa, Direita rolável */
+        min-height: 100vh;
+    }
+
+    /* COLUNA ESQUERDA (Sticky - Identidade) */
+    .left-panel {
         position: relative;
+        height: 100vh;
+        background-color: #020617;
         overflow: hidden;
-        background-color: #0f172a;
+        display: flex; flex-direction: column; justify-content: space-between;
+        padding: 4rem;
+        position: sticky; top: 0;
+        border-right: 1px solid rgba(255,255,255,0.05);
     }
-    .hero-bg {
-        width: 100%; height: 100%; object-fit: cover; opacity: 0.8;
-        animation: slowZoom 20s infinite alternate;
-    }
-    @keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.15); } }
 
-    .hero-overlay {
+    /* Background da Capa */
+    .panel-bg {
+        position: absolute; inset: 0; opacity: 0.4;
+        background-image: url('{{ url_for("static", filename="profile_pics/" + project.image_file) }}');
+        background-size: cover; background-position: center;
+        filter: saturate(1.2);
+    }
+    .panel-overlay {
         position: absolute; inset: 0;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(15, 23, 42, 1));
+        background: linear-gradient(to top, #020617 15%, rgba(2, 6, 23, 0.8) 100%);
     }
 
-    /* --- 2. CARTÃO FLUTUANTE --- */
-    .main-card {
-        background: white;
-        border-radius: 32px 32px 0 0;
-        margin-top: -60px;
-        position: relative;
-        z-index: 10;
-        padding: 2.5rem 1.5rem 6rem 1.5rem;
-        box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
-        min-height: 60vh;
-        max-width: 900px;
-        margin-left: auto; margin-right: auto;
-    }
-
-    /* Cabeçalho */
-    .project-header { text-align: center; margin-bottom: 2rem; }
-    .category-badge {
-        background: #dcfce7; color: #166534;
-        padding: 6px 16px; border-radius: 50rem;
-        font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px;
-        display: inline-block; margin-bottom: 1rem;
-        border: 1px solid #bbf7d0;
-    }
-    .project-title {
-        font-size: 2.5rem; font-weight: 900; color: #0f172a; line-height: 1.1; margin-bottom: 0.5rem;
-        letter-spacing: -0.03em;
-    }
+    /* Conteúdo Esquerda */
+    .project-meta { position: relative; z-index: 10; margin-top: 2rem; }
     
-    /* Stats */
-    .quick-stats {
-        display: grid; grid-template-columns: repeat(3, 1fr);
-        background: #f8fafc; border: 1px solid #e2e8f0;
-        border-radius: 20px; padding: 1.5rem; margin-bottom: 2.5rem;
-    }
-    .stat-box { text-align: center; border-right: 1px solid #e2e8f0; }
-    .stat-box:last-child { border-right: none; }
-    .stat-value { font-size: 1.5rem; font-weight: 800; color: #01552b; display: block; line-height: 1; margin-bottom: 5px; }
-    .stat-label { font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px; }
-
-    /* Descrição */
-    .desc-box {
-        font-size: 1.1rem; line-height: 1.8; color: #475569;
-        margin-bottom: 3rem; text-align: center; max-width: 750px; margin-left: auto; margin-right: auto;
+    .p-badge {
+        display: inline-block; background: rgba(1, 85, 43, 0.8); color: #4ade80; 
+        padding: 6px 16px; border-radius: 50rem; font-weight: 800; font-size: 0.75rem; 
+        text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem;
+        border: 1px solid rgba(74, 222, 128, 0.3); backdrop-filter: blur(5px);
     }
 
-    /* Títulos */
-    .section-label {
-        font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;
-        color: #94a3b8; font-weight: 800; margin-bottom: 1.5rem;
-        display: flex; align-items: center; gap: 15px;
+    .p-title {
+        font-size: 3.5rem; font-weight: 900; line-height: 1; margin-bottom: 1.5rem; color: white;
+        text-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
-    .section-label::after { content: ''; flex: 1; height: 2px; background: #f1f5f9; border-radius: 2px; }
 
-    /* --- 3. EQUIPA --- */
-    .team-scroller {
-        display: flex; gap: 1.8rem; overflow-x: auto; padding: 1rem 0.5rem 2rem 0.5rem;
-        scrollbar-width: none; -ms-overflow-style: none;
-        mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    .p-desc {
+        font-size: 1.1rem; line-height: 1.7; color: #cbd5e1; margin-bottom: 2rem;
+        border-left: 4px solid #4ade80; padding-left: 1.5rem;
     }
-    .team-scroller::-webkit-scrollbar { display: none; }
+
+    /* --- CAIXA DA EQUIPA (Com Hover) --- */
+    .team-box {
+        position: relative; z-index: 10;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+        border-radius: 20px;
+        margin-top: auto;
+    }
+
+    .team-label {
+        font-size: 0.75rem; text-transform: uppercase; color: #4ade80;
+        font-weight: 800; letter-spacing: 1.5px; margin-bottom: 1rem; display: block;
+    }
+
+    .team-mini-list { display: flex; gap: 12px; flex-wrap: wrap; }
     
-    .team-member { 
-        text-align: center; flex-shrink: 0; position: relative; cursor: pointer;
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Avatar Clicável */
+    .tm-avatar {
+        width: 55px; height: 55px; border-radius: 50%; 
+        border: 2px solid rgba(255,255,255,0.3);
+        object-fit: cover; transition: 0.3s; cursor: pointer;
     }
-    .team-member:hover { transform: translateY(-8px) scale(1.05); }
+    .tm-avatar:hover { transform: scale(1.15); border-color: #4ade80; z-index: 10; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); }
 
-    .team-avatar {
-        width: 75px; height: 75px; border-radius: 50%; object-fit: cover;
-        border: 3px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        margin-bottom: 0.8rem; transition: all 0.3s;
-    }
-    .team-member:hover .team-avatar { border-color: #01552b; box-shadow: 0 12px 25px rgba(1, 85, 43, 0.2); }
-    .team-name { font-size: 0.85rem; font-weight: 700; color: #1e293b; display: block; }
-
-    /* Tooltip */
+    /* --- TOOLTIP HOVER CARD (Perfil Flutuante) --- */
     .member-tooltip-card {
-        position: fixed; background: white; border-radius: 20px;
-        width: 280px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.25); z-index: 9999;
-        pointer-events: none; opacity: 0;
-        transform: translateY(20px) scale(0.9);
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        border: 1px solid #f1f5f9; overflow: hidden;
+        position: fixed; background: white; border-radius: 16px; width: 260px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 9999; pointer-events: none; opacity: 0;
+        transform: translateY(10px) scale(0.95); transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border: 1px solid #e2e8f0; overflow: hidden; text-align: center;
     }
     .member-tooltip-card.visible { opacity: 1; transform: translateY(0) scale(1); }
     
-    .tooltip-banner { height: 100px; width: 100%; background-size: cover; background-position: center; position: relative; }
-    .tooltip-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent); }
-    .tooltip-content { padding: 0 1.5rem 1.5rem 1.5rem; text-align: center; margin-top: -40px; position: relative; z-index: 2; }
-    .tooltip-avatar { width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.15); object-fit: cover; margin-bottom: 0.5rem; }
-    .tooltip-role-badge { 
-        font-size: 0.65rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;
-        color: white; background: #01552b; padding: 4px 12px; border-radius: 50rem;
-        display: inline-block; margin-bottom: 0.8rem; box-shadow: 0 4px 10px rgba(1, 85, 43, 0.3);
-    }
-    .tooltip-name { font-size: 1.2rem; font-weight: 900; color: #0f172a; margin-bottom: 0.5rem; line-height: 1.2; }
-    .tooltip-bio { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+    .tp-banner { height: 80px; width: 100%; background-size: cover; background-position: center; }
+    .tp-content { padding: 0 1.5rem 1.5rem 1.5rem; margin-top: -40px; position: relative; }
+    .tp-avatar { width: 70px; height: 70px; border-radius: 50%; border: 3px solid white; object-fit: cover; margin-bottom: 0.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+    .tp-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.2rem; }
+    .tp-role { font-size: 0.7rem; font-weight: 700; color: #01552b; background: #f0fdf4; padding: 3px 10px; border-radius: 50rem; display: inline-block; margin-bottom: 0.5rem; }
+    .tp-bio { font-size: 0.8rem; color: #64748b; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-    /* --- 4. TIMELINE REFINADA --- */
-    .timeline-wrapper { margin-top: 1rem; padding-left: 10px; }
-    .timeline-item { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; position: relative; }
-    .timeline-item:not(:last-child)::before {
-        content: ''; position: absolute; left: 27px; top: 60px; bottom: -40px;
-        width: 2px; background: #e2e8f0; z-index: 0; background: linear-gradient(to bottom, #e2e8f0 60%, transparent);
+    /* --- COLUNA DIREITA (Rolável - Timeline) --- */
+    .right-panel {
+        padding: 4rem 4rem 8rem 6rem;
+        background-color: #0f172a;
+        overflow-y: auto;
+    }
+
+    .timeline-header { 
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem; 
+        border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;
+    }
+    .th-title { font-size: 1.8rem; font-weight: 800; color: white; display: flex; align-items: center; gap: 12px; }
+    .th-badge { 
+        background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; 
+        color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+    }
+
+    .timeline-feed { border-left: 2px solid rgba(255,255,255,0.1); padding-left: 2.5rem; position: relative; }
+    
+    .log-entry { position: relative; margin-bottom: 4rem; opacity: 0; animation: fadeUp 0.6s forwards; }
+    .log-entry:nth-child(1) { animation-delay: 0.1s; }
+    .log-entry:nth-child(2) { animation-delay: 0.2s; }
+    .log-entry:nth-child(3) { animation-delay: 0.3s; }
+    
+    .log-dot {
+        position: absolute; left: -3.2rem; top: 0.5rem;
+        width: 22px; height: 22px; background: #0f172a;
+        border: 5px solid #4ade80; border-radius: 50%;
+        box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+    }
+    .log-entry:not(:first-child) .log-dot { border-color: #475569; box-shadow: none; }
+
+    .log-card-dark {
+        background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 24px; padding: 2rem; transition: 0.3s;
+    }
+    .log-card-dark:hover { 
+        background: rgba(30, 41, 59, 0.8); border-color: #4ade80; transform: translateX(10px); 
+        box-shadow: -10px 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .log-meta { display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; }
+    .log-date { 
+        font-weight: 800; color: #f1f5f9; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; 
+        background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;
     }
     
-    .log-date-badge {
-        width: 56px; height: 60px; flex-shrink: 0; background: white;
-        border: 1px solid #e2e8f0; border-radius: 14px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.03); z-index: 1; overflow: hidden;
-    }
-    .badge-month { width: 100%; background: #f8fafc; color: #94a3b8; font-size: 0.65rem; text-transform: uppercase; font-weight: 700; text-align: center; padding: 4px 0; }
-    .badge-day { font-size: 1.5rem; font-weight: 800; color: #0f172a; padding: 2px 0 4px 0; line-height: 1; }
+    .log-user { display: flex; align-items: center; gap: 10px; }
+    .log-user img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
+    .log-user span { font-size: 0.85rem; color: #94a3b8; font-weight: 600; }
 
-    .timeline-item:first-child .log-date-badge { border-color: #01552b; }
-    .timeline-item:first-child .badge-month { background: #01552b; color: white; }
-    .timeline-item:first-child .badge-day { color: #01552b; }
+    .log-text { font-size: 1.15rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 1rem; white-space: pre-wrap; }
 
-    .log-card {
-        flex-grow: 1; background: white; border: 1px solid #f1f5f9;
-        border-radius: 16px; padding: 1.5rem; position: relative;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: transform 0.2s;
+    .log-obs {
+        background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; 
+        padding: 1rem 1.5rem; margin-top: 1.5rem; border-radius: 0 12px 12px 0;
     }
-    .log-card:hover { box-shadow: 0 15px 30px -5px rgba(0,0,0,0.08); transform: translateY(-3px); border-color: #e2e8f0; }
-    .log-card::before {
-        content: ''; position: absolute; top: 22px; left: -9px; width: 18px; height: 18px;
-        background: white; transform: rotate(45deg); border-left: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;
-        border-radius: 0 0 0 4px;
+    .obs-title { color: #fbbf24; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 1px; }
+
+    .history-notice {
+        text-align: center; padding: 3rem; margin-top: 4rem;
+        border-top: 1px dashed rgba(255,255,255,0.1); color: #64748b;
+    }
+    .history-btn {
+        display: inline-block; margin-top: 1rem;
+        color: #4ade80; border: 1px solid #4ade80; padding: 8px 20px; border-radius: 50rem;
+        text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 0.9rem;
+    }
+    .history-btn:hover { background: #4ade80; color: #022c16; }
+
+    /* Botão Voltar */
+    .btn-back-float {
+        position: fixed; top: 30px; right: 30px; z-index: 100;
+        background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        color: white; width: 50px; height: 50px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; text-decoration: none;
+    }
+    .btn-back-float:hover { background: white; color: #0f172a; transform: rotate(-90deg); }
+
+    /* CTA Mobile */
+    .mobile-cta { display: none; margin-top: 2rem; }
+
+    @media (max-width: 992px) {
+        .project-wrapper { grid-template-columns: 1fr; }
+        .left-panel { height: auto; position: relative; padding: 4rem 2rem; min-height: auto; }
+        .right-panel { padding: 2rem; }
+        .mobile-cta { display: block; }
     }
 
-    .log-author { display: flex; align-items: center; gap: 10px; margin-bottom: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid #f8fafc; }
-    .log-avatar-mini { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
-    .log-author-name { font-size: 0.8rem; font-weight: 700; color: #475569; }
-    
-    .log-text { font-size: 1rem; line-height: 1.6; color: #334155; margin: 0; white-space: pre-wrap; }
-
-    /* Box de Info Extra (Apenas Obs) */
-    .log-extras {
-        background-color: #fffbeb; border-radius: 10px; padding: 1rem; margin-top: 1rem; border: 1px solid #fef3c7;
-        border-left: 3px solid #f59e0b;
-    }
-    .log-extra-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: #b45309; display: block; margin-bottom: 4px; }
-    .log-extra-text { font-size: 0.9rem; color: #92400e; line-height: 1.4; }
-
-    /* FAB */
-    .fab-access {
-        position: fixed; bottom: 25px; right: 25px; z-index: 100;
-        background: #0f172a; color: white;
-        padding: 12px 24px; border-radius: 50rem;
-        font-weight: 700; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
-        text-decoration: none; display: flex; align-items: center; gap: 10px;
-        transition: transform 0.2s;
-    }
-    .fab-access:hover { transform: translateY(-3px); color: #4ade80; }
-    
-    .animate-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px); }
-    .d-1 { animation-delay: 0.1s; }
-    .d-2 { animation-delay: 0.2s; }
-    .d-3 { animation-delay: 0.3s; }
-    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
-<div class="public-hero" style="background-image: url('{{ url_for('static', filename='profile_pics/' + project.image_file) }}');">
-    <div class="hero-overlay"></div>
-</div>
+<a href="{{ url_for('main.public_lab', lab_id=project.laboratory_id) }}" class="btn-back-float" title="Voltar ao Lab"><i class="fas fa-times"></i></a>
 
-<div class="container pb-5">
-    <div class="main-card animate-up">
+<div class="project-wrapper">
+    
+    <div class="left-panel">
+        <div class="panel-bg"></div>
+        <div class="panel-overlay"></div>
         
-        <div class="project-header">
-            <span class="category-badge">{{ project.category }}</span>
-            <h1 class="project-title">{{ project.name }}</h1>
-        </div>
+        <div class="project-meta">
+            <span class="p-badge">{{ project.category }}</span>
+            <h1 class="p-title">{{ project.name }}</h1>
+            
+            <div class="p-desc">
+                {{ project.description if project.description else 'Sem descrição disponível.' }}
+            </div>
 
-        <div class="quick-stats animate-up d-1">
-            <div class="stat-box">
-                <i class="fas fa-history stat-icon"></i>
-                <span class="stat-value">{{ recent_logs|length }}</span>
-                <span class="stat-label">Updates Visíveis</span>
-            </div>
-            <div class="stat-box">
-                <i class="fas fa-users stat-icon"></i>
-                <span class="stat-value">{{ contributors|length }}</span>
-                <span class="stat-label">Membros</span>
-            </div>
-            <div class="stat-box">
-                <i class="far fa-clock stat-icon"></i>
-                {% if recent_logs %}
-                    {% set days = (now_date - recent_logs[0].entry_date).days %}
-                    <span class="stat-value">{{ days }} dias</span>
-                    <span class="stat-label">Última Ativ.</span>
-                {% else %}
-                    <span class="stat-value">-</span>
-                    <span class="stat-label">Inativo</span>
-                {% endif %}
+            <div class="mobile-cta">
+                <a href="#timeline" class="btn btn-outline-light rounded-pill w-100">Ver Progresso <i class="fas fa-arrow-down ms-2"></i></a>
             </div>
         </div>
 
-        <div class="desc-box animate-up d-2">
-            {{ project.description if project.description else 'Sem descrição pública disponível.' }}
-        </div>
-
-        <div class="animate-up d-2">
-            <div class="section-label">Equipe Responsável</div>
-            <div class="team-scroller">
+        {% if contributors %}
+        <div class="team-box">
+            <span class="team-label"><i class="fas fa-users me-2"></i> Equipa Responsável</span>
+            <div class="team-mini-list">
                 {% for user in contributors %}
-                <div class="team-member" 
-                     data-name="{{ user.username }}"
+                <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" 
+                     class="tm-avatar t-hover-trigger" 
+                     data-name="{{ user.username }}" 
                      data-role="{{ 'Professor' if user.role == 'professor' else 'Bolsista' }}"
-                     data-bio="{{ user.bio if user.bio else 'Membro da equipe.' }}"
+                     data-bio="{{ user.bio if user.bio else 'Pesquisador do projeto.' }}"
                      data-avatar="{{ url_for('static', filename='profile_pics/' + user.image_file) }}"
                      data-cover="{{ url_for('static', filename='profile_pics/' + user.cover_file) }}">
-                    <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="team-avatar">
-                    <span class="team-name">{{ user.username.split()[0] }}</span>
-                </div>
-                {% else %}
-                <span class="text-muted fst-italic small ms-2">Equipa não definida.</span>
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
+    </div>
 
-        <div class="animate-up d-3">
-            <div class="section-label" style="margin-top: 3rem;">Últimas Atualizações</div>
-
-            <div class="timeline-wrapper">
-                {% if recent_logs %}
-                    {% for log in recent_logs %}
-                    <div class="timeline-item">
-                        <div class="log-date-badge">
-                            <span class="badge-month">{{ log.entry_date.strftime('%b') }}</span>
-                            <span class="badge-day">{{ log.entry_date.day }}</span>
-                        </div>
-                        
-                        <div class="log-card">
-                            <div class="log-author">
-                                <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}" class="log-avatar-mini">
-                                <span class="log-author-name">{{ log.author.username }}</span>
-                            </div>
-                            <p class="log-text">{{ log.tasks_completed | truncate(140) }}</p>
-
-                            {% if log.observations %}
-                                <div class="log-extras">
-                                    <span class="log-extra-label"><i class="fas fa-lightbulb me-1"></i> Observação</span>
-                                    <div class="log-extra-text">{{ log.observations }}</div>
-                                </div>
-                            {% endif %}
-                            </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-5 text-muted small opacity-75">
-                        <i class="far fa-clock mb-3 fs-1"></i><br>Sem atualizações recentes.
-                    </div>
-                {% endif %}
-            </div>
+    <div class="right-panel" id="timeline">
+        <div class="timeline-header">
+            <div class="th-title"><i class="fas fa-stream text-success"></i> Linha do Tempo</div>
+            <span class="th-badge">Feed Público</span>
         </div>
 
+        <div class="timeline-feed">
+            {% if recent_logs %}
+                {% for log in recent_logs %}
+                <div class="log-entry" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+                    <div class="log-dot"></div>
+                    
+                    <div class="log-card-dark">
+                        <div class="log-meta">
+                            <span class="log-date">{{ log.entry_date.strftime('%d %B %Y') }}</span>
+                            <div class="log-user">
+                                <img src="{{ url_for('static', filename='profile_pics/' + log.author.image_file) }}">
+                                <span>{{ log.author.username }}</span>
+                            </div>
+                        </div>
+
+                        <p class="log-text">{{ log.tasks_completed }}</p>
+
+                        {% if log.observations %}
+                        <div class="log-obs">
+                            <span class="obs-title"><i class="fas fa-lightbulb me-1"></i> Nota Técnica</span>
+                            <span style="color: #fcd34d;">{{ log.observations }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="history-notice">
+                    <i class="fas fa-archive fa-2x mb-3"></i>
+                    <p>Estes são os registos públicos mais recentes.</p>
+                    <p class="small opacity-75 mb-3">Para aceder ao arquivo histórico completo, documentação técnica e relatórios de IA, é necessário acesso de membro.</p>
+                    
+                    {% if current_user.is_anonymous %}
+                        <a href="{{ url_for('main.login') }}" class="history-btn">Login de Membro</a>
+                    {% else %}
+                        <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="history-btn">Aceder Painel Completo</a>
+                    {% endif %}
+                </div>
+
+            {% else %}
+                <div class="text-center py-5 opacity-50">
+                    <i class="fas fa-moon fa-3x mb-3"></i>
+                    <h5>Nenhuma atividade recente.</h5>
+                </div>
+            {% endif %}
+        </div>
     </div>
+
 </div>
-
-{% if current_user.is_anonymous %}
-    <a href="{{ url_for('main.login') }}" class="fab-access">
-        <i class="fas fa-sign-in-alt"></i> Sou Membro
-    </a>
-{% else %}
-    <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="fab-access">
-        <i class="fas fa-lock-open"></i> Acesso Completo
-    </a>
-{% endif %}
-
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script>
+    // Lógica do Hover Card (Reutilizada e Adaptada)
     document.addEventListener('DOMContentLoaded', () => {
         const tooltip = document.createElement('div');
         tooltip.className = 'member-tooltip-card';
         tooltip.innerHTML = `
-            <div class="tooltip-banner" id="tp-banner"></div>
-            <div class="tooltip-content">
-                <img src="" class="tooltip-avatar" id="tp-avatar">
-                <div><span class="tooltip-role-badge" id="tp-role"></span></div>
-                <div class="tooltip-name" id="tp-name"></div>
-                <div class="tooltip-bio" id="tp-bio"></div>
+            <div class="tp-banner" id="tp-banner"></div>
+            <div class="tp-content">
+                <img src="" class="tp-avatar" id="tp-avatar">
+                <div><span class="tp-role" id="tp-role"></span></div>
+                <div class="tp-name" id="tp-name"></div>
+                <div class="tp-bio" id="tp-bio"></div>
             </div>
         `;
         document.body.appendChild(tooltip);
 
-        const members = document.querySelectorAll('.team-member');
+        const triggers = document.querySelectorAll('.t-hover-trigger');
         const tpBanner = document.getElementById('tp-banner');
         const tpAvatar = document.getElementById('tp-avatar');
         const tpRole = document.getElementById('tp-role');
         const tpName = document.getElementById('tp-name');
         const tpBio = document.getElementById('tp-bio');
 
-        members.forEach(member => {
-            member.addEventListener('mouseenter', (e) => {
-                tpBanner.style.backgroundImage = `url('${member.getAttribute('data-cover')}')`;
-                tpAvatar.src = member.getAttribute('data-avatar');
-                tpRole.textContent = member.getAttribute('data-role');
-                tpName.textContent = member.getAttribute('data-name');
-                tpBio.textContent = member.getAttribute('data-bio');
-
-                const rect = member.getBoundingClientRect();
-                const tooltipX = rect.left + (rect.width / 2) - 140; 
-                const tooltipY = rect.top - 220; 
-
-                tooltip.style.left = `${tooltipX}px`;
-                tooltip.style.top = `${tooltipY}px`;
+        triggers.forEach(trig => {
+            trig.addEventListener('mouseenter', (e) => {
+                tpBanner.style.backgroundImage = `url('${trig.getAttribute('data-cover')}')`;
+                tpAvatar.src = trig.getAttribute('data-avatar');
+                tpRole.textContent = trig.getAttribute('data-role');
+                tpName.textContent = trig.getAttribute('data-name');
+                tpBio.textContent = trig.getAttribute('data-bio') || 'Sem biografia.';
+                
+                const rect = trig.getBoundingClientRect();
+                
+                // Ajuste de posição para não sair da tela (especialmente na sidebar esquerda)
+                // Posiciona acima e centrado
+                tooltip.style.left = `${rect.left + (rect.width/2) - 130}px`; 
+                tooltip.style.top = `${rect.top - 220}px`;
+                
                 tooltip.classList.add('visible');
             });
-            member.addEventListener('mouseleave', () => {
-                tooltip.classList.remove('visible');
-            });
+            trig.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
         });
     });
 </script>

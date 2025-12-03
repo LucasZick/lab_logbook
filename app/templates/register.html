@@ -2,152 +2,271 @@
 
 {% block content %}
 <style>
-    /* --- ESTILOS DE FULL SCREEN (Igual ao Login) --- */
-    nav.navbar, footer { display: none !important; }
+    /* --- LAYOUT DE TELA DIVIDIDA --- */
+    nav, footer { display: none !important; }
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; height: 100vh; }
     
-    body, html {
-        height: 100%;
-        overflow-x: hidden;
-        background-color: #fff;
-    }
-    main.container {
-        margin: 0 !important;
-        padding: 0 !important;
-        max-width: 100% !important;
-        height: 100vh;
+    .auth-wrapper {
+        display: flex; min-height: 100vh; width: 100%; background: white;
     }
 
-    .login-row { height: 100vh; margin: 0; }
+    /* Visual (Esquerda) */
+    .auth-visual {
+        flex: 1; background-color: #020617; position: relative;
+        display: flex; flex-direction: column; justify-content: center; padding: 4rem;
+        color: white; overflow: hidden;
+    }
+    .visual-bg {
+        position: absolute; inset: 0; opacity: 0.4;
+        background-image: url('https://images.unsplash.com/photo-1535378437327-b7128d8de746?q=80&w=1974&auto=format&fit=crop');
+        background-size: cover; background-position: center;
+    }
+    .visual-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, rgba(1, 85, 43, 0.9), rgba(2, 6, 23, 0.95));
+    }
+    .visual-content { position: relative; z-index: 10; max-width: 500px; }
+    .visual-title { font-size: 3.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; }
+    .visual-text { font-size: 1.2rem; color: #cbd5e1; line-height: 1.6; }
 
-    /* --- LADO ESQUERDO (Branding) --- */
-    .brand-col {
-        background: linear-gradient(135deg, #003319 0%, #01552b 100%);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 4rem;
-        position: relative;
-        overflow: hidden;
+    /* Formulário (Direita) */
+    .auth-form-container {
+        width: 550px; display: flex; flex-direction: column; justify-content: center;
+        padding: 4rem; background: white; overflow-y: auto; position: relative;
     }
 
-    /* Decoração de fundo */
-    .brand-col::before {
-        content: ''; position: absolute; top: -10%; right: -10%; width: 300px; height: 300px;
-        background: rgba(255,255,255,0.05); border-radius: 50%;
+    .btn-back-home {
+        position: absolute; top: 2rem; right: 2rem; color: #64748b; 
+        text-decoration: none; font-weight: 600; font-size: 0.9rem;
+        display: flex; align-items: center; gap: 8px; transition: 0.2s;
     }
-    .brand-col::after {
-        content: ''; position: absolute; bottom: 10%; left: -5%; width: 200px; height: 200px;
-        background: rgba(255,255,255,0.05); border-radius: 50%;
-    }
+    .btn-back-home:hover { color: #01552b; }
 
-    .brand-content { position: relative; z-index: 2; max-width: 500px; }
+    .form-header { margin-bottom: 2rem; }
+    .form-title { font-size: 2rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; }
+    .form-subtitle { color: #64748b; }
 
-    /* --- LADO DIREITO (Formulário) --- */
-    .form-col {
-        display: flex; align-items: center; justify-content: center;
-        padding: 2rem; background-color: #ffffff;
-        overflow-y: auto; /* Permite scroll se a tela for pequena verticalmente */
-    }
-
-    .login-box { width: 100%; max-width: 450px; padding: 1rem; }
-
-    /* Inputs Modernos */
+    /* Inputs Padrão */
     .form-floating > .form-control {
-        border: 2px solid #f3f4f6; border-radius: 12px; height: 3.5rem;
+        border-radius: 12px; border: 1px solid #e2e8f0; background-color: #f8fafc;
     }
     .form-floating > .form-control:focus {
-        border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
+        background-color: white; border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
     }
-    .form-floating > label { padding-left: 1rem; color: #6b7280; }
+    .form-floating > label { color: #94a3b8; }
+
+    /* --- SELETOR DE LAB PESQUISÁVEL (CUSTOM) --- */
+    .lab-select-wrapper { position: relative; margin-bottom: 1.5rem; }
     
-    /* Botão */
-    .btn-register {
-        background-color: #01552b; color: white; font-weight: 600; padding: 0.9rem;
-        border-radius: 12px; font-size: 1rem; width: 100%; border: none;
-        transition: all 0.3s ease;
+    .lab-select-btn {
+        width: 100%; padding: 1rem; background-color: #f8fafc;
+        border: 1px solid #e2e8f0; border-radius: 12px; text-align: left;
+        cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        color: #1e293b; font-weight: 500; transition: all 0.2s;
     }
-    .btn-register:hover {
-        background-color: #003319; transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(1, 85, 43, 0.2); color: white;
+    .lab-select-btn:hover { border-color: #cbd5e1; }
+    .lab-select-btn.active { border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1); background: white; }
+
+    .lab-dropdown {
+        position: absolute; top: 110%; left: 0; right: 0;
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 100;
+        display: none; overflow: hidden;
     }
+    .lab-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
+    
+    .lab-search-box { padding: 10px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
+    .lab-search-input {
+        width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; outline: none;
+    }
+    .lab-search-input:focus { border-color: #01552b; }
 
-    .brand-link { color: #01552b; text-decoration: none; font-weight: bold; }
-    .brand-link:hover { text-decoration: underline; color: #003319; }
+    .lab-options-list { max-height: 200px; overflow-y: auto; }
+    .lab-option {
+        padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f8fafc; font-size: 0.9rem; color: #475569;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .lab-option:hover { background-color: #f0fdf4; color: #01552b; }
+    .lab-option strong { color: #0f172a; font-weight: 700; min-width: 50px; } /* Sigla */
 
-    /* Animação */
-    .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
-    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    .btn-submit {
+        background: #01552b; color: white; width: 100%; padding: 1rem;
+        border-radius: 12px; font-weight: 700; font-size: 1.1rem; border: none;
+        transition: 0.3s; margin-top: 1rem;
+    }
+    .btn-submit:hover { background: #014421; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(1, 85, 43, 0.3); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 992px) {
+        .auth-wrapper { flex-direction: column; }
+        .auth-visual { display: none; }
+        .auth-form-container { width: 100%; padding: 2rem; }
+    }
 </style>
 
-<div class="row login-row g-0">
+<div class="auth-wrapper">
     
-    <div class="col-lg-6 d-none d-lg-flex brand-col">
-        <div class="brand-content fade-in-up">
-            <i class="fas fa-rocket fa-3x mb-4" style="opacity: 0.9;"></i>
-            <h1 class="display-5 fw-bold mb-3">Junte-se à Equipe.</h1>
-            <p class="lead" style="opacity: 0.9; font-size: 1.1rem;">
-                Crie a sua conta para começar a registrar as suas atividades e contribuir para os projetos de um laboratório.
-            </p>
+    <div class="auth-visual">
+        <div class="visual-bg"></div>
+        <div class="visual-overlay"></div>
+        <div class="visual-content">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.8;"><i class="fas fa-atom"></i></div>
+            <h1 class="visual-title">Junte-se à Inovação.</h1>
+            <p class="visual-text">Faça parte da rede de pesquisa. Registe as suas atividades, colabore em projetos e acompanhe o seu progresso técnico.</p>
         </div>
     </div>
 
-    <div class="col-lg-6 form-col">
-        <div class="login-box fade-in-up" style="animation-delay: 0.1s;">
-            
-            <div class="d-lg-none text-center mb-4">
-                <i class="fas fa-user-plus fa-3x" style="color: #01552b;"></i>
-            </div>
+    <div class="auth-form-container">
+        <a href="{{ url_for('main.landing') }}" class="btn-back-home"><i class="fas fa-arrow-left"></i> Voltar ao Início</a>
 
-            <h2 class="fw-bold mb-2" style="color: #1f2937;">Criar Conta</h2>
-            <p class="text-muted mb-4">Preencha os dados abaixo para solicitar acesso.</p>
+        <div class="form-header">
+            <h2 class="form-title">Criar Conta</h2>
+            <p class="form-subtitle">Preencha os dados para solicitar acesso.</p>
+        </div>
 
-            <form action="" method="post" novalidate>
-                {{ form.hidden_tag() }}
+        <form action="" method="post" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="lab-select-wrapper" id="labWrapper">
+                <label class="small text-muted fw-bold text-uppercase mb-1">Qual laboratório você frequenta?</label>
                 
-                <div class="form-floating mb-3">
-                    {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
-                    <label for="username">Nome de Usuário</label>
-                    {% for error in form.username.errors %}
-                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
-                    {% endfor %}
+                {{ form.lab_select(class="d-none", id="realLabSelect") }}
+
+                <div class="lab-select-btn" id="labTrigger">
+                    <span id="labSelectedText">Selecione o Laboratório...</span>
+                    <i class="fas fa-chevron-down text-muted"></i>
                 </div>
 
-                <div class="form-floating mb-3">
-                    {{ form.email(class="form-control", id="email", placeholder="nome@exemplo.com") }}
-                    <label for="email">Endereço de E-mail</label>
-                    {% for error in form.email.errors %}
-                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
-                    {% endfor %}
+                <div class="lab-dropdown" id="labDropdown">
+                    <div class="lab-search-box">
+                        <input type="text" class="lab-search-input" id="labSearchInput" placeholder="Digite a sigla ou nome (ex: LAR, Química)...">
+                    </div>
+                    <div class="lab-options-list" id="labOptionsList">
+                        </div>
                 </div>
-
-                <div class="form-floating mb-3">
-                    {{ form.password(class="form-control", id="password", placeholder="Senha") }}
-                    <label for="password">Senha</label>
-                    {% for error in form.password.errors %}
-                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <div class="form-floating mb-4">
-                    {{ form.password2(class="form-control", id="password2", placeholder="Repetir Senha") }}
-                    <label for="password2">Confirmar Senha</label>
-                    {% for error in form.password2.errors %}
-                        <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <div class="d-grid">
-                    {{ form.submit(class="btn btn-register", value="Registrar-se") }}
-                </div>
-            </form>
-
-            <div class="text-center mt-4">
-                <p class="text-muted small">Já tem uma conta? 
-                    <a href="{{ url_for('main.login') }}" class="brand-link">Fazer Login</a>
-                </p>
+                {% for error in form.lab_select.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
             </div>
+
+            <div class="form-floating mb-3">
+                {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
+                <label for="username">Nome de Usuário</label>
+                {% for error in form.username.errors %} <div class="text-danger small mt-1">{{ error }}</div> {% endfor %}
+            </div>
+
+            <div class="form-floating mb-3">
+                {{ form.email(class="form-control", id="email", placeholder="Email") }}
+                <label for="email">E-mail Institucional</label>
+                {% for error in form.email.errors %} <div class="text-danger small mt-1">{{ error }}</div> {% endfor %}
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        {{ form.password(class="form-control", id="pass", placeholder="Senha") }}
+                        <label for="pass">Senha</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        {{ form.password2(class="form-control", id="pass2", placeholder="Confirma") }}
+                        <label for="pass2">Confirmar</label>
+                    </div>
+                </div>
+                {% for error in form.password.errors %} <div class="text-danger small mt-1">{{ error }}</div> {% endfor %}
+            </div>
+
+            {{ form.submit(class="btn-submit", value="Criar Conta") }}
+
+        </form>
+
+        <div class="text-center mt-4 font-size-sm">
+            Já tem uma conta? <a href="{{ url_for('main.login') }}" style="color:#01552b; font-weight:700; text-decoration:none;">Entrar agora</a>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const realSelect = document.getElementById('realLabSelect');
+        const trigger = document.getElementById('labTrigger');
+        const dropdown = document.getElementById('labDropdown');
+        const searchInput = document.getElementById('labSearchInput');
+        const optionsList = document.getElementById('labOptionsList');
+        const selectedText = document.getElementById('labSelectedText');
+        const wrapper = document.getElementById('labWrapper');
+
+        // 1. Popula a lista customizada com base no Select do Flask
+        Array.from(realSelect.options).forEach(option => {
+            const div = document.createElement('div');
+            div.className = 'lab-option';
+            
+            // Tenta separar Sigla de Nome se houver " - "
+            // Ex: "LAR - Laboratório de Robótica"
+            const text = option.text;
+            let htmlContent = text;
+            if (text.includes(' - ')) {
+                const parts = text.split(' - ');
+                htmlContent = `<strong>${parts[0]}</strong> <span>${parts[1]}</span>`;
+            }
+
+            div.innerHTML = htmlContent;
+            div.dataset.value = option.value;
+            div.dataset.search = text.toLowerCase(); // Para busca
+
+            div.addEventListener('click', () => {
+                // Seleciona no input real
+                realSelect.value = option.value;
+                // Atualiza visual
+                selectedText.innerHTML = htmlContent;
+                selectedText.style.color = '#01552b';
+                selectedText.style.fontWeight = 'bold';
+                // Fecha dropdown
+                dropdown.classList.remove('show');
+                trigger.classList.remove('active');
+            });
+
+            optionsList.appendChild(div);
+        });
+
+        // 2. Abrir/Fechar Dropdown
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita fechar logo em seguida
+            dropdown.classList.toggle('show');
+            trigger.classList.toggle('active');
+            if (dropdown.classList.contains('show')) {
+                searchInput.focus();
+            }
+        });
+
+        // 3. Fechar ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target)) {
+                dropdown.classList.remove('show');
+                trigger.classList.remove('active');
+            }
+        });
+
+        // 4. Filtragem em Tempo Real
+        searchInput.addEventListener('keyup', function() {
+            const term = this.value.toLowerCase();
+            const items = optionsList.querySelectorAll('.lab-option');
+            let hasResults = false;
+
+            items.forEach(item => {
+                if (item.dataset.search.includes(term)) {
+                    item.style.display = 'flex';
+                    hasResults = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

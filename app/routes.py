@@ -5,7 +5,7 @@ from flask import render_template, flash, redirect, url_for, request, Blueprint,
 from app import db
 from app.forms import ActivateAccountForm, EditLabForm, LabForm, LoginForm, RegistrationForm, LogEntryForm, EditProfileForm, ChangePasswordForm, ProjectForm, ResetPasswordRequestForm, ResetPasswordForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, LogEntry, Project, Laboratory
+from app.models import ProjectTag, User, LogEntry, Project, Laboratory
 from urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_, func
@@ -46,56 +46,72 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- UTILITÁRIOS DE IMAGEM ---
-def save_picture(form_picture):
+# --- FUNÇÃO MESTRE (O MOTOR) ---
+def save_image_file(form_picture, folder, output_size=None, max_width=None):
+    """
+    Função genérica para salvar, renomear e redimensionar imagens.
+    :param folder: Nome da subpasta dentro de static (ex: 'profile_pics')
+    :param output_size: Tupla (largura, altura) para thumbnail (corta/ajusta)
+    :param max_width: Largura máxima para redimensionamento proporcional (para capas)
+    """
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
-    relative_path = 'static/profile_pics'
-    full_directory = os.path.join(current_app.root_path, relative_path)
-    if not os.path.exists(full_directory): os.makedirs(full_directory)
+    
+    # Define o caminho completo
+    full_directory = os.path.join(current_app.root_path, 'static', folder)
+    
+    # Cria a pasta se não existir (Segurança)
+    if not os.path.exists(full_directory):
+        os.makedirs(full_directory)
+        
     picture_path = os.path.join(full_directory, picture_fn)
-    output_size = (150, 150)
+
+    # Abre a imagem
     i = Image.open(form_picture)
-    i.thumbnail(output_size)
+
+    # Lógica de Redimensionamento
+    if max_width and i.width > max_width:
+        # Redimensiona mantendo a proporção (para Capas)
+        ratio = max_width / float(i.width)
+        new_height = int((float(i.height) * float(ratio)))
+        i = i.resize((max_width, new_height), Image.Resampling.LANCZOS)
+    elif output_size:
+        # Cria thumbnail quadrado (para Avatares/Logos)
+        i.thumbnail(output_size)
+
+    # Salva
     i.save(picture_path)
     return picture_fn
+
+# --- FUNÇÕES ESPECÍFICAS (AGORA SÃO ATALHOS) ---
+
+def save_picture(form_picture):
+    # Avatar de Usuário: Pasta profile_pics, Tamanho 150x150
+    return save_image_file(form_picture, 'profile_pics', output_size=(150, 150))
 
 def save_cover(form_cover):
-    random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(form_cover.filename)
-    cover_fn = random_hex + f_ext
-    relative_path = 'static/profile_pics'
-    full_directory = os.path.join(current_app.root_path, relative_path)
-    if not os.path.exists(full_directory): os.makedirs(full_directory)
-    cover_path = os.path.join(full_directory, cover_fn)
-    i = Image.open(form_cover)
-    if i.width > 1080:
-        ratio = 1080 / float(i.width)
-        new_height = int((float(i.height) * float(ratio)))
-        i = i.resize((1080, new_height), Image.Resampling.LANCZOS)
-    i.save(cover_path)
-    return cover_fn
+    # Capa de Perfil/Projeto: Pasta profile_pics, Largura Max 1080px
+    return save_image_file(form_cover, 'profile_pics', max_width=1080)
 
 def save_lab_logo(form_picture):
-    random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
+    # Logo do Lab: Pasta lab_logos, Tamanho 300x300
+    return save_image_file(form_picture, 'lab_logos', output_size=(300, 300))
+
+def save_affiliation_logo(form_picture):
+    # Logo da Afiliação: Pasta lab_logos, Tamanho 150x150 (Pequeno)
+    return save_image_file(form_picture, 'lab_logos', output_size=(150, 150))
+
+def get_lab_categories():
+    if not current_user.is_authenticated or not current_user.laboratory_id:
+        return [('Geral', 'Geral')]
     
-    # Pasta separada para organização
-    relative_path = 'static/lab_logos'
-    full_directory = os.path.join(current_app.root_path, relative_path)
-    if not os.path.exists(full_directory): os.makedirs(full_directory)
+    tags = ProjectTag.query.filter_by(laboratory_id=current_user.laboratory_id).all()
+    choices = [(t.name, t.name) for t in tags]
     
-    picture_path = os.path.join(full_directory, picture_fn)
-    
-    # Redimensionar (Logos não precisam ser gigantes)
-    output_size = (300, 300)
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
-    
-    return picture_fn
+    if not choices:
+        return [('Geral', 'Geral')]
+    return choices
 
 @bp.context_processor
 def inject_lab_info():
@@ -793,6 +809,7 @@ def view_logs(student_id):
 @login_required
 def new_project():
     form = ProjectForm()
+    form.category.choices = get_lab_categories()
     if form.validate_on_submit():
         image_file = 'default_project.jpg'
         if form.image.data: image_file = save_cover(form.image.data)
@@ -814,6 +831,7 @@ def edit_project(project_id):
     project = Project.query.filter_by(id=project_id, laboratory_id=current_user.laboratory_id).first_or_404()
     
     form = ProjectForm(original_name=project.name)
+    form.category.choices = get_lab_categories()
     if form.validate_on_submit():
         project.name = form.name.data; project.description = form.description.data; project.category = form.category.data
         if form.image.data: project.image_file = save_cover(form.image.data)
@@ -952,41 +970,43 @@ def user_profile(username):
     # Filtro de segurança: só vejo perfis do meu laboratório
     user = User.query.filter_by(username=username, laboratory_id=current_user.laboratory_id).first_or_404()
     total_logs = user.logs.count()
+    recent_logs = user.logs.order_by(LogEntry.entry_date.desc()).limit(5).all()
     image_file = url_for('static', filename='profile_pics/' + user.image_file)
-    return render_template('user_profile.html', user=user, total_logs=total_logs, image_file=image_file)
+    return render_template('user_profile.html', user=user, total_logs=total_logs, image_file=image_file, recent_logs=recent_logs)
 
-# --- AUTENTICAÇÃO (LOGIN/REGISTRO/SENHA) ---
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated: return redirect(url_for('main.index'))
     
     form = RegistrationForm()
     
-    # Popula o menu de laboratórios disponíveis
+    # 1. Busca todos os laboratórios para o menu
     labs = Laboratory.query.order_by(Laboratory.name).all()
+    
+    # 2. Cria as opções: (ID, "Sigla - Nome")
     form.lab_select.choices = [(l.id, f"{l.acronym} - {l.name}") for l in labs]
 
     if form.validate_on_submit():
-        # Criação segura: Sempre bolsista, sempre inativo até aprovação
-        lab = Laboratory.query.get(form.lab_select.data)
+        # Busca o objeto do laboratório selecionado
+        selected_lab = Laboratory.query.get(form.lab_select.data)
         
         user = User(
             username=form.username.data, 
             email=form.email.data,
-            role='bolsista',       # Forçado
-            is_active=False,       # Segurança
+            role='bolsista',       # Registo público é sempre bolsista
+            is_active=False,       # Inativo até aprovação
             is_approved=False,
-            laboratory=lab
+            laboratory=selected_lab # Vincula ao lab escolhido
         )
         user.set_password(form.password.data)
         
         db.session.add(user)
         db.session.commit()
         
-        flash('Solicitação enviada ao coordenador do laboratório!', 'info')
+        flash('Solicitação enviada! Aguarde a aprovação do coordenador.', 'info')
         return redirect(url_for('main.login'))
         
-    return render_template('register.html', title='Solicitar Acesso', form=form)
+    return render_template('register.html', title='Criar Conta', form=form)
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1144,41 +1164,101 @@ def lab_settings():
     form = EditLabForm()
     
     if form.validate_on_submit():
-        if form.logo.data:
+        # 1. Imagens (Só salva se houver upload novo)
+        if form.logo.data: 
             lab.image_file = save_lab_logo(form.logo.data)
-        
+        if form.cover.data: 
+            # Usa a função save_cover que já temos (ou crie save_lab_cover se preferir tamanho diferente)
+            lab.cover_file = save_cover(form.cover.data) 
+        if form.affiliation_logo.data: 
+            lab.affiliation_logo = save_lab_logo(form.affiliation_logo.data)
+
+        # 2. Dados de Texto
         lab.name = form.name.data
         lab.acronym = form.acronym.data
         lab.description = form.description.data
+        lab.affiliation_name = form.affiliation_name.data
+        lab.address = form.address.data
+        lab.location = form.location.data
+        lab.contact_email = form.contact_email.data
+        lab.instagram_link = form.instagram_link.data
+        lab.linkedin_link = form.linkedin_link.data
+        lab.website_link = form.website_link.data
+        
+        # 3. Tags (Apaga as antigas e cria as novas)
+        # Isso é uma estratégia simples. Para sistemas grandes, faríamos "diff".
+        ProjectTag.query.filter_by(laboratory_id=lab.id).delete()
+        
+        if form.custom_tags.data:
+            # Separa por vírgula e remove espaços
+            tag_list = [t.strip() for t in form.custom_tags.data.split(',') if t.strip()]
+            # Remove duplicatas usando set
+            tag_list = list(set(tag_list))
+            
+            for tag_name in tag_list:
+                new_tag = ProjectTag(name=tag_name, laboratory=lab)
+                db.session.add(new_tag)
         
         db.session.commit()
-        flash('Configurações do laboratório atualizadas!', 'success')
+        flash('Configurações do laboratório atualizadas com sucesso!', 'success')
         return redirect(url_for('main.lab_settings'))
     
     elif request.method == 'GET':
+        # Preenche o formulário com os dados do banco
         form.name.data = lab.name
         form.acronym.data = lab.acronym
         form.description.data = lab.description
+        form.affiliation_name.data = lab.affiliation_name
+        form.address.data = lab.address
+        form.location.data = lab.location
+        form.contact_email.data = lab.contact_email
+        form.instagram_link.data = lab.instagram_link
+        form.linkedin_link.data = lab.linkedin_link
+        form.website_link.data = lab.website_link
+        
+        # Carrega as tags para a string
+        current_tags = ProjectTag.query.filter_by(laboratory_id=lab.id).all()
+        form.custom_tags.data = ", ".join([t.name for t in current_tags])
 
-    image_file = url_for('static', filename='lab_logos/' + lab.image_file)
-    return render_template('lab_settings.html', title='Configurações do Lab', form=form, image_file=image_file)
+    # Garante que as imagens têm fallback se forem None no banco
+    logo_url = url_for('static', filename='lab_logos/' + (lab.image_file or 'default_lab.jpg'))
+    cover_url = url_for('static', filename='profile_pics/' + (lab.cover_file or 'default_lab_cover.jpg'))
+    aff_url = None
+    if lab.affiliation_logo:
+        aff_url = url_for('static', filename='lab_logos/' + lab.affiliation_logo)
+    
+    return render_template('lab_settings.html', title='Configurações', form=form, logo_url=logo_url, cover_url=cover_url, aff_url=aff_url)
 
 @bp.route('/lab/<int:lab_id>')
 def public_lab(lab_id):
     lab = Laboratory.query.get_or_404(lab_id)
     
-    # Dados para mostrar
-    prof = lab.users.filter_by(role='professor').first()
+    # MUDANÇA: .all() em vez de .first() para pegar TODOS os professores
+    profs = lab.users.filter_by(role='professor').all()
+    
     students = lab.users.filter_by(role='bolsista', is_active=True).all()
     projects = lab.projects.order_by(Project.created_at.desc()).all()
     
-    # Estatísticas simples para mostrar impacto
     total_logs = LogEntry.query.join(User).filter(User.laboratory_id == lab.id).count()
     
+    # Lógica de Skills (igual anterior)
+    from collections import Counter
+    all_skills = []
+    for s in students:
+        if s.skills:
+            s_list = [x.strip() for x in s.skills.split(',')]
+            all_skills.extend(s_list)
+    top_skills = Counter(all_skills).most_common(10)
+    
+    # Lógica de Atividade Recente
+    recent_activity = LogEntry.query.join(User).filter(User.laboratory_id == lab.id).order_by(LogEntry.entry_date.desc()).limit(6).all()
+
     return render_template('lab_public.html', 
-                           title=f"{lab.acronym} - {lab.name}",
+                           title=f"{lab.acronym}",
                            lab=lab,
-                           prof=prof,
+                           profs=profs, # Passa a lista
                            students=students,
                            projects=projects,
-                           total_logs=total_logs)
+                           total_logs=total_logs,
+                           top_skills=top_skills,
+                           recent_activity=recent_activity)

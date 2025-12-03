@@ -2,196 +2,225 @@
 
 {% block content %}
 <style>
-    /* Customização do Tagify para a marca */
-    .tagify {
-        --tags-border-color: #dee2e6;
-        --tags-hover-border-color: #01552b;
-        --tags-focus-border-color: #01552b;
-        --tag-bg: #e6f4ea; /* Fundo verde muito claro */
-        --tag-text-color: #01552b; /* Texto verde marca */
-        --tag-remove-btn-color: #01552b;
-        border-radius: 8px;
-    }
-    
-    /* Ajuste para Floating Labels ficarem bonitos */
-    .form-floating > .form-control:focus ~ label,
-    .form-floating > .form-control:not(:placeholder-shown) ~ label {
-        color: #01552b;
-        font-weight: 600;
-    }
-    .form-control:focus {
-        border-color: #01552b;
-        box-shadow: 0 0 0 0.25rem rgba(1, 85, 43, 0.15);
+    /* --- ESTILO EDITAR PERFIL (Visual Rich) --- */
+    .edit-container { max-width: 1200px; margin: 0 auto; }
+
+    /* Cartão Principal */
+    .settings-card {
+        background: white; border-radius: 24px; overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
     }
 
-    /* Área da Foto */
-    .edit-avatar-wrapper {
-        position: relative;
-        display: inline-block;
-        margin-bottom: 1.5rem;
+    /* Coluna Visual (Esquerda) */
+    .visual-col {
+        background: #f8fafc; border-right: 1px solid #e2e8f0;
+        padding: 0; position: relative;
     }
-    .edit-avatar {
-        width: 160px;
-        height: 160px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid #fff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+    /* Preview da Capa */
+    .cover-preview-box {
+        height: 220px; width: 100%; position: relative;
+        background-color: #cbd5e1; overflow: hidden; cursor: pointer; group: cover;
     }
-    
-    .section-title {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        color: #9ca3af;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        letter-spacing: 0.05em;
-        border-bottom: 1px solid #f3f4f6;
-        padding-bottom: 0.5rem;
+    .cover-img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+    .cover-overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: white; opacity: 0; transition: 0.3s; backdrop-filter: blur(2px);
+    }
+    .cover-preview-box:hover .cover-overlay { opacity: 1; }
+    .cover-preview-box:hover .cover-img { transform: scale(1.05); }
+
+    /* Preview do Avatar */
+    .avatar-preview-box {
+        width: 140px; height: 140px; margin: -70px auto 2rem auto; /* Sobe para cima da capa */
+        position: relative; cursor: pointer; z-index: 10;
+    }
+    .avatar-img {
+        width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+        border: 5px solid white; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        background: white; transition: 0.3s;
+    }
+    .avatar-overlay {
+        position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center; color: white;
+        opacity: 0; transition: 0.3s; border: 5px solid white;
+    }
+    .avatar-preview-box:hover .avatar-overlay { opacity: 1; }
+
+    /* Texto Visual */
+    .visual-text { text-align: center; padding: 0 2rem 2rem 2rem; }
+    .visual-name { font-size: 1.5rem; font-weight: 800; color: #1e293b; margin-bottom: 0.2rem; }
+    .visual-role { font-size: 0.8rem; text-transform: uppercase; color: #01552b; font-weight: 700; letter-spacing: 1px; }
+    .visual-note { font-size: 0.8rem; color: #94a3b8; margin-top: 1rem; }
+
+    /* Coluna Formulário (Direita) */
+    .form-col { padding: 3rem; }
+    .form-section-title {
+        font-size: 0.9rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;
+        letter-spacing: 1px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;
+    }
+    .form-section-title::after { content: ''; flex: 1; height: 1px; background: #f1f5f9; }
+
+    /* Inputs */
+    .form-floating > .form-control, .form-floating > .form-select {
+        border: 1px solid #e2e8f0; border-radius: 12px; background-color: #fff;
+    }
+    .form-floating > .form-control:focus { border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1); }
+    .form-floating > label { color: #64748b; padding-left: 1rem; }
+
+    /* Tagify Custom */
+    .tagify { border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.5rem; --tag-bg: #f0fdf4; --tag-text-color: #166534; }
+    .tagify:hover { border-color: #cbd5e1; }
+    .tagify.tagify--focus { border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1); }
+
+    /* Footer Actions */
+    .form-actions {
+        margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #f1f5f9;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .btn-save {
+        background: #01552b; color: white; padding: 0.8rem 2.5rem; border-radius: 50rem;
+        font-weight: 700; border: none; box-shadow: 0 4px 15px rgba(1, 85, 43, 0.3); transition: 0.2s;
+    }
+    .btn-save:hover { transform: translateY(-2px); background: #014421; }
+
+    @media (min-width: 992px) {
+        .settings-card { display: grid; grid-template-columns: 350px 1fr; }
+        .visual-col { height: auto; } /* Altura igual */
     }
 </style>
 
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold text-dark mb-0">Configurações de Perfil</h3>
-            <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left me-1"></i> Voltar ao Perfil
-            </a>
+<div class="edit-container">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Configurações de Perfil</h2>
+            <p class="text-muted mb-0">Gerencie suas informações pessoais e aparência.</p>
         </div>
-
-        <form action="" method="post" enctype="multipart/form-data">
-            {{ form.hidden_tag() }}
-
-            <div class="row">
-                
-                <div class="col-md-4 mb-4">
-                    <div class="content-card h-100 text-center">
-                        <div class="section-title text-start">Imagens & Segurança</div>
-                        
-                        <div class="mb-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Imagem de Capa (Banner)</label>
-                            {{ form.cover(class="form-control form-control-sm") }}
-                            {% for error in form.cover.errors %}
-                                <div class="text-danger small mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="edit-avatar-wrapper">
-                            <img src="{{ image_file }}" class="edit-avatar" alt="Foto de Perfil">
-                        </div>
-
-                        <div class="mb-4 text-start">
-                            <label class="form-label small fw-bold text-muted">Alterar Foto de Perfil</label>
-                            {{ form.picture(class="form-control form-control-sm") }}
-                            {% for error in form.picture.errors %}
-                                <div class="text-danger small mt-1">{{ error }}</div>
-                            {% endfor %}
-                            <div class="form-text small">Recomendado: JPG ou PNG.</div>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <div class="d-grid">
-                            <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-warning text-dark">
-                                <i class="fas fa-key me-2"></i> Alterar Senha
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-8">
-                    <div class="content-card h-100">
-                        
-                        <div class="section-title"><i class="fas fa-user-edit me-2"></i> Informações Pessoais</div>
-                        
-                        <div class="row g-3 mb-4">
-                            
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    {{ form.username(class="form-control", id="username", placeholder="Username") }}
-                                    <label for="username">Nome de Usuário</label>
-                                </div>
-                                {% for error in form.username.errors %}
-                                    <div class="text-danger small mt-1">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ form.email(class="form-control", id="email", placeholder="Email") }}
-                                    <label for="email">Endereço de E-mail</label>
-                                </div>
-                                {% for error in form.email.errors %}
-                                    <div class="text-danger small mt-1">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ form.confirm_email(class="form-control", id="confirm_email", placeholder="Confirmar Email") }}
-                                    <label for="confirm_email">Confirmar E-mail</label>
-                                </div>
-                                {% for error in form.confirm_email.errors %}
-                                    <div class="text-danger small mt-1">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    {{ form.course(class="form-control", id="course", placeholder="Curso") }}
-                                    <label for="course">Curso / Vínculo</label>
-                                </div>
-                            </div>
-                            
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    {{ form.bio(class="form-control", id="bio", placeholder="Bio", style="height: 100px") }}
-                                    <label for="bio">Sobre Mim (Bio)</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="section-title"><i class="fas fa-tools me-2"></i> Competências</div>
-                        <div class="mb-4">
-                            <label class="form-label small fw-bold text-muted">Habilidades Técnicas</label>
-                            {{ form.skills(class="form-control", id="skills_input") }}
-                            <div class="form-text">Digite uma habilidade e pressione <strong>Enter</strong> para adicionar.</div>
-                        </div>
-
-                        <div class="section-title"><i class="fas fa-globe me-2"></i> Presença Digital</div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    {{ form.lattes_link(class="form-control", id="lattes", placeholder="Lattes") }}
-                                    <label for="lattes"><i class="fas fa-scroll me-1"></i> Lattes</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    {{ form.github_link(class="form-control", id="github", placeholder="GitHub") }}
-                                    <label for="github"><i class="fab fa-github me-1"></i> GitHub</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    {{ form.linkedin_link(class="form-control", id="linkedin", placeholder="LinkedIn") }}
-                                    <label for="linkedin"><i class="fab fa-linkedin me-1"></i> LinkedIn</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-5 pt-3 border-top">
-                            <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-light border">Cancelar</a>
-                            {{ form.submit(class="btn btn-success px-4 fw-bold") }}
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </form>
+        <a href="{{ url_for('main.user_profile', username=current_user.username) }}" class="btn btn-light border rounded-pill px-4 fw-bold text-muted">
+            <i class="fas fa-arrow-left me-2"></i> Voltar
+        </a>
     </div>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+
+        <div class="settings-card">
+            
+            <div class="visual-col">
+                
+                <div class="cover-preview-box" onclick="document.getElementById('coverInput').click();">
+                    <img id="coverPreview" src="{{ url_for('static', filename='profile_pics/' + current_user.cover_file) }}" class="cover-img">
+                    <div class="cover-overlay">
+                        <i class="fas fa-camera fa-2x mb-2"></i>
+                        <span class="fw-bold small">ALTERAR CAPA</span>
+                    </div>
+                </div>
+                {{ form.cover(class="d-none", id="coverInput", onchange="previewImage(this, 'coverPreview')") }}
+
+                <div class="avatar-preview-box" onclick="document.getElementById('avatarInput').click();">
+                    <img id="avatarPreview" src="{{ image_file }}" class="avatar-img">
+                    <div class="avatar-overlay">
+                        <i class="fas fa-camera fa-lg"></i>
+                    </div>
+                </div>
+                {{ form.picture(class="d-none", id="avatarInput", onchange="previewImage(this, 'avatarPreview')") }}
+
+                <div class="visual-text">
+                    <div class="visual-name">{{ current_user.username }}</div>
+                    <div class="visual-role">{{ current_user.role }}</div>
+                    <p class="visual-note">
+                        As alterações de imagem são pré-visualizadas aqui. Clique em "Salvar" para aplicar.
+                    </p>
+                    
+                    <hr class="my-4 opacity-25">
+
+                    <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-secondary w-100 rounded-pill py-2">
+                        <i class="fas fa-key me-2"></i> Alterar Senha
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="form-col">
+                
+                <div class="form-section-title"><i class="fas fa-user-circle"></i> Dados Pessoais</div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <div class="form-floating">
+                            {{ form.username(class="form-control", placeholder="User") }}
+                            <label>Nome de Usuário</label>
+                        </div>
+                        {% for error in form.username.errors %} <div class="text-danger small">{{ error }}</div> {% endfor %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            {{ form.email(class="form-control", placeholder="Email") }}
+                            <label>E-mail</label>
+                        </div>
+                        {% for error in form.email.errors %} <div class="text-danger small">{{ error }}</div> {% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            {{ form.confirm_email(class="form-control", placeholder="Confirmar") }}
+                            <label>Confirmar E-mail</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="form-floating">
+                            {{ form.course(class="form-control", placeholder="Curso") }}
+                            <label>Curso / Vínculo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-floating mb-5">
+                    {{ form.bio(class="form-control", placeholder="Bio", style="height: 120px") }}
+                    <label>Sobre Mim (Bio)</label>
+                </div>
+
+                <div class="form-section-title"><i class="fas fa-briefcase"></i> Perfil Profissional</div>
+                
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted ms-1">Competências & Habilidades</label>
+                    {{ form.skills(class="form-control", id="skills_input") }}
+                    <div class="form-text text-muted small ms-1">Digite e pressione Enter (Ex: Python, ROS, Soldagem).</div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ form.lattes_link(class="form-control", placeholder="Lattes") }}
+                            <label><i class="fas fa-scroll me-1"></i> Lattes</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ form.github_link(class="form-control", placeholder="GitHub") }}
+                            <label><i class="fab fa-github me-1"></i> GitHub</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ form.linkedin_link(class="form-control", placeholder="LinkedIn") }}
+                            <label><i class="fab fa-linkedin me-1"></i> LinkedIn</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <span class="text-muted small">Todas as alterações requerem validação.</span>
+                    <button type="submit" class="btn-save">Salvar Alterações</button>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
 </div>
 {% endblock %}
 
@@ -201,17 +230,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 
 <script>
+    // Tagify
     var input = document.querySelector('#skills_input');
-    
-    // Inicializa o Tagify com configurações visuais
     var tagify = new Tagify(input, {
         originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(','),
-        dropdown: {
-            maxItems: 20,           
-            classname: "tags-look", 
-            enabled: 0,             
-            closeOnSelect: false    
-        }
+        dropdown: { maxItems: 20, classname: "tags-look", enabled: 0, closeOnSelect: false }
     });
+
+    // Função Genérica de Preview de Imagem
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 </script>
 {% endblock %}

@@ -2,273 +2,583 @@
 
 {% block content %}
 <style>
-    /* --- RESET GERAL --- */
+    /* --- 0. TEMA DARK MODE PREMIUM --- */
     nav, footer { display: none !important; }
     main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-    body { background-color: #ffffff; color: #1e293b; font-family: 'Inter', sans-serif; }
-
-    /* --- 1. HERO SECTION (Cinemática) --- */
-    .lab-hero {
-        height: 70vh;
-        position: relative;
-        display: flex;
-        align-items: center;
-        background-color: #020617;
-        overflow: hidden;
-    }
     
-    /* Fundo Tecnológico Abstrato */
+    :root {
+        --bg-darker: #020617;
+        --bg-card: rgba(30, 41, 59, 0.7);
+        --accent: #4ade80; /* Verde Neon */
+        --accent-glow: rgba(74, 222, 128, 0.5);
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: rgba(51, 65, 85, 0.8);
+    }
+
+    body { 
+        background-color: var(--bg-darker);
+        color: var(--text-main);
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+        
+        /* FUNDO: Grid Tecnológico com ALTA visibilidade (0.7 opacity) */
+        background-image: 
+            /* Vignette para escurecer as bordas */
+            radial-gradient(circle at 50% 0%, transparent 10%, #020617 90%),
+            /* Linhas Verticais (Opacidade aumentada para 0.7) */
+            linear-gradient(to right, rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+            /* Linhas Horizontais (Opacidade aumentada para 0.7) */
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+        background-size: 100% 100%, 40px 40px, 40px 40px;
+        background-attachment: fixed;
+    }
+    a { text-decoration: none; transition: 0.3s; color: inherit; }
+
+    /* Scrollbar Personalizada */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* --- 1. HERO SECTION --- */
+    .lab-hero {
+        height: 65vh; min-height: 500px; position: relative;
+        display: flex; align-items: center; justify-content: center; text-align: center;
+        background-color: #000; overflow: hidden;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    }
     .hero-bg {
         position: absolute; inset: 0;
-        background-image: url('https://img.freepik.com/free-vector/gradient-technological-background_23-2148884155.jpg');
-        background-size: cover; background-position: center;
-        opacity: 0.4; animation: slowPan 60s infinite alternate;
+        background-image: url('{{ url_for("static", filename="profile_pics/" + lab.cover_file) }}');
+        background-size: cover; background-position: center; opacity: 0.5;
+        animation: slowZoom 60s infinite alternate;
+        filter: saturate(1.1);
     }
-    @keyframes slowPan { from { transform: scale(1); } to { transform: scale(1.1); } }
+    @keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.15); } }
     
-    .hero-overlay {
+    .hero-overlay { 
+        position: absolute; inset: 0; 
+        background: radial-gradient(circle at center, rgba(2, 6, 23, 0.2) 0%, var(--bg-darker) 90%);
+        backdrop-filter: blur(3px);
+    }
+
+    .hero-content { position: relative; z-index: 10; max-width: 1000px; padding: 2rem; margin-top: -60px; }
+
+    .lab-logo-box {
+        width: 140px; height: 140px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 30px; padding: 20px; 
+        margin: 0 auto 1.5rem auto; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 50px rgba(74, 222, 128, 0.2);
+        transform: rotate(-3deg); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .lab-logo-box:hover { transform: rotate(0deg) scale(1.05); box-shadow: 0 0 70px var(--accent-glow); }
+    .lab-logo-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+
+    .lab-title { 
+        font-size: 5rem; font-weight: 900; color: white; line-height: 1; 
+        text-shadow: 0 10px 30px rgba(0,0,0,0.9); margin-bottom: 0.5rem; letter-spacing: -2px;
+    }
+    .lab-acronym { 
+        font-size: 1.2rem; font-weight: 800; letter-spacing: 8px; color: var(--accent); 
+        text-transform: uppercase; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 50rem;
+        border: 1px solid rgba(74, 222, 128, 0.2);
+    }
+
+    /* --- 2. INFO DOCK --- */
+    .info-dock {
+        max-width: 1100px; margin: -4rem auto 4rem auto; 
+        background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border-radius: 24px; padding: 1.5rem 3rem;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); 
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative; z-index: 20;
+        display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2rem;
+    }
+    
+    .info-group { display: flex; align-items: center; gap: 14px; }
+    .info-icon { 
+        width: 48px; height: 48px; background: rgba(74, 222, 128, 0.05); color: var(--accent); border-radius: 14px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+        border: 1px solid rgba(74, 222, 128, 0.15); box-shadow: 0 0 20px rgba(74, 222, 128, 0.1) inset;
+    }
+    .info-data div { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; margin-bottom: 2px; }
+    /* Ajuste para permitir múltiplas linhas na localização */
+    .info-data span { font-size: 1.05rem; font-weight: 600; color: white; display: block; line-height: 1.3; }
+    .affil-mini { width: 22px; margin-right: 5px; filter: brightness(0) invert(1); opacity: 0.8; }
+
+    .dock-socials { display: flex; gap: 10px; }
+    .d-social-btn {
+        width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.03); 
+        border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted);
+        display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .d-social-btn:hover { background: var(--accent); color: #020617; transform: translateY(-5px) scale(1.1); border-color: var(--accent); box-shadow: 0 5px 15px var(--accent-glow); }
+
+    /* --- 3. LAYOUT PRINCIPAL --- */
+    .main-layout {
+        max-width: 1350px; margin: 0 auto 6rem auto; padding: 0 2rem;
+        display: grid; grid-template-columns: 340px 1fr; gap: 3.5rem;
+    }
+
+    /* Sidebar Styles */
+    .sidebar-card {
+        background: var(--bg-card); border-radius: 20px; padding: 1.8rem;
+        border: 1px solid var(--border); margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(10px);
+    }
+    .sidebar-title { 
+        font-size: 0.8rem; font-weight: 800; color: var(--text-muted); 
+        margin-bottom: 1.2rem; text-transform: uppercase; letter-spacing: 2px; 
+        border-bottom: 1px solid var(--border); padding-bottom: 10px; 
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .sidebar-text { font-size: 0.95rem; color: #cbd5e1; line-height: 1.7; }
+
+    /* --- RICH MEMBER LIST (COM FADE NO CONTAINER) --- */
+    .members-list { 
+        display: flex; flex-direction: column; gap: 12px; 
+        max-height: 450px; overflow-y: auto; padding-right: 5px; /* Escalável */
+    }
+
+    .rich-member-card {
+        position: relative; overflow: hidden; border-radius: 16px;
+        min-height: 75px; 
+        border: 1px solid var(--border);
+        cursor: pointer; transition: all 0.3s ease;
+        display: flex; align-items: center;
+    }
+
+    /* Camada 1: Imagem de Fundo (Capa) */
+    .rm-bg-layer {
         position: absolute; inset: 0;
-        background: linear-gradient(to right, rgba(2, 6, 23, 0.9) 0%, rgba(2, 6, 23, 0.6) 100%);
+        background-size: cover; background-position: center;
+        opacity: 0.25; /* Começa escuro */
+        filter: grayscale(100%) contrast(1.2); 
+        transition: all 0.4s ease; z-index: 0;
+    }
+    /* Camada 2: Overlay Escuro */
+    .rm-overlay-layer {
+        position: absolute; inset: 0;
+        background: linear-gradient(to right, rgba(2, 6, 23, 0.95) 25%, rgba(2, 6, 23, 0.5) 100%);
+        z-index: 1; transition: 0.3s;
+    }
+    /* Camada 3: Conteúdo */
+    .rm-content-layer {
+        position: relative; z-index: 2;
+        display: flex; align-items: center;
+        padding: 0.8rem 1rem; width: 100%;
     }
 
-    .hero-content {
-        position: relative; z-index: 10; width: 100%; max-width: 1200px; margin: 0 auto; padding: 2rem;
-        display: grid; grid-template-columns: 1.5fr 1fr; gap: 4rem; align-items: center;
+    /* Efeitos de Hover no Card */
+    .rich-member-card:hover {
+        border-color: var(--accent);
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
     }
+    .rich-member-card:hover .rm-bg-layer {
+        opacity: 0.6; /* Fica mais visível */
+        filter: grayscale(20%); 
+        transform: scale(1.05);
+    }
+    .rich-member-card:hover .rm-overlay-layer {
+         background: linear-gradient(to right, rgba(2, 6, 23, 0.9) 20%, rgba(74, 222, 128, 0.15) 100%);
+    }
+    .rich-member-card:hover .rm-avatar { border-color: var(--accent); }
+    .rich-member-card:hover .rm-icon { color: white; transform: translateX(3px); }
 
-    /* Lado Esquerdo: Identidade */
-    .lab-brand { display: flex; flex-direction: column; align-items: flex-start; }
+    .rm-avatar {
+        width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
+        border: 2px solid rgba(255,255,255,0.2); transition: 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); background: #000;
+    }
+    .rm-info { display: flex; flex-direction: column; line-height: 1.2; margin-left: 14px; }
+    .rm-name { font-weight: 700; font-size: 0.95rem; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    .rm-role { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 700; margin-top: 2px; letter-spacing: 0.5px; }
+    .rm-icon { margin-left: auto; color: rgba(255,255,255,0.2); transition: 0.2s; }
+
+
+    /* --- HOVER TOOLTIP --- */
+    .member-tooltip-card {
+        position: fixed; width: 300px; 
+        background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
+        border: 1px solid var(--accent); border-radius: 16px; overflow: hidden; z-index: 9999;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 30px rgba(74, 222, 128, 0.15);
+        opacity: 0; pointer-events: none; transition: opacity 0.3s cubic-bezier(0.19, 1, 0.22, 1), transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+        transform: translateY(20px) scale(0.95); display: flex; flex-direction: column;
+    }
+    .member-tooltip-card.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+    .tp-banner { height: 110px; background-size: cover; background-position: center; position: relative; }
+    .tp-banner::after { content:''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,1) 10%, transparent); }
+    .tp-content { padding: 0 1.5rem 1.5rem 1.5rem; margin-top: -45px; position: relative; }
+    .tp-avatar { width: 85px; height: 85px; border-radius: 50%; border: 3px solid var(--accent); object-fit: cover; box-shadow: 0 10px 25px rgba(0,0,0,0.6); background: #000; }
+    .tp-role { display: inline-block; background: var(--accent); color: #020617; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-top: 12px; margin-bottom: 8px; box-shadow: 0 5px 15px var(--accent-glow); }
+    .tp-name { font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 5px; }
+    .tp-bio { font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;}
+
+
+    /* --- CONTEÚDO DIREITO (Projetos) --- */
+    .search-box { position: relative; margin-bottom: 2rem; }
+    .search-input {
+        width: 100%; padding: 1.2rem 1.5rem 1.2rem 3.5rem; border-radius: 16px;
+        border: 1px solid var(--border); font-size: 1.1rem; background: rgba(15, 23, 42, 0.6); color: white;
+        transition: 0.3s; backdrop-filter: blur(5px);
+    }
+    .search-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.1); background: rgba(15, 23, 42, 0.8); }
     
-    .lab-logo {
-        width: 100px; height: 100px; object-fit: contain;
-        background: white; padding: 10px; border-radius: 20px;
-        margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    /* CORREÇÃO DO ÍCONE DE PESQUISA (Sem Blur) */
+    .search-icon { 
+        position: absolute; left: 1.3rem; top: 50%; transform: translateY(-50%); 
+        color: var(--accent); /* Cor Verde Neon */
+        font-size: 1.3rem; 
+        /* text-shadow removido para nitidez */
+        pointer-events: none;
+        z-index: 5;
     }
+
+    .filter-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 2.5rem; }
+    .filter-tag {
+        background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted);
+        padding: 8px 20px; border-radius: 50rem; font-size: 0.85rem; font-weight: 600;
+        cursor: pointer; transition: all 0.2s; backdrop-filter: blur(5px);
+    }
+    .filter-tag:hover { border-color: var(--accent); color: white; background: rgba(74, 222, 128, 0.05); }
+    .filter-tag.active {
+        background: var(--accent); color: #022c16; border-color: var(--accent); 
+        box-shadow: 0 0 25px rgba(74, 222, 128, 0.4);
+    }
+
+    /* Grid Projetos */
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
     
-    .lab-acronym {
-        color: #4ade80; font-weight: 800; letter-spacing: 4px; font-size: 1rem; text-transform: uppercase;
-        margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px;
+    .p-card {
+        background: var(--bg-card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        display: flex; flex-direction: column; height: 100%; text-decoration: none; color: inherit;
+        position: relative; backdrop-filter: blur(10px);
     }
-    .lab-acronym::before { content: ''; width: 40px; height: 2px; background: #4ade80; }
+    .p-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6); }
 
-    .lab-title {
-        font-size: 4rem; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 1.5rem;
-        text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    .p-img-box { height: 180px; position: relative; overflow: hidden; }
+    .p-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; opacity: 0.9; }
+    .p-card:hover .p-img { transform: scale(1.1); opacity: 1; }
+    .p-img-box::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-dark), transparent); opacity: 0.6; }
+
+    .p-cat-badge {
+        position: absolute; top: 15px; left: 15px; z-index: 5;
+        background: rgba(2, 6, 23, 0.8); color: var(--accent); border: 1px solid rgba(74, 222, 128, 0.3);
+        padding: 5px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; backdrop-filter: blur(10px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
 
-    .lab-desc {
-        font-size: 1.2rem; line-height: 1.6; color: #94a3b8; margin-bottom: 2.5rem; max-width: 600px;
-    }
-
-    /* Lado Direito: Stats Grid */
-    .stats-grid {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
-    }
-    .stat-card {
-        background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.1); padding: 2rem; border-radius: 20px;
-        text-align: center; transition: transform 0.3s;
-    }
-    .stat-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); border-color: #4ade80; }
+    .p-body { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; position: relative; }
+    .p-title { font-size: 1.3rem; font-weight: 700; color: white; margin-bottom: 0.5rem; line-height: 1.3; }
+    .p-desc { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1.5rem; }
     
-    .stat-num { font-size: 2.5rem; font-weight: 800; color: white; display: block; line-height: 1; margin-bottom: 5px; }
-    .stat-label { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 1px; }
+    .p-footer { 
+        margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; font-weight: 600;
+    }
+    .p-link { color: var(--accent); display: flex; align-items: center; gap: 5px; opacity: 0.8; transition: 0.3s; }
+    .p-card:hover .p-link { opacity: 1; transform: translateX(5px); text-shadow: 0 0 10px var(--accent-glow); }
 
-    /* --- 2. SECÇÃO DE PROJETOS (Estilo Revista) --- */
-    .projects-section { padding: 6rem 2rem; background: #ffffff; }
-    
-    .section-header { 
-        max-width: 1200px; margin: 0 auto 3rem auto; display: flex; justify-content: space-between; align-items: flex-end;
-        border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;
-    }
-    .section-title { font-size: 2rem; font-weight: 800; color: #0f172a; margin: 0; }
-    .section-subtitle { color: #64748b; font-size: 1rem; margin: 0; }
+    /* Stats Box */
+    .stat-row { display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--border); }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-k { color: var(--text-muted); font-size: 0.9rem; }
+    .stat-v { font-weight: 700; color: white; font-family: 'Courier New', monospace; }
 
-    .projects-grid {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2.5rem;
-        max-width: 1200px; margin: 0 auto;
-    }
-
-    .project-card {
-        display: block; text-decoration: none; color: inherit; group: project;
-    }
-    
-    .p-image-box {
-        height: 260px; border-radius: 20px; overflow: hidden; position: relative; margin-bottom: 1.5rem;
-        box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);
-    }
-    .p-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
-    .project-card:hover .p-img { transform: scale(1.05); }
-    
-    .p-overlay {
-        position: absolute; inset: 0; background: rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s;
-        display: flex; align-items: center; justify-content: center;
-    }
-    .project-card:hover .p-overlay { opacity: 1; }
-    .btn-view { 
-        background: white; color: #0f172a; padding: 10px 25px; border-radius: 50rem; 
-        font-weight: 700; transform: translateY(20px); transition: transform 0.3s;
-    }
-    .project-card:hover .btn-view { transform: translateY(0); }
-
-    .p-cat { font-size: 0.75rem; font-weight: 800; color: #01552b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; display: block; }
-    .p-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; line-height: 1.3; }
-    .p-desc { color: #64748b; line-height: 1.6; font-size: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-    /* --- 3. EQUIPA (Modern Grid) --- */
-    .team-section { padding: 6rem 2rem; background: #f8fafc; }
-    
-    .team-grid {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;
-        max-width: 1000px; margin: 0 auto;
-    }
-    
-    .member-card {
-        background: white; border-radius: 20px; padding: 2rem 1rem; text-align: center;
-        border: 1px solid #e2e8f0; transition: transform 0.3s;
-    }
-    .member-card:hover { transform: translateY(-10px); border-color: #01552b; box-shadow: 0 10px 30px -10px rgba(1, 85, 43, 0.15); }
-
-    .m-avatar { 
-        width: 90px; height: 90px; border-radius: 50%; object-fit: cover; 
-        border: 3px solid #f1f5f9; margin-bottom: 1rem; 
-    }
-    .m-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; display: block; margin-bottom: 0.2rem; }
-    .m-role { font-size: 0.75rem; text-transform: uppercase; color: #64748b; letter-spacing: 1px; font-weight: 600; }
-    
-    /* Destaque para o Professor */
-    .member-card.professor { border-top: 4px solid #01552b; }
-
-    /* --- 4. FOOTER CTA --- */
-    .lab-cta {
-        background: #0f172a; color: white; text-align: center; padding: 5rem 2rem;
+    /* Footer */
+    .lab-footer { background: var(--bg-darker); border-top: 1px solid var(--border); padding: 6rem 2rem; text-align: center; color: #64748b; margin-top: 5rem; position: relative; }
+    .lab-footer::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 80%; height: 1px; background: radial-gradient(circle, var(--accent) 0%, transparent 100%); opacity: 0.3; }
+    .btn-join {
+        background: var(--accent); color: #022c16; padding: 1.2rem 4rem; border-radius: 50rem;
+        font-weight: 800; text-decoration: none; display: inline-block; margin-top: 2rem;
+        box-shadow: 0 0 30px var(--accent-glow); transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
         position: relative; overflow: hidden;
     }
-    .lab-cta h2 { font-size: 2.5rem; font-weight: 900; margin-bottom: 2rem; }
-    .btn-join {
-        background: #4ade80; color: #022c16; padding: 1rem 3rem; border-radius: 12px;
-        font-weight: 800; text-decoration: none; font-size: 1.1rem; transition: all 0.2s;
-        box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
-    }
-    .btn-join:hover { transform: scale(1.05); background: white; box-shadow: 0 0 40px rgba(255,255,255,0.3); }
+    .btn-join::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent); transform: rotate(45deg); animation: shine 3s infinite; opacity: 0; }
+    .btn-join:hover { background: white; transform: scale(1.05); box-shadow: 0 0 60px rgba(255,255,255,0.5); }
+    .btn-join:hover::after { opacity: 1; }
+    @keyframes shine { 0% { left: -100%; } 100% { left: 100%; } }
 
-    .btn-back-float {
-        position: fixed; top: 25px; left: 25px; z-index: 100;
-        background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-        color: white; width: 45px; height: 45px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        text-decoration: none; border: 1px solid rgba(255,255,255,0.2);
-        transition: background 0.2s;
+    /* Voltar */
+    .btn-back {
+        position: fixed; top: 30px; left: 30px; z-index: 1000;
+        background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); color: white;
+        width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; text-decoration: none; font-size: 1.2rem;
     }
-    .btn-back-float:hover { background: rgba(255,255,255,0.3); }
+    .btn-back:hover { background: white; color: #020617; transform: rotate(-45deg); }
 
-    /* Responsivo */
     @media (max-width: 992px) {
-        .hero-content { grid-template-columns: 1fr; text-align: center; padding-top: 4rem; }
-        .lab-brand { align-items: center; margin-bottom: 3rem; }
-        .lab-acronym { justify-content: center; }
-        .lab-acronym::before { display: none; }
+        .main-layout { grid-template-columns: 1fr; }
+        .info-dock { flex-direction: column; text-align: center; gap: 1.5rem; }
         .lab-title { font-size: 3rem; }
-        .lab-hero { height: auto; padding-bottom: 4rem; }
+        .member-tooltip-card { display: none !important; }
     }
 </style>
 
-<a href="{{ url_for('main.landing') }}" class="btn-back-float" title="Voltar"><i class="fas fa-arrow-left"></i></a>
+<a href="{{ url_for('main.landing') }}" class="btn-back" title="Voltar"><i class="fas fa-arrow-left"></i></a>
 
 <div class="lab-hero">
     <div class="hero-bg"></div>
     <div class="hero-overlay"></div>
-    
     <div class="hero-content">
-        <div class="lab-brand animate__animated animate__fadeInLeft">
-            <img src="{{ url_for('static', filename='lab_logos/' + lab.image_file) }}" class="lab-logo">
-            <div class="lab-acronym">{{ lab.acronym }}</div>
-            <h1 class="lab-title">{{ lab.name }}</h1>
-            <p class="lab-desc">
-                {{ lab.description if lab.description else 'Polo de inovação tecnológica e pesquisa aplicada.' }}
+        <div class="lab-logo-box">
+            <img src="{{ url_for('static', filename='lab_logos/' + lab.image_file) }}" class="lab-logo-img">
+        </div>
+        <span class="lab-acronym">{{ lab.acronym }}</span>
+        <h1 class="lab-title">{{ lab.name }}</h1>
+    </div>
+</div>
+
+<div class="info-dock">
+    {% if lab.affiliation_name %}
+    <div class="info-group">
+        <div class="info-icon">
+            {% if lab.affiliation_logo %}<img src="{{ url_for('static', filename='lab_logos/' + lab.affiliation_logo) }}" class="affil-mini">{% else %}<i class="fas fa-university"></i>{% endif %}
+        </div>
+        <div class="info-data">
+            <div>Afiliação</div>
+            <span>{{ lab.affiliation_name }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if lab.address or lab.location %}
+    <div class="info-group">
+        <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+        <div class="info-data">
+            <div>Endereço & Localização</div>
+            <span>
+                {% if lab.address %}{{ lab.address }}{% endif %}
+                {% if lab.address and lab.location %}<br>{% endif %} {% if lab.location %}<span style="color: var(--accent); font-weight: 700;">{{ lab.location }}</span>{% endif %}
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="info-group ms-auto">
+        <div class="dock-socials">
+            {% if lab.website_link %}<a href="{{ lab.website_link }}" target="_blank" class="d-social-btn" title="Website"><i class="fas fa-globe"></i></a>{% endif %}
+            {% if lab.instagram_link %}<a href="{{ lab.instagram_link }}" target="_blank" class="d-social-btn" title="Instagram"><i class="fab fa-instagram"></i></a>{% endif %}
+            {% if lab.contact_email %}<a href="mailto:{{ lab.contact_email }}" class="d-social-btn" title="Email"><i class="fas fa-envelope"></i></a>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="main-layout">
+    
+    <aside>
+        <div class="sidebar-card">
+            <div class="sidebar-title">Sobre o Laboratório</div>
+            <p class="sidebar-text">
+                {{ lab.description if lab.description else 'Sem descrição institucional definida.' }}
             </p>
-            
-            {% if prof %}
-            <div class="d-flex align-items-center gap-3 mt-2">
-                <img src="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}" style="width:40px; height:40px; border-radius:50%; border:2px solid white;">
-                <div style="text-align: left; line-height: 1.2;">
-                    <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Coordenação</span><br>
-                    <span style="color: white; font-weight: 700;">{{ prof.username }}</span>
+        </div>
+
+        {% if profs %}
+        <div class="sidebar-card">
+            <div class="sidebar-title">
+                Coordenação <span class="badge bg-dark border border-secondary">{{ profs|length }}</span>
+            </div>
+            <div class="members-list custom-scroll">
+                {% for prof in profs %}
+                <div class="rich-member-card t-hover-trigger"
+                     data-name="{{ prof.username }}" data-role="Professor Coordinator" 
+                     data-bio="{{ prof.bio }}"
+                     data-avatar="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}"
+                     data-cover="{{ url_for('static', filename='profile_pics/' + prof.cover_file) }}">
+                    
+                    <div class="rm-bg-layer" style="background-image: url('{{ url_for('static', filename='profile_pics/' + prof.cover_file) }}');"></div>
+                    <div class="rm-overlay-layer"></div>
+                    
+                    <div class="rm-content-layer">
+                        <img src="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}" class="rm-avatar">
+                        <div class="rm-info">
+                            <div class="rm-name">{{ prof.username }}</div>
+                            <span class="rm-role">Coordenador</span>
+                        </div>
+                        <i class="fas fa-chevron-right rm-icon"></i>
+                    </div>
                 </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="stats-grid animate__animated animate__fadeInRight">
-            <div class="stat-card">
-                <span class="stat-num">{{ projects|length }}</span>
-                <span class="stat-label">Projetos Ativos</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-num">{{ students|length }}</span>
-                <span class="stat-label">Pesquisadores</span>
-            </div>
-            <div class="stat-card" style="grid-column: span 2;">
-                <span class="stat-num">{{ total_logs }}+</span>
-                <span class="stat-label">Horas de Desenvolvimento</span>
+                {% endfor %}
             </div>
         </div>
-    </div>
-</div>
+        {% endif %}
+        
+        {% if students %}
+        <div class="sidebar-card">
+            <div class="sidebar-title">
+                Pesquisadores <span class="badge bg-dark border border-secondary">{{ students|length }}</span>
+            </div>
+            <div class="members-list custom-scroll">
+                {% for student in students %}
+                <div class="rich-member-card t-hover-trigger"
+                     data-name="{{ student.username }}" data-role="Pesquisador / Bolsista" 
+                     data-bio="{{ student.bio }}"
+                     data-avatar="{{ url_for('static', filename='profile_pics/' + student.image_file) }}"
+                     data-cover="{{ url_for('static', filename='profile_pics/' + student.cover_file) }}">
+                     
+                    <div class="rm-bg-layer" style="background-image: url('{{ url_for('static', filename='profile_pics/' + student.cover_file) }}');"></div>
+                    <div class="rm-overlay-layer"></div>
 
-{% if projects %}
-<div class="projects-section">
-    <div class="section-header">
-        <div>
-            <h2 class="section-title">Portfólio</h2>
-            <p class="section-subtitle">O que estamos a construir.</p>
-        </div>
-    </div>
-
-    <div class="projects-grid">
-        {% for proj in projects %}
-        <a href="{{ url_for('main.public_project', project_id=proj.id) }}" class="project-card">
-            <div class="p-image-box">
-                <img src="{{ url_for('static', filename='profile_pics/' + proj.image_file) }}" class="p-img">
-                <div class="p-overlay">
-                    <span class="btn-view">Ver Detalhes</span>
+                    <div class="rm-content-layer">
+                        <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" class="rm-avatar">
+                        <div class="rm-info">
+                            <div class="rm-name">{{ student.username.split()[0] }} {{ student.username.split()[1] if student.username.split()|length > 1 else '' }}</div>
+                            <span class="rm-role">Pesquisador</span>
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            <span class="p-cat">{{ proj.category }}</span>
-            <h3 class="p-title">{{ proj.name }}</h3>
-            <p class="p-desc">{{ proj.description if proj.description else 'Sem descrição.' }}</p>
-        </a>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-{% if students %}
-<div class="team-section">
-    <div class="section-header justify-content-center text-center mb-5">
-        <div>
-            <h2 class="section-title">Equipa de Pesquisa</h2>
-            <p class="section-subtitle">As mentes por trás da inovação.</p>
         </div>
-    </div>
+        {% endif %}
 
-    <div class="team-grid">
-        {% for student in students %}
-        <div class="member-card">
-            <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" class="m-avatar">
-            <span class="m-name">{{ student.username }}</span>
-            <span class="m-role">Bolsista</span>
+        <div class="sidebar-card">
+            <div class="sidebar-title">Impacto Gerado</div>
+            <div class="stat-row"><span class="stat-k">Projetos Ativos</span><span class="stat-v">{{ projects|length }}</span></div>
+            <div class="stat-row"><span class="stat-k">Entradas no Log</span><span class="stat-v">{{ total_logs }}</span></div>
+            <div class="stat-row"><span class="stat-k">Equipe Total</span><span class="stat-v">{{ students|length + profs|length }}</span></div>
         </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
+    </aside>
 
-<div class="lab-cta">
-    <h2>Quer fazer parte deste laboratório?</h2>
-    <a href="{{ url_for('main.register') }}" class="btn-join">
-        Solicitar Acesso <i class="fas fa-arrow-right ms-2"></i>
-    </a>
+    <section>
+        <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="projectSearch" class="search-input" placeholder="Pesquisar projetos, tecnologias ou áreas...">
+        </div>
+        
+        <div class="filter-tags">
+            <button class="filter-tag active" onclick="filterCat('all', this)">Todos</button>
+            {% for tag in lab.tags %}
+                <button class="filter-tag" onclick="filterCat('{{ tag.name }}', this)">{{ tag.name }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="projects-grid" id="projectsGrid">
+            {% for proj in projects %}
+            <a href="{{ url_for('main.public_project', project_id=proj.id) }}" 
+               class="p-card p-item"
+               data-name="{{ proj.name|lower }}"
+               data-desc="{{ proj.description|lower }}"
+               data-cat="{{ proj.category }}">
+               
+                <div class="p-img-box">
+                    <img src="{{ url_for('static', filename='profile_pics/' + proj.image_file) }}" class="p-img">
+                    <span class="p-cat-badge">{{ proj.category }}</span>
+                </div>
+                
+                <div class="p-body">
+                    <h3 class="p-title">{{ proj.name }}</h3>
+                    <p class="p-desc">{{ proj.description if proj.description else 'Sem descrição pública disponível para este projeto.' }}</p>
+                    <div class="p-footer">
+                        <span><i class="far fa-clock me-1"></i> {{ proj.logs.count() }} updates</span>
+                        <span class="p-link">Explorar <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <div id="noResults" class="text-center py-5 d-none" style="color: var(--text-muted);">
+            <i class="fas fa-folder-open fa-3x mb-3" style="opacity: 0.3;"></i>
+            <p>Nenhum projeto encontrado com esses termos.</p>
+        </div>
+    </section>
+
 </div>
 
+<div class="lab-footer">
+    <h2 class="fw-bold mb-3 text-white">Interessado em colaborar?</h2>
+    <p class="mb-4">Solicite acesso para acompanhar o progresso detalhado.</p>
+    <a href="{{ url_for('main.register') }}" class="btn-join">Solicitar Acesso ao Lab</a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // 1. Filtro de Projetos
+    let currentCat = 'all';
+    const searchInput = document.getElementById('projectSearch');
+    if(searchInput) searchInput.addEventListener('keyup', runFilter);
+
+    function filterCat(cat, btn) {
+        currentCat = cat;
+        document.querySelectorAll('.filter-tag').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        runFilter();
+    }
+    function runFilter() {
+        let term = searchInput.value.toLowerCase();
+        let items = document.querySelectorAll('.p-item');
+        let visible = 0;
+        items.forEach(item => {
+            let name = item.getAttribute('data-name');
+            let desc = item.getAttribute('data-desc');
+            let cat = item.getAttribute('data-cat');
+            let textMatch = name.includes(term) || desc.includes(term);
+            let catMatch = (currentCat === 'all') || (cat === currentCat);
+            if (textMatch && catMatch) { item.style.display = 'flex'; visible++; } else { item.style.display = 'none'; }
+        });
+        document.getElementById('noResults').classList.toggle('d-none', visible > 0);
+    }
+
+    // 2. Hover Card
+    document.addEventListener('DOMContentLoaded', () => {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'member-tooltip-card';
+        tooltip.innerHTML = `
+            <div class="tp-banner" id="tp-banner"></div>
+            <div class="tp-content">
+                <img src="" class="tp-avatar" id="tp-avatar">
+                <div><span class="tp-role" id="tp-role"></span></div>
+                <div class="tp-name" id="tp-name"></div>
+                <div class="tp-bio" id="tp-bio"></div>
+            </div>
+        `;
+        document.body.appendChild(tooltip);
+
+        const triggers = document.querySelectorAll('.t-hover-trigger');
+        const tpBanner = document.getElementById('tp-banner');
+        const tpAvatar = document.getElementById('tp-avatar');
+        const tpRole = document.getElementById('tp-role');
+        const tpName = document.getElementById('tp-name');
+        const tpBio = document.getElementById('tp-bio');
+
+        triggers.forEach(trig => {
+            trig.addEventListener('mouseenter', (e) => {
+                tpBanner.style.backgroundImage = `url('${trig.getAttribute('data-cover')}')`;
+                tpAvatar.src = trig.getAttribute('data-avatar');
+                tpRole.textContent = trig.getAttribute('data-role');
+                tpName.textContent = trig.getAttribute('data-name');
+                const bioText = trig.getAttribute('data-bio');
+                tpBio.textContent = (bioText && bioText !== 'None') ? bioText : 'Pesquisador ativo no laboratório.';
+                
+                const rect = trig.getBoundingClientRect();
+                let leftPos = rect.right + 15;
+                let topPos = rect.top + (rect.height / 2) - 100; 
+
+                if (leftPos + 300 > window.innerWidth) {
+                    leftPos = rect.left - 315; 
+                }
+
+                tooltip.style.left = `${leftPos}px`;
+                tooltip.style.top = `${topPos}px`;
+                tooltip.classList.add('visible');
+            });
+
+            trig.addEventListener('mouseleave', () => { 
+                tooltip.classList.remove('visible'); 
+            });
+        });
+    });
+</script>
 {% endblock %}

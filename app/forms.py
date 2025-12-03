@@ -97,16 +97,8 @@ class ResetPasswordForm(FlaskForm):
 class ProjectForm(FlaskForm):
     name = StringField('Nome do Projeto', validators=[DataRequired(), Length(max=100)])
     
-    # Seletor de Categoria (Mantido)
-    category = SelectField('Categoria Principal', choices=[
-        ('Geral', 'Geral / Outros'),
-        ('Robotica', 'Robótica Móvel & Manipuladores'),
-        ('IA', 'Inteligência Artificial & Visão'),
-        ('Embedded', 'Sistemas Embarcados & IoT'),
-        ('3D', 'Impressão 3D & Prototipagem'),
-        ('Software', 'Software & Interfaces'),
-        ('Eletronica', 'Eletrónica & Circuitos')
-    ], validators=[DataRequired()])
+    # O SelectField começa vazio e será preenchido na rota com as tags do banco
+    category = SelectField('Categoria', choices=[], validators=[DataRequired()])
 
     description = TextAreaField('Descrição', validators=[Length(max=500)], render_kw={"rows": 3})
     image = FileField('Imagem do Projeto', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
@@ -136,7 +128,27 @@ class EditLabForm(FlaskForm):
     name = StringField('Nome do Laboratório', validators=[DataRequired()])
     acronym = StringField('Sigla (Ex: LAR)', validators=[DataRequired()])
     description = TextAreaField('Descrição / Missão', render_kw={"rows": 3})
-    logo = FileField('Logótipo do Laboratório', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
+    
+    # Imagens
+    logo = FileField('Logótipo do Lab', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
+    cover = FileField('Capa do Lab', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
+    
+    # NOVO: Afiliação
+    affiliation_name = StringField('Instituição Filiada (Ex: UDESC)')
+    affiliation_logo = FileField('Logo da Instituição', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
+    
+    # Endereço
+    address = StringField('Endereço Completo (Rua, Nº, Bairro)')
+    location = StringField('Localização Interna (Bloco, Sala)')
+    
+    contact_email = StringField('E-mail Público', validators=[Email()])
+    
+    instagram_link = StringField('Instagram')
+    linkedin_link = StringField('LinkedIn')
+    website_link = StringField('Site Externo')
+    
+    custom_tags = StringField('Tags de Projeto', render_kw={"placeholder": "Digite as categorias separadas por vírgula (Ex: Robótica, IA, Química)"})
+
     submit = SubmitField('Salvar Configurações')
 
 class ActivateAccountForm(FlaskForm):

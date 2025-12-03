@@ -1,8 +1,8 @@
-"""Sistema Multi-Tenant
+"""melhorias nas tags e informacoes dos labs
 
-Revision ID: a7b18a0fc718
+Revision ID: 4c0ab1b9369f
 Revises: 
-Create Date: 2025-11-30 17:36:37.486710
+Create Date: 2025-12-02 17:36:43.140508
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a7b18a0fc718'
+revision = '4c0ab1b9369f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,6 +24,15 @@ def upgrade():
     sa.Column('acronym', sa.String(length=20), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('image_file', sa.String(length=100), nullable=False),
+    sa.Column('cover_file', sa.String(length=100), nullable=False),
+    sa.Column('affiliation_name', sa.String(length=150), nullable=True),
+    sa.Column('affiliation_logo', sa.String(length=100), nullable=True),
+    sa.Column('address', sa.String(length=255), nullable=True),
+    sa.Column('location', sa.String(length=100), nullable=True),
+    sa.Column('contact_email', sa.String(length=120), nullable=True),
+    sa.Column('instagram_link', sa.String(length=256), nullable=True),
+    sa.Column('linkedin_link', sa.String(length=256), nullable=True),
+    sa.Column('website_link', sa.String(length=256), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('project',
@@ -37,6 +46,13 @@ def upgrade():
     sa.ForeignKeyConstraint(['laboratory_id'], ['laboratory.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
+    )
+    op.create_table('project_tag',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('laboratory_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['laboratory_id'], ['laboratory.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -99,6 +115,7 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_user_email'))
 
     op.drop_table('user')
+    op.drop_table('project_tag')
     op.drop_table('project')
     op.drop_table('laboratory')
     # ### end Alembic commands ###
