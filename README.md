@@ -15,8 +15,8 @@ O sistema centraliza diários de bordo, gestão de projetos, portfólios públic
 ### 👥 Hierarquia de Acesso
 
 - **Super Admin:** Visão global da instituição, criação e gestão de laboratórios.  
-- **Professor (Coordenador):** Gestão completa do laboratório, equipa e projetos.  
-- **Bolsista (Pesquisador):** Registo de atividades e gestão do próprio perfil.
+- **Professor (Coordenador):** Gestão completa do laboratório, equipe e projetos.  
+- **Bolsista (Pesquisador):** Registro de atividades e gestão do próprio perfil.
 
 ### 🎨 Identidade Institucional
 
@@ -32,7 +32,7 @@ Cada laboratório possui sua própria **Página Pública**, contendo:
 
 ## 🧪 Operacional & Diário de Bordo
 
-- **Logs Diários:** Registo rápido de atividades com data, tarefas, observações e próximos passos.  
+- **Logs Diários:** Registro rápido de atividades com data, tarefas, observações e próximos passos.  
 - **Timeline Interativa:** Visualização cronológica com filtros por mês e ano.  
 - **Edição Segura:** Bolsistas podem editar logs recentes (até 7 dias).  
 - **Busca Global:** Motor avançado para localizar termos técnicos, projetos ou atividades.
@@ -139,7 +139,7 @@ docker-compose exec web flask create-super-admin admin@udesc.br senha123
 ### Professor
 1. Ative a conta via link enviado por e-mail.  
 2. Configure o laboratório (logo, capa, redes).  
-3. Convide a equipa.
+3. Convide a equipe.
 
 ### Bolsista
 1. Registe-se em `/register`.  
