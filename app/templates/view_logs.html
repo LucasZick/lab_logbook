@@ -171,7 +171,16 @@
         <div class="col-lg-9">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0">Registros de {{ current_month_name }}</h5>
-                <span class="badge bg-light text-dark border">{{ logs_to_display|length }} registros</span>
+                <div class="d-flex gap-2">
+                    {% if logs_to_display %}
+                        <a href="{{ url_for('main.print_report', user_id=student.id, year=request.args.get('ano'), month=request.args.get('mes')) }}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-dark fw-bold">
+                            <i class="fas fa-file-pdf me-1"></i> Relatório PDF
+                        </a>
+                    {% endif %}
+                    <span class="badge bg-light text-dark border d-flex align-items-center">{{ logs_to_display|length }} logs</span>
+                </div>
             </div>
 
             {% if logs_to_display %}

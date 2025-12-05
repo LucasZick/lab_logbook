@@ -5,7 +5,7 @@
     /* --- 1. FUNDO E ESTRUTURA --- */
     body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
 
-    /* Notificações */
+    /* Notificações Flutuantes */
     #flash-messages-container {
         position: fixed; top: 20px; right: 20px; z-index: 9999; width: 350px; pointer-events: none;
     }
@@ -18,7 +18,7 @@
     .alert-danger  { border-color: #ef4444; color: #7f1d1d; }
     .alert-info    { border-color: #3b82f6; color: #1e3a8a; }
 
-    /* --- 2. CABEÇALHO --- */
+    /* --- 2. CABEÇALHO COMMAND CENTER --- */
     .admin-header {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: white; padding: 3rem 2rem 8rem 2rem;
@@ -33,7 +33,6 @@
     }
     @keyframes panGrid { from { background-position: 0 0; } to { background-position: 50px 50px; } }
     .header-content { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; max-width: 1200px; margin: 0 auto; }
-    
     .admin-badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 50rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: #94a3b8; }
     
     .btn-new-lab {
@@ -43,90 +42,107 @@
     }
     .btn-new-lab:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4); color: white; }
 
-    /* --- 3. STATS FLUTUANTES (CORRIGIDO) --- */
+    /* --- 3. STATS FLUTUANTES --- */
     .stats-container {
         max-width: 1200px; margin: -6rem auto 3rem auto;
         padding: 0 1rem; position: relative; z-index: 10;
     }
-    
-    /* Grid forçado para ficar lado a lado */
     .stats-row {
-        display: grid; 
-        grid-template-columns: repeat(4, 1fr); /* 4 colunas iguais */
-        gap: 1.5rem;
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
     }
-    
-    /* Responsividade para telas menores */
-    @media (max-width: 992px) {
-        .stats-row { grid-template-columns: repeat(2, 1fr); } /* 2 por linha em tablets */
-    }
-    @media (max-width: 576px) {
-        .stats-row { grid-template-columns: 1fr; } /* 1 por linha em celular */
-    }
+    @media (max-width: 992px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 576px) { .stats-row { grid-template-columns: 1fr; } }
 
     .stat-card-admin {
         background: white; border-radius: 16px; padding: 1.5rem;
         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; border-left: 5px solid #0f172a;
-        transition: transform 0.2s; display: flex; flex-direction: column; justify-content: center;
-        min-height: 140px; /* Altura mínima para ficarem iguais */
+        transition: transform 0.2s; display: flex; flex-direction: column; justify-content: center; min-height: 140px;
     }
     .stat-card-admin:hover { transform: translateY(-5px); }
     .stat-title { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.5rem; }
     .stat-value { font-size: 2.5rem; font-weight: 800; color: #0f172a; line-height: 1; }
     .stat-icon { float: right; font-size: 2rem; opacity: 0.15; margin-top: -10px; }
 
-    /* --- 4. LISTA DE LABS --- */
+    /* --- 4. LISTA DE LABS (Grid Otimizado) --- */
     .lab-list-container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
     
     .lab-row {
-        background: white; border-radius: 16px; padding: 1.5rem;
+        background: white; border-radius: 16px; padding: 1.2rem 1.5rem;
         margin-bottom: 1rem; border: 1px solid #e2e8f0;
-        display: grid; grid-template-columns: 60px 2fr 2.5fr 1.5fr 100px; 
-        align-items: center; gap: 1rem; transition: all 0.2s;
+        display: grid; grid-template-columns: 60px 2.5fr 2.5fr 1.5fr auto;
+        align-items: center; gap: 1.5rem; transition: all 0.2s;
     }
-    .lab-row:hover { border-color: #3b82f6; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1); transform: scale(1.005); z-index: 5; position: relative; }
+    .lab-row:hover { 
+        border-color: #3b82f6; box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.15); 
+        transform: translateY(-2px); position: relative; z-index: 5; 
+    }
 
-    .lab-icon { width: 50px; height: 50px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 800; font-size: 0.9rem; }
-    .lab-name { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 0.2rem; }
-    .lab-sigla { font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+    /* Ícone ID */
+    .lab-icon { 
+        width: 50px; height: 50px; background: #f8fafc; border-radius: 12px; 
+        display: flex; align-items: center; justify-content: center; 
+        color: #94a3b8; font-weight: 800; font-size: 0.9rem; border: 1px solid #f1f5f9;
+    }
 
-    /* Professor Area */
-    .prof-wrapper { display: flex; align-items: center; gap: 12px; }
+    /* Info Lab */
+    .lab-info-group { display: flex; flex-direction: column; }
+    .lab-name { font-size: 1.1rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+    .lab-badges { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .lab-sigla { font-size: 0.7rem; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+    .view-link { font-size: 0.75rem; color: #64748b; text-decoration: none; transition: 0.2s; display: flex; align-items: center; gap: 4px; }
+    .view-link:hover { color: #01552b; }
+
+    /* Professor (Com Hover Trigger Restaurado) */
+    .prof-wrapper { display: flex; align-items: center; gap: 12px; cursor: pointer; }
     
-    /* MUDANÇA AQUI: A classe trigger vai só na imagem */
     .prof-img-trigger { 
-        width: 45px; height: 45px; border-radius: 50%; object-fit: cover; 
-        border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s;
-        cursor: help; /* Cursor de ajuda para indicar hover */
+        width: 42px; height: 42px; border-radius: 50%; object-fit: cover; 
+        border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s;
     }
-    .prof-img-trigger:hover { transform: scale(1.1); border-color: #3b82f6; }
+    .prof-wrapper:hover .prof-img-trigger { transform: scale(1.15); border-color: #3b82f6; }
     
-    .prof-name { font-size: 0.95rem; font-weight: 600; color: #334155; }
-    
+    .prof-meta { display: flex; flex-direction: column; line-height: 1.2; }
+    .prof-name { font-size: 0.9rem; font-weight: 600; color: #334155; }
+    .prof-email { font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 5px; }
+
     /* Botão Copiar Email */
     .btn-copy { 
-        font-size: 0.85rem; color: #94a3b8; cursor: pointer; transition: color 0.2s; 
-        background: none; border: none; padding: 2px 5px; margin-left: 5px;
+        font-size: 0.8rem; color: #cbd5e1; cursor: pointer; transition: color 0.2s; background: none; border: none; padding: 0;
     }
-    .btn-copy:hover { color: #3b82f6; background-color: #eff6ff; border-radius: 4px; }
+    .btn-copy:hover { color: #3b82f6; }
 
-    .lab-metrics { display: flex; gap: 1.5rem; }
+    /* Metrics */
+    .lab-metrics { display: flex; gap: 1.5rem; border-left: 1px solid #f1f5f9; padding-left: 1.5rem; }
     .metric { text-align: center; }
     .m-val { display: block; font-weight: 800; font-size: 1.1rem; color: #334155; line-height: 1; }
-    .m-lbl { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+    .m-lbl { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
 
-    .btn-icon { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #e2e8f0; background: white; color: #64748b; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; text-decoration: none; }
-    .btn-icon:hover { background: #f1f5f9; color: #0f172a; }
-    .btn-delete:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+    /* --- TOOLBAR DE AÇÕES --- */
+    .actions-toolbar {
+        display: flex; align-items: center; gap: 8px;
+        background: #f8fafc; padding: 6px; border-radius: 50rem;
+        border: 1px solid #f1f5f9;
+    }
+    
+    .action-btn {
+        width: 34px; height: 34px; border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center;
+        color: #64748b; transition: all 0.2s; text-decoration: none;
+        background: white; border: 1px solid #e2e8f0;
+    }
+    .action-btn:hover { transform: translateY(-2px); }
+    .btn-test:hover { color: #d97706; border-color: #d97706; background: #fffbeb; }
+    .btn-edit:hover { color: #01552b; border-color: #01552b; }
+    .btn-delete:hover { color: #ef4444; border-color: #ef4444; background: #fef2f2; }
 
-    .empty-admin { text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; margin-top: 2rem; }
+    .divider-vertical { width: 1px; height: 20px; background: #cbd5e1; margin: 0 4px; }
 
-    /* --- TOOLTIP HOVER CARD --- */
+    /* --- TOOLTIP HOVER CARD (Premium) --- */
     .admin-tooltip-card {
         position: fixed; background: white; border-radius: 16px; width: 260px;
         box-shadow: 0 15px 40px rgba(0,0,0,0.2); z-index: 9999; pointer-events: none; opacity: 0;
         transform: translateY(10px) scale(0.95); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        border: 1px solid #e2e8f0; overflow: hidden;
+        border: 1px solid #e2e8f0; overflow: hidden; text-align: center;
     }
     .admin-tooltip-card.visible { opacity: 1; transform: translateY(0) scale(1); }
     
@@ -136,6 +152,8 @@
     .tooltip-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.2rem; }
     .tooltip-role { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #01552b; background: #f0fdf4; padding: 3px 10px; border-radius: 50rem; display: inline-block; margin-bottom: 0.5rem; }
     .tooltip-status { font-size: 0.75rem; color: #64748b; }
+
+    .empty-admin { text-align: center; padding: 4rem; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; margin-top: 2rem; }
 </style>
 
 <div class="admin-header">
@@ -157,44 +175,25 @@
         <div class="stats-row">
             <div class="stat-card-admin" style="border-left-color: #2563eb;">
                 <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="stat-title">Laboratórios</div>
-                        <div class="stat-value">{{ labs|length }}</div>
-                        <small class="text-muted">Ativos</small>
-                    </div>
+                    <div><div class="stat-title">Laboratórios</div><div class="stat-value">{{ labs|length }}</div><small class="text-muted">Ativos</small></div>
                     <i class="fas fa-flask stat-icon text-primary"></i>
                 </div>
             </div>
-
             <div class="stat-card-admin" style="border-left-color: #10b981;">
                 <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="stat-title">Pesquisadores</div>
-                        <div class="stat-value">{{ total_users }}</div>
-                        <small class="text-muted">Total</small>
-                    </div>
+                    <div><div class="stat-title">Pesquisadores</div><div class="stat-value">{{ total_users }}</div><small class="text-muted">Total</small></div>
                     <i class="fas fa-users stat-icon text-success"></i>
                 </div>
             </div>
-
             <div class="stat-card-admin" style="border-left-color: #f59e0b;">
                 <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="stat-title">Projetos</div>
-                        <div class="stat-value">{{ total_projects }}</div>
-                        <small class="text-muted">Dev</small>
-                    </div>
+                    <div><div class="stat-title">Projetos</div><div class="stat-value">{{ total_projects }}</div><small class="text-muted">Dev</small></div>
                     <i class="fas fa-project-diagram stat-icon text-warning"></i>
                 </div>
             </div>
-
             <div class="stat-card-admin" style="border-left-color: #6366f1;">
                 <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="stat-title">Total de Logs</div>
-                        <div class="stat-value">{{ total_logs }}</div>
-                        <small class="text-muted">Histórico</small>
-                    </div>
+                    <div><div class="stat-title">Total de Logs</div><div class="stat-value">{{ total_logs }}</div><small class="text-muted">Histórico</small></div>
                     <i class="fas fa-file-alt stat-icon text-indigo"></i>
                 </div>
             </div>
@@ -217,40 +216,36 @@
             <div class="lab-row">
                 <div class="lab-icon">#{{ lab.id }}</div>
                 
-                <div>
+                <div class="lab-info-group">
                     <div class="lab-name">{{ lab.name }}</div>
-                    <span class="lab-sigla">{{ lab.acronym }}</span>
+                    <div class="lab-badges">
+                        <span class="lab-sigla">{{ lab.acronym }}</span>
+                        <a href="{{ url_for('main.public_lab', lab_id=lab.id) }}" target="_blank" class="view-link">
+                            <i class="fas fa-external-link-alt" style="font-size: 0.7rem;"></i> Ver Página
+                        </a>
+                    </div>
                 </div>
                 
                 <div>
                     {% set prof = lab.users.filter_by(role='professor').first() %}
                     {% if prof %}
-                        <div class="prof-wrapper">
-                            <img src="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}" 
-                                 class="prof-img prof-img-trigger"
-                                 data-name="{{ prof.username }}"
-                                 data-avatar="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}"
-                                 data-cover="{{ url_for('static', filename='profile_pics/' + prof.cover_file) }}"
-                                 data-status="{{ 'Ativo' if prof.invite_status == 'accepted' else 'Pendente' }}">
+                        <div class="prof-wrapper prof-img-trigger"
+                             data-name="{{ prof.username }}"
+                             data-avatar="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}"
+                             data-cover="{{ url_for('static', filename='profile_pics/' + prof.cover_file) }}"
+                             data-status="{{ 'Ativo' if prof.invite_status == 'accepted' else 'Pendente' }}">
                             
-                            <div class="prof-info">
-                                <div class="prof-name">
-                                    {{ prof.username }} 
-                                </div>
-                                <div class="text-muted small d-flex align-items-center">
+                            <img src="{{ url_for('static', filename='profile_pics/' + prof.image_file) }}" class="prof-img">
+                            <div class="prof-meta">
+                                <div class="prof-name">{{ prof.username }}</div>
+                                <div class="prof-email">
                                     {{ prof.email }}
-                                    <button class="btn-copy" onclick="copyToClipboard('{{ prof.email }}', this)" title="Copiar Email">
-                                        <i class="far fa-copy"></i>
-                                    </button>
+                                    <button class="btn-copy" onclick="copyToClipboard('{{ prof.email }}', this)" title="Copiar"><i class="far fa-copy"></i></button>
                                 </div>
-                                
-                                {% if prof.invite_status == 'pending' %}
-                                    <span class="badge badge-soft-warning mt-1" style="font-size: 0.6rem;">Aguardando Aceite</span>
-                                {% endif %}
                             </div>
                         </div>
                     {% else %}
-                        <span class="text-danger small fw-bold"><i class="fas fa-exclamation-circle"></i> Sem Professor</span>
+                        <span class="text-danger small fw-bold bg-red-50 px-2 py-1 rounded"><i class="fas fa-exclamation-circle"></i> Sem Professor</span>
                     {% endif %}
                 </div>
                 
@@ -265,19 +260,13 @@
                     </div>
                 </div>
                 
-                <div class="lab-actions">
-                    <a href="{{ url_for('main.edit_lab', lab_id=lab.id) }}" 
-                           class="btn-icon me-1" 
-                           title="Editar Detalhes">
-                            <i class="fas fa-pen"></i>
-                    </a>
-                    <a href="{{ url_for('main.delete_lab', lab_id=lab.id) }}" 
-                       class="btn-icon btn-delete" 
-                       onclick="return confirm('PERIGO: Isso apagará o laboratório e TODOS os seus dados. Continuar?');"
-                       title="Apagar Definitivamente">
-                        <i class="fas fa-trash-alt"></i>
-                    </a>
+                <div class="actions-toolbar">
+                    <a href="{{ url_for('main.test_report_specific', lab_id=lab.id) }}" class="action-btn btn-test" title="Testar Relatório IA"><i class="fas fa-bolt"></i></a>
+                    <div class="divider-vertical"></div>
+                    <a href="{{ url_for('main.edit_lab', lab_id=lab.id) }}" class="action-btn btn-edit" title="Editar Configurações"><i class="fas fa-pen"></i></a>
+                    <a href="{{ url_for('main.delete_lab', lab_id=lab.id) }}" class="action-btn btn-delete" onclick="return confirm('ATENÇÃO: Apagar este laboratório removerá TODOS os dados associados. Continuar?');" title="Apagar Definitivamente"><i class="fas fa-trash"></i></a>
                 </div>
+
             </div>
             {% endfor %}
         {% else %}
@@ -300,21 +289,14 @@
             btn.innerHTML = '<i class="fas fa-check text-success"></i>';
             setTimeout(() => { btn.innerHTML = originalIcon; }, 2000);
         });
+        event.stopPropagation();
     }
 
     // Tooltip Lógica
     document.addEventListener('DOMContentLoaded', () => {
         const tooltip = document.createElement('div');
         tooltip.className = 'admin-tooltip-card';
-        tooltip.innerHTML = `
-            <div class="tooltip-banner" id="atp-banner"></div>
-            <div class="tooltip-content">
-                <img src="" class="tooltip-avatar" id="atp-avatar">
-                <div><span class="tooltip-role" id="atp-role">Admin Responsável</span></div>
-                <div class="tooltip-name" id="atp-name"></div>
-                <div class="tooltip-status" id="atp-status"></div>
-            </div>
-        `;
+        tooltip.innerHTML = `<div class="tooltip-banner" id="atp-banner"></div><div class="tooltip-content"><img src="" class="tooltip-avatar" id="atp-avatar"><div><span class="tooltip-role" id="atp-role">Admin Responsável</span></div><div class="tooltip-name" id="atp-name"></div><div class="tooltip-status" id="atp-status"></div></div>`;
         document.body.appendChild(tooltip);
 
         const triggers = document.querySelectorAll('.prof-img-trigger');
@@ -339,9 +321,7 @@
                 tooltip.classList.add('visible');
             });
 
-            trigger.addEventListener('mouseleave', () => {
-                tooltip.classList.remove('visible');
-            });
+            trigger.addEventListener('mouseleave', () => { tooltip.classList.remove('visible'); });
         });
     });
 </script>

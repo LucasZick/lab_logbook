@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 # Adicionado FileField e FileAllowed
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import SelectField, StringField, PasswordField, BooleanField, SubmitField, TextAreaField, DateField
-from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
+from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length, Optional
 from datetime import date
 from app.models import Project, User
 
@@ -117,12 +117,34 @@ class ProjectForm(FlaskForm):
                 raise ValidationError('Já existe um projeto com esse nome.')
 
 class LabForm(FlaskForm):
+    # 1. Dados Principais
     name = StringField('Nome do Laboratório', validators=[DataRequired()])
     acronym = StringField('Sigla (Ex: LAR)', validators=[DataRequired()])
+    description = TextAreaField('Descrição / Missão', render_kw={"rows": 4})
     
-    prof_name = StringField('Usuário de Acesso (Login)', validators=[DataRequired()], render_kw={"placeholder": "ex: joao_silva"})
-    prof_email = StringField('E-mail do Professor', validators=[DataRequired(), Email()])
-    submit = SubmitField('Criar Laboratório')
+    # 2. Imagens (Opcionais na edição)
+    logo = FileField('Logotipo', validators=[FileAllowed(['jpg', 'png', 'jpeg']), Optional()])
+    cover = FileField('Capa (Banner)', validators=[FileAllowed(['jpg', 'png', 'jpeg']), Optional()])
+    
+    # 3. Identidade Institucional
+    affiliation_name = StringField('Instituição Filiada (Ex: UDESC)')
+    affiliation_logo = FileField('Logo da Instituição', validators=[FileAllowed(['jpg', 'png', 'jpeg']), Optional()])
+    
+    # 4. Localização e Contato
+    address = StringField('Endereço Completo')
+    location = StringField('Localização Interna (Sala/Bloco)')
+    contact_email = StringField('E-mail Público', validators=[Optional(), Email()])
+    
+    # 5. Redes Sociais
+    website_link = StringField('Site Externo')
+    instagram_link = StringField('Instagram')
+    linkedin_link = StringField('LinkedIn')
+    
+    # 6. Responsável (Usado na criação ou transferência)
+    prof_name = StringField('Usuário do Responsável', validators=[DataRequired()])
+    prof_email = StringField('E-mail do Responsável', validators=[DataRequired(), Email()])
+    
+    submit = SubmitField('Salvar Laboratório')
 
 class EditLabForm(FlaskForm):
     name = StringField('Nome do Laboratório', validators=[DataRequired()])
@@ -130,7 +152,7 @@ class EditLabForm(FlaskForm):
     description = TextAreaField('Descrição / Missão', render_kw={"rows": 3})
     
     # Imagens
-    logo = FileField('Logótipo do Lab', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
+    logo = FileField('Logotipo do Lab', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
     cover = FileField('Capa do Lab', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Apenas imagens!')])
     
     # NOVO: Afiliação

@@ -304,12 +304,22 @@
             <span class="text-brand">Laboratório</span>
         </h1>
         <p class="hero-subtitle">
-            Logbook integra registos diários, inteligência artificial e gestão de projetos numa única plataforma unificada para equipas de pesquisa.
+            Logbook integra registros diários, inteligência artificial e gestão de projetos numa única plataforma unificada para equipes de pesquisa.
         </p>
         <div class="cta-group">
-            <a href="{{ url_for('main.login') }}" class="btn-cta-primary">Aceder ao Sistema</a>
+            <a href="{{ url_for('main.login') }}" class="btn-cta-primary">Acessar o Sistema</a>
             <a href="{{ url_for('main.register') }}" class="btn-cta-secondary">Criar Conta</a>
         </div>
+    </div>
+</section>
+
+<section style="background-color: #020617; padding: 0rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative;">
+    <div id="network-container" style="width: 100%; height: 500px; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);"></div>
+    
+    <div style="position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: #94a3b8;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;"><span style="width:10px; height:10px; background:#01552b; border-radius:50%;"></span> Laboratório</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;"><span style="width:10px; height:10px; background:#3b82f6; border-radius:50%;"></span> Projeto</div>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="width:10px; height:10px; background:#94a3b8; border-radius:50%;"></span> Pesquisador</div>
     </div>
 </section>
 
@@ -317,7 +327,7 @@
     <div class="stats-container">
         <div class="stat-item">
             <span class="stat-num">{{ stats.logs }}</span>
-            <span class="stat-text">Registos Realizados</span>
+            <span class="stat-text">Registros Realizados</span>
         </div>
         <div class="stat-item">
             <span class="stat-num">{{ stats.projects }}</span>
@@ -330,6 +340,7 @@
     </div>
 </section>
 
+
 <section class="section-padding bento-section">
     <div class="text-center mb-5">
         <h2 class="fw-bold fs-1 mb-3">Tudo o que precisa. Num só lugar.</h2>
@@ -341,7 +352,7 @@
             <div>
                 <i class="fas fa-brain bento-icon"></i>
                 <h3 class="bento-title">Relatórios Inteligentes</h3>
-                <p class="bento-desc">A nossa IA lê os registos da semana e gera automaticamente um resumo executivo para os orientadores. Adeus relatórios manuais.</p>
+                <p class="bento-desc">A nossa IA lê os registros da semana e gera automaticamente um resumo executivo para os orientadores. Adeus relatórios manuais.</p>
             </div>
             <i class="fas fa-robot bento-visual"></i>
         </div>
@@ -382,7 +393,7 @@
         <div class="role-col">
             <h3 class="text-white"><i class="fas fa-user-graduate text-brand"></i> Para Bolsistas</h3>
             <ul>
-                <li><i class="fas fa-check"></i> Registo de atividades em menos de 30 segundos.</li>
+                <li><i class="fas fa-check"></i> Registro de atividades em menos de 30 segundos.</li>
                 <li><i class="fas fa-check"></i> Histórico organizado para o TCC/Tese.</li>
                 <li><i class="fas fa-check"></i> Perfil profissional com Lattes e GitHub.</li>
             </ul>
@@ -475,5 +486,106 @@
             answer.style.display = 'block'; icon.style.transform = 'rotate(180deg)';
         }
     }
+</script>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var container = document.getElementById('network-container');
+        var rawData = {{ graph_data | safe }};
+        
+        if (!rawData.nodes || rawData.nodes.length === 0) return;
+
+        // Adiciona propriedades aleatórias para a animação de "flutuar"
+        rawData.nodes.forEach(node => {
+            node.angle = Math.random() * Math.PI * 2; // Fase inicial aleatória
+            node.speed = 0.002 + Math.random() * 0.003; // Velocidade única
+            node.radius = 5 + Math.random() * 10; // Raio de flutuação
+        });
+
+        var data = {
+            nodes: new vis.DataSet(rawData.nodes),
+            edges: new vis.DataSet(rawData.edges)
+        };
+        
+        var options = {
+            nodes: {
+                borderWidth: 2,
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 15, x: 0, y: 5 }
+            },
+            edges: {
+                width: 5,
+                smooth: { type: 'continuous', forceDirection: 'none' },
+                color: { opacity: 0.5 }
+            },
+            physics: {
+                enabled: true,
+                solver: 'forceAtlas2Based',
+                forceAtlas2Based: {
+                    gravitationalConstant: -300, // <--- Mais força de repulsão (Era -150)
+                    centralGravity: 0.005,       // Puxa um pouco mais para o centro para não fugir da tela
+                    springLength: 300,           // <--- Molas mais longas (Era 250)
+                    springConstant: 0.02,
+                    damping: 0.8
+                },
+                stabilization: {
+                    enabled: true,
+                    iterations: 1000 // Estabiliza antes de mostrar para não "explodir" na cara do usuário
+                }
+            },
+            interaction: {
+                hover: true,
+                zoomView: false,
+                dragView: true,
+                dragNodes: true
+            }
+        };
+        
+        var network = new vis.Network(container, data, options);
+
+        // --- ANIMAÇÃO DE FLUTUAÇÃO SUAVE ---
+        // Acontece a cada frame de desenho
+        network.on("beforeDrawing", function (ctx) {
+            const nodePositions = network.getPositions();
+            const nodeIds = data.nodes.getIds();
+            
+            nodeIds.forEach(id => {
+                // Se o nó estiver sendo arrastado pelo usuário, não animamos
+                if (network.getSelectedNodes().includes(id)) return;
+
+                const node = data.nodes.get(id);
+                const pos = nodePositions[id];
+                
+                if (pos) {
+                    // Atualiza o ângulo para o próximo frame
+                    node.angle += node.speed;
+                    
+                    // Calcula o novo offset baseado em Seno/Cosseno (movimento circular/ondulatório)
+                    const offsetX = Math.cos(node.angle) * 0.5; 
+                    const offsetY = Math.sin(node.angle) * 0.5;
+                    
+                    // Aplica o movimento movendo o nó fisicamente
+                    network.body.nodes[id].x += offsetX;
+                    network.body.nodes[id].y += offsetY;
+                }
+            });
+        });
+
+        // Força a renderização contínua
+        function step() {
+            network.redraw();
+            requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+        
+        // Centraliza no início
+        network.once("stabilizationIterationsDone", function() {
+            network.fit({ animation: { duration: 1500, easingFunction: 'easeInOutQuad' } });
+        });
+    });
 </script>
 {% endblock %}

@@ -58,7 +58,7 @@
         border-left: 4px solid #4ade80; padding-left: 1.5rem;
     }
 
-    /* --- CAIXA DA EQUIPA (Com Hover) --- */
+    /* --- CAIXA DA EQUIPE (Com Hover) --- */
     .team-box {
         position: relative; z-index: 10;
         background: rgba(255, 255, 255, 0.05);
@@ -216,7 +216,7 @@
 
         {% if contributors %}
         <div class="team-box">
-            <span class="team-label"><i class="fas fa-users me-2"></i> Equipa Responsável</span>
+            <span class="team-label"><i class="fas fa-users me-2"></i> Equipe Responsável</span>
             <div class="team-mini-list">
                 {% for user in contributors %}
                 <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" 
@@ -267,13 +267,13 @@
 
                 <div class="history-notice">
                     <i class="fas fa-archive fa-2x mb-3"></i>
-                    <p>Estes são os registos públicos mais recentes.</p>
-                    <p class="small opacity-75 mb-3">Para aceder ao arquivo histórico completo, documentação técnica e relatórios de IA, é necessário acesso de membro.</p>
+                    <p>Estes são os registros públicos mais recentes.</p>
+                    <p class="small opacity-75 mb-3">Para acessar o arquivo histórico completo, documentação técnica e relatórios de IA, é necessário acesso de membro.</p>
                     
                     {% if current_user.is_anonymous %}
                         <a href="{{ url_for('main.login') }}" class="history-btn">Login de Membro</a>
                     {% else %}
-                        <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="history-btn">Aceder Painel Completo</a>
+                        <a href="{{ url_for('main.project_details', project_id=project.id) }}" class="history-btn">Acessar Painel Completo</a>
                     {% endif %}
                 </div>
 

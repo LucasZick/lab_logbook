@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório - {{ user.username }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CONFIGURAÇÃO DE IMPRESSÃO --- */
+        :root {
+            --primary: #01552b;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --light: #f1f5f9;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: #525659; /* Fundo cinza do visualizador */
+            font-family: 'Inter', sans-serif;
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+        }
+
+        /* O Contentor do Documento */
+        .document-container {
+            width: 210mm; 
+            /* Altura automática para crescer com o conteúdo */
+            min-height: 297mm; 
+            background: white; margin: 20px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            position: relative;
+            padding-bottom: 20mm; /* Espaço no fim */
+        }
+
+        /* --- 1. HEADER (Capa) --- */
+        .report-header {
+            height: 50mm;
+            position: relative;
+            display: flex; align-items: flex-end;
+            border-bottom: 4px solid var(--primary);
+            background-color: #f8fafc;
+        }
+
+        .header-bg {
+            position: absolute; inset: 0;
+            background-image: url('{{ url_for("static", filename="profile_pics/" + lab.cover_file) }}');
+            background-size: cover; background-position: center;
+            opacity: 0.2; filter: grayscale(100%);
+        }
+
+        .header-content {
+            position: relative; z-index: 10; width: 100%; padding: 10mm 15mm;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .header-info h1 { font-size: 22pt; font-weight: 900; text-transform: uppercase; margin: 0; line-height: 1; color: var(--dark); }
+        .header-info h2 { font-size: 10pt; font-weight: 600; margin: 5px 0 0 0; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; }
+        .header-info .affil { font-size: 8pt; color: var(--gray); margin-bottom: 2px; font-weight: 700; text-transform: uppercase; }
+
+        .header-logos { display: flex; gap: 10px; align-items: center; }
+        .logo-circle {
+            width: 20mm; height: 20mm; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid #e2e8f0;
+        }
+        .logo-img { width: 70%; height: 70%; object-fit: contain; }
+
+        /* --- 2. INFO STRIP --- */
+        .info-bar {
+            background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;
+            padding: 6mm 15mm; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5mm;
+            font-size: 9pt; color: var(--dark); margin-bottom: 10mm;
+        }
+        .info-col strong { display: block; color: var(--gray); font-size: 7pt; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .info-col span { font-weight: 700; font-size: 10pt; }
+
+        /* --- 3. TIMELINE (Corpo) --- */
+        .content-area { 
+            padding: 0 15mm; 
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 8mm;
+            /* A linha vertical contínua */
+            border-left: 2px solid #e2e8f0;
+            margin-bottom: 15mm;
+        }
+
+        /* O ITEM DA TIMELINE (Segredo da Paginação) */
+        .timeline-item { 
+            position: relative; 
+            margin-bottom: 8mm; 
+            
+            /* ISSO AQUI É MÁGICO: Impede que o item seja cortado entre páginas */
+            break-inside: avoid; 
+            page-break-inside: avoid; 
+        }
+        
+        .t-dot {
+            position: absolute; left: -10mm; top: 1.5mm;
+            width: 3mm; height: 3mm; background: var(--primary);
+            border-radius: 50%; border: 2px solid white;
+            box-shadow: 0 0 0 1px #e2e8f0;
+        }
+
+        .t-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2mm; }
+        .t-date { font-family: 'Inter', sans-serif; font-weight: 800; font-size: 10pt; color: var(--dark); }
+        .t-project { 
+            font-size: 8pt; font-weight: 700; color: var(--primary); text-transform: uppercase; 
+            background: #f0fdf4; padding: 2px 6px; border-radius: 4px;
+        }
+
+        .t-body { font-size: 10pt; color: #334155; line-height: 1.5; text-align: justify; }
+        
+        .t-obs {
+            margin-top: 3mm; padding: 3mm; background-color: #fffbeb;
+            border-left: 3px solid #f59e0b; color: #92400e; font-size: 9pt; font-style: italic;
+        }
+
+        /* --- 4. RODAPÉ E ASSINATURAS --- */
+        .signatures-section {
+            padding: 0 15mm;
+            margin-top: 15mm;
+            /* Garante que as assinaturas não quebram feio */
+            break-inside: avoid; 
+            page-break-inside: avoid;
+        }
+
+        .signatures { display: flex; justify-content: space-between; margin-bottom: 5mm; }
+        .sig-line { width: 40%; border-top: 1px solid #000; padding-top: 2mm; font-size: 9pt; text-align: center; margin-top: 15mm; }
+
+        .doc-meta {
+            text-align: center; font-size: 7pt; color: #94a3b8; margin-top: 5mm; border-top: 1px solid #e2e8f0; padding-top: 2mm;
+        }
+
+        /* Controles */
+        .no-print { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; gap: 10px; }
+        .btn { background: var(--primary); color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .btn-back { background: white; color: #333; }
+
+        /* MODO IMPRESSÃO REAL */
+        @media print {
+            body { background: none; }
+            .document-container { 
+                width: 100%; margin: 0; box-shadow: none; border: none; min-height: auto;
+            }
+            .no-print { display: none; }
+            
+            /* Configura margens da folha física */
+            @page { 
+                margin: 10mm 0; 
+                size: A4; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button onclick="window.print()" class="btn"><i class="fas fa-print"></i> Imprimir</button>
+    </div>
+
+    <div class="document-container">
+        
+        <div class="report-header">
+            <div class="header-bg"></div>
+            <div class="header-content">
+                <div class="header-info">
+                    {% if lab.affiliation_name %}<div class="affil">{{ lab.affiliation_name }}</div>{% endif %}
+                    <h1>{{ lab.name }}</h1>
+                    <h2>Relatório de Atividades</h2>
+                </div>
+
+                <div class="header-logos">
+                    {% if lab.affiliation_logo %}
+                    <div class="logo-circle" style="width: 15mm; height: 15mm;">
+                        <img src="{{ url_for('static', filename='lab_logos/' + lab.affiliation_logo) }}" class="logo-img">
+                    </div>
+                    {% endif %}
+                    <div class="logo-circle">
+                        <img src="{{ url_for('static', filename='lab_logos/' + lab.image_file) }}" class="logo-img">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-bar">
+            <div class="info-col"><strong>Pesquisador</strong><span>{{ user.username }}</span></div>
+            <div class="info-col"><strong>Vínculo</strong><span>{{ user.role|upper }}</span></div>
+            <div class="info-col"><strong>Período</strong><span>{{ month_name|upper }} / {{ report_date.year }}</span></div>
+            <div class="info-col"><strong>Registos</strong><span>{{ logs|length }} Atividades</span></div>
+        </div>
+
+        <div class="content-area">
+            {% if logs %}
+                <div class="timeline">
+                    {% for log in logs %}
+                    <div class="timeline-item">
+                        <div class="t-dot"></div>
+                        
+                        <div class="t-header">
+                            <span class="t-date">{{ log.entry_date.strftime('%d/%m/%Y') }}</span>
+                            <span class="t-project">{{ log.project }}</span>
+                        </div>
+                        
+                        <div class="t-body">{{ log.tasks_completed }}</div>
+
+                        {% if log.observations %}
+                        <div class="t-obs"><strong>Nota:</strong> {{ log.observations }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 30mm; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 10px;">
+                    Nenhuma atividade registada.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="signatures-section">
+            <div class="signatures">
+                <div class="sig-line">
+                    <strong>{{ user.username }}</strong><br>
+                    Assinatura do Pesquisador
+                </div>
+                <div class="sig-line">
+                    <strong>Responsável Técnico</strong><br>
+                    Coordenação {{ lab.acronym }}
+                </div>
+            </div>
+            
+            <div class="doc-meta">
+                Documento gerado eletronicamente em {{ generation_date.strftime('%d/%m/%Y') }} via Logbook.<br>
+                {{ lab.contact_email }}
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

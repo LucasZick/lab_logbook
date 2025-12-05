@@ -371,11 +371,11 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-center text-muted">
-        <div class="container">
-            <small>
+    <footer>
+        <div class="container text-center py-4">
+            <small class="text-muted">
                 Logbook &copy; 2025 <span class="mx-2">|</span>
-                <a href="mailto:lucasalexandrezick@gmail.com?subject=Reportar Problema - Logbook" class="text-decoration-none text-secondary">
+                <a href="mailto:{{ admin_email }}?subject=Reportar Problema no Logbook" class="text-decoration-none text-secondary">
                     <i class="fas fa-bug"></i> Reportar Problema
                 </a>
             </small>

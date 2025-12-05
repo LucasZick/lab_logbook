@@ -2,7 +2,7 @@
 
 {% block content %}
 <style>
-    /* --- RESET & LAYOUT (Igual ao Registo) --- */
+    /* --- RESET & LAYOUT (Igual ao Registro) --- */
     nav, footer { display: none !important; }
     main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; height: 100vh; }
     
@@ -18,7 +18,7 @@
     }
     .visual-bg {
         position: absolute; inset: 0; opacity: 0.4;
-        /* Mesma imagem do registo para consistência, ou pode variar */
+        /* Mesma imagem do registro para consistência, ou pode variar */
         background-image: url('https://images.unsplash.com/photo-1535378437327-b7128d8de746?q=80&w=1974&auto=format&fit=crop');
         background-size: cover; background-position: center;
     }
@@ -103,7 +103,7 @@
             <i class="fas fa-fingerprint visual-icon"></i>
             <h1 class="visual-title">Acesso Seguro.</h1>
             <p class="visual-text">
-                Bem-vindo de volta ao ecossistema de gestão do seu laboratório. Acompanhe projetos, equipas e resultados num só lugar.
+                Bem-vindo de volta ao ecossistema de gestão do seu laboratório. Acompanhe projetos, equipes e resultados num só lugar.
             </p>
         </div>
     </div>
@@ -148,7 +148,7 @@
                 <a href="{{ url_for('main.reset_password_request') }}" class="forgot-link">Esqueceu a senha?</a>
             </div>
 
-            {{ form.submit(class="btn-submit", value="Aceder ao Sistema") }}
+            {{ form.submit(class="btn-submit", value="Acessar o Sistema") }}
 
         </form>
 

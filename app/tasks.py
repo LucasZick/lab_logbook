@@ -3,93 +3,134 @@ import google.generativeai as genai
 import markdown
 from datetime import date, timedelta
 from app import create_app
-from app.models import User, LogEntry
+from app.models import User, LogEntry, Laboratory
 from app.email import send_email
 
-def send_weekly_report_job():
+def send_weekly_report_job(test_mode=False, force_email=None, target_lab_id=None):
     """
-    A tarefa que será executada semanalmente. Agora cria o seu
-    próprio contexto de aplicação de forma segura.
+    Gera e envia relatórios semanais.
+    :param target_lab_id: Se informado, processa APENAS este laboratório.
     """
-    # Criamos uma instância da app SEM iniciar o agendador
     app = create_app(start_scheduler=False)
     
-    # Usamos essa instância para criar o contexto
     with app.app_context():
-        print("Executando a tarefa agendada: Envio do relatório semanal...")
-
-        professors = User.query.filter_by(role='professor', is_active=True).all()
-        recipients = [p.email for p in professors]
-
-        if not recipients:
-            print("Nenhum professor ativo encontrado. A tarefa será encerrada.")
-            return
-
+        print(f"--- Job Iniciado ({'TESTE' if test_mode else 'PROD'}) ---")
+        
+        # FILTRAGEM INTELIGENTE
+        if target_lab_id:
+            labs = Laboratory.query.filter_by(id=target_lab_id).all()
+            print(f"   -> Foco no Lab ID: {target_lab_id}")
+        else:
+            labs = Laboratory.query.all()
+        
         today = date.today()
-        start_of_week = today - timedelta(days=today.weekday())
         
-        logs_current_week = LogEntry.query.join(User).filter(
-            User.role == 'bolsista', User.is_active == True,
-            LogEntry.entry_date >= start_of_week, LogEntry.entry_date <= today
-        ).order_by(User.username, LogEntry.entry_date).all()
+        if test_mode:
+            # MODO TESTE: Pega a semana passada (hoje - 7 dias)
+            # Isso garante que haja dados se testar numa segunda-feira
+            target_date = today - timedelta(days=7)
+            start_of_week = target_date - timedelta(days=target_date.weekday())
+            end_of_week = start_of_week + timedelta(days=6)
+            print(f"   -> Data de Referência (Teste): {start_of_week} a {end_of_week}")
+        else:
+            # MODO NORMAL: Pega a semana atual
+            start_of_week = today - timedelta(days=today.weekday())
+            end_of_week = today # Até hoje
+        
+        period_str = f"{start_of_week.strftime('%d/%m')} a {end_of_week.strftime('%d/%m')}"
 
-        if not logs_current_week:
-            print(f"Nenhum registro encontrado na semana ({start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}). E-mail não será enviado.")
-            return
+        for lab in labs:
+            print(f"> Processando Laboratório: {lab.name} ({lab.acronym})...")
+
+            # 1. Definir Destinatários
+            if test_mode and force_email:
+                recipients = [force_email]
+                print(f"   [TESTE] Redirecionando email para: {force_email}")
+            else:
+                professors = lab.users.filter_by(role='professor', is_active=True).all()
+                recipients = [p.email for p in professors]
+
+            if not recipients:
+                print(f"  x Sem destinatários para {lab.acronym}. Pulando.")
+                continue
+
+            # 2. Busca Logs (Semana Passada se for teste, Atual se for produção)
+            logs_current_week = LogEntry.query.join(User).filter(
+                User.laboratory_id == lab.id,
+                User.role == 'bolsista', 
+                User.is_active == True,
+                LogEntry.entry_date >= start_of_week, 
+                LogEntry.entry_date <= end_of_week
+            ).order_by(User.username, LogEntry.entry_date).all()
+
+            if not logs_current_week:
+                print(f"  x Sem registros no {lab.acronym} no período.")
+                continue
             
-        formatted_logs = ""
-        for log in logs_current_week:
-            formatted_logs += f"Data: {log.entry_date.strftime('%d/%m/%Y')}\nBolsista: {log.author.username}\nProjeto: {log.project}\nTarefas Realizadas: {log.tasks_completed}\n"
-            if log.observations: formatted_logs += f"Observações: {log.observations}\n"
-            formatted_logs += f"Próximos Passos: {log.next_steps}\n---\n"
+            # 3. Montagem dos Dados
+            formatted_logs = ""
+            for log in logs_current_week:
+                formatted_logs += f"""
+                BOLSISTA: {log.author.username} ({log.author.course or 'N/D'})
+                PROJETO: {log.project}
+                DATA: {log.entry_date.strftime('%d/%m/%Y')}
+                FEITO: {log.tasks_completed}
+                OBS: {log.observations if log.observations else '-'}
+                PRÓXIMOS: {log.next_steps}
+                --------------------------------------------------
+                """
 
-        period_description = f"a semana de {start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}"
-        report_title = f"Análise Semanal: {start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')}"
-        master_prompt = f"""
-        Objetivo: Atue como um analisador de dados. Analise os registros de diário de bordo para {period_description} fornecidos e produza um relatório em formato Markdown.
-        
+            # 4. Prompt IA
+            lab_context = f"Lab: {lab.name} ({lab.acronym}). Descrição: {lab.description or 'P&D'}."
+            
+            master_prompt = f"""
+            Atue como Gestor de Laboratório.
+            CONTEXTO: {lab_context}
+            PERÍODO: {period_str}
 
-        Instruções Estritas:
-        1. Baseie a sua análise EXCLUSIVAMENTE nos dados fornecidos.
-        2. NÃO inclua saudações, introduções ou conclusões.
-        3. Use o seguinte formato Markdown:
-        # Análise Semanal de Atividades
-        ## Resumo Geral
-        (Parágrafo conciso sobre o progresso.)
-        ## Principais Avanços
-        - (Tópicos com as conquistas.)
-        ## Gargalos e Pontos de Atenção
-        - (Tópicos com os problemas.)
-        ## Sugestões para Reunião Semanal
-        - (Tópicos para discussão.)
+            DADOS DOS BOLSISTAS:
+            {formatted_logs}
 
-        Dados Brutos para {report_title}:
+            OBJETIVO:
+            Crie um resumo executivo curto e direto em Markdown.
+            1. Panorama Geral.
+            2. Destaques Individuais.
+            3. Bloqueios/Problemas.
+            4. Sugestões Práticas.
 
-        ---
-        {formatted_logs}
-        """
+            Não retorne saudações e nenhum texto externo ao resumo como "com certeza, aqui está um resumo...". Retorne estritamente o que vai para o resumo.
+            """
 
-        try:
-            api_key = app.config['GEMINI_API_KEY']
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-pro')
-            response = model.generate_content(master_prompt)
-            report_html = markdown.markdown(response.text)
-        except Exception as e:
-            print(f"Erro ao comunicar com a IA: {e}")
-            return
-        
-        subject = f"Logbook: Análise Semanal ({start_of_week.strftime('%d/%m/%Y')} a {today.strftime('%d/%m/%Y')})"
-        
-        final_email_html = render_template('email/weekly_report_email.html', 
-                                           report_content=report_html, 
-                                           period=f"{start_of_week.strftime('%d/%m')} a {today.strftime('%d/%m')}")
-        
-        send_email(subject,
-                   sender=app.config['MAIL_USERNAME'],
-                   recipients=recipients,
-                   text_body="O seu relatório está disponível. Por favor, verifique a versão HTML.",
-                   html_body=final_email_html) # <--- MUDANÇA AQUI
-        
-        print(f"Relatório semanal enviado com sucesso para: {', '.join(recipients)}")
+            try:
+                api_key = app.config['GEMINI_API_KEY']
+                if not api_key:
+                    print("  x Erro: API Key não configurada.")
+                    continue
 
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel('gemini-2.5-pro')
+                response = model.generate_content(master_prompt)
+                report_html = markdown.markdown(response.text)
+                
+                # 5. Envio
+                prefix = "[TESTE] " if test_mode else ""
+                subject = f"{prefix}[{lab.acronym}] Relatório Semanal IA - {period_str}"
+                
+                final_email_html = render_template('email/weekly_report_email.html', 
+                                                   report_content=report_html, 
+                                                   period=period_str,
+                                                   lab_name=lab.name)
+                
+                send_email(subject,
+                           sender=app.config['MAIL_USERNAME'],
+                           recipients=recipients,
+                           text_body="Relatório disponível em HTML.",
+                           html_body=final_email_html)
+                
+                print(f"  v Sucesso! Enviado para {recipients}")
+
+            except Exception as e:
+                print(f"  x Erro ao processar {lab.acronym}: {e}")
+                continue
+
+        print("--- Job Finalizado ---")

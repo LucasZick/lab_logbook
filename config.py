@@ -13,6 +13,8 @@ class Config:
     MAIL_USE_TLS = True
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'suporte@exemplo.com'
     
     # MUDANÇA CRÍTICA: A URL do banco de dados agora é fornecida pelo Docker
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')

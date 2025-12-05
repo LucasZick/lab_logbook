@@ -1,57 +1,161 @@
 {% extends "base.html" %}
+
 {% block content %}
+<style>
+    /* Estilos específicos para o formulário rico */
+    .form-section { margin-bottom: 2.5rem; }
+    .form-section-title {
+        font-size: 0.85rem; text-transform: uppercase; font-weight: 700; 
+        color: #64748b; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;
+    }
+    .form-section-title i { color: #01552b; font-size: 1rem; }
+
+    /* Floating Labels Custom */
+    .form-floating > .form-control:focus { border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1); }
+    .form-floating > label { padding-left: 1rem; }
+
+    /* Uploads */
+    .file-drop-zone {
+        border: 2px dashed #cbd5e1; border-radius: 12px; padding: 2rem; text-align: center;
+        background: #f8fafc; cursor: pointer; transition: 0.2s; position: relative;
+    }
+    .file-drop-zone:hover { border-color: #01552b; background: #f0fdf4; }
+    .file-icon { font-size: 2rem; color: #94a3b8; margin-bottom: 0.5rem; }
+    .file-label { font-size: 0.9rem; font-weight: 600; color: #475569; }
+    .file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+</style>
+
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
+    <div class="col-lg-8">
         <div class="content-card">
-            <div class="text-center mb-4">
-                <div style="width: 60px; height: 60px; background: #dbeafe; color: #1e40af; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.5rem;">
+            
+            <div class="text-center mb-5">
+                <div style="width: 70px; height: 70px; background: #f0fdf4; color: #01552b; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; font-size: 2rem; border: 1px solid #dcfce7;">
                     <i class="fas fa-flask"></i>
                 </div>
-                <h3 class="fw-bold">{{ 'Editar Laboratório' if is_edit else 'Novo Laboratório' }}</h3>
-                <p class="text-muted">
-                    {% if is_edit %}
-                        Atualize as informações ou altere o responsável.
-                    {% else %}
-                        Cadastre um novo ambiente e defina o responsável.
-                    {% endif %}
+                <h2 class="fw-bold text-dark mb-2">{{ 'Editar Laboratório' if is_edit else 'Novo Laboratório' }}</h2>
+                <p class="text-muted mb-0" style="max-width: 500px; margin: 0 auto;">
+                    Configure a identidade, localização e liderança da unidade de pesquisa.
                 </p>
             </div>
 
-            <form action="" method="post">
+            <form action="" method="post" enctype="multipart/form-data">
                 {{ form.hidden_tag() }}
                 
-                <h6 class="text-uppercase text-muted fw-bold small mb-3">Dados do Lab</h6>
-                <div class="form-floating mb-3">
-                    {{ form.name(class="form-control", placeholder="Nome") }}
-                    <label>Nome do Laboratório</label>
-                </div>
-                <div class="form-floating mb-4">
-                    {{ form.acronym(class="form-control", placeholder="Sigla") }}
-                    <label>Sigla (Ex: LAR)</label>
-                </div>
-
-                <h6 class="text-uppercase text-muted fw-bold small mb-3">Responsável Técnico</h6>
-                
-                <div class="mb-3">
-                    <div class="form-floating">
-                        {{ form.prof_name(class="form-control", placeholder="usuario") }}
-                        <label>Usuário de Acesso (Login)</label>
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-info-circle"></i> Informações Gerais</div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="form-floating">
+                                {{ form.name(class="form-control", placeholder="Nome") }}
+                                <label>Nome do Laboratório</label>
+                            </div>
+                            {% for error in form.name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                {{ form.acronym(class="form-control", placeholder="Sigla") }}
+                                <label>Sigla (Ex: LAR)</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ form.description(class="form-control", placeholder="Desc", style="height: 100px") }}
+                                <label>Descrição / Missão</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-text text-muted small">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Use letras minúsculas e sem espaços (ex: <strong>pedro_alberto</strong>).
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-image"></i> Identidade Visual</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted mb-2">Logotipo</label>
+                            <div class="file-drop-zone">
+                                <i class="fas fa-cloud-upload-alt file-icon"></i>
+                                <div class="file-label">Arraste ou clique para enviar</div>
+                                {{ form.logo(class="file-input") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted mb-2">Capa (Banner)</label>
+                            <div class="file-drop-zone">
+                                <i class="fas fa-image file-icon"></i>
+                                <div class="file-label">Arraste ou clique para enviar</div>
+                                {{ form.cover(class="file-input") }}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-floating mb-4">
-                    {{ form.prof_email(class="form-control", placeholder="Email") }}
-                    <label>E-mail Institucional</label>
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-user-shield"></i> Coordenação</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.prof_name(class="form-control", placeholder="user") }}
+                                <label>Usuário de Acesso (Login)</label>
+                            </div>
+                            <div class="form-text small">
+                                <i class="fas fa-info-circle me-1"></i> Minúsculas, sem espaços (ex: <strong>joao_silva</strong>).
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.prof_email(class="form-control", placeholder="Email") }}
+                                <label>E-mail Institucional</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="d-grid gap-2">
-                    {{ form.submit(class="btn btn-success py-3 fw-bold", value="Guardar Alterações" if is_edit else "Criar Laboratório") }}
-                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-light">Cancelar</a>
+                <div class="form-section mb-5">
+                    <div class="form-section-title"><i class="fas fa-map-marker-alt"></i> Localização & Redes</div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <div class="form-floating">
+                                {{ form.affiliation_name(class="form-control", placeholder="Afiliação") }}
+                                <label>Instituição Filiada (Ex: UDESC)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                {{ form.contact_email(class="form-control", placeholder="Email Público") }}
+                                <label>E-mail de Contato Público</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        {{ form.address(class="form-control", placeholder="Endereço") }}
+                        <label>Endereço Completo</label>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                {{ form.location(class="form-control", placeholder="Sala") }}
+                                <label>Sala / Bloco</label>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-floating">
+                                {{ form.website_link(class="form-control", placeholder="Site") }}
+                                <label>Website Oficial</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="d-flex justify-content-end gap-3 pt-4 border-top">
+                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-lg btn-light border text-muted fw-bold px-4">Cancelar</a>
+                    {{ form.submit(class="btn btn-lg btn-success px-5 fw-bold shadow-sm") }}
+                </div>
+
             </form>
         </div>
     </div>

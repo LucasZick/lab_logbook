@@ -227,7 +227,7 @@ def populate():
 
     db.session.commit()
     print(f"\n=== CONCLUÍDO ===")
-    print(f"Total de Registos Gerados: {total_logs}")
+    print(f"Total de Registros Gerados: {total_logs}")
     print("------------------------------------------------")
     print("USUÁRIOS PARA TESTE:")
     print("1. Admin: 'admin'")
