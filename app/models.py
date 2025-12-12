@@ -91,6 +91,7 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.Text)
     skills = db.Column(db.String(256))
     invite_status = db.Column(db.String(20), default='none')
+    tour_completed = db.Column(db.Boolean, default=False)
 
     laboratory_id = db.Column(db.Integer, db.ForeignKey('laboratory.id'), nullable=True)
 

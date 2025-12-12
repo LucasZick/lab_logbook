@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* --- LAYOUT DO ESTÚDIO --- */
+    /* Nota: O fundo agora é herdado do base.html (branco com pontinhos) */
+
+    .studio-grid {
+        display: grid; grid-template-columns: 320px 1fr; gap: 40px;
+        max-width: 1200px; margin: 3rem auto; padding: 0 20px;
+    }
+
+    /* 1. PAINEL DE CONTROLE (Esquerda - TEMA CLARO) */
+    .control-panel {
+        background: #ffffff; /* Cartão branco */
+        border: 1px solid #e2e8f0; border-radius: 16px;
+        box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.07); /* Sombra suave */
+        padding: 25px; height: fit-content;
+        position: sticky; top: 20px;
+    }
+    
+    .panel-header {
+        border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;
+    }
+    .panel-title { font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; color: #0f172a; /* Texto Escuro */ }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+    
+    /* Inputs adaptados para fundo claro */
+    .studio-input {
+        width: 100%; background: #f8fafc; border: 1px solid #cbd5e1;
+        color: #0f172a; padding: 12px 15px; border-radius: 8px; transition: 0.3s; font-size: 0.9rem;
+    }
+    .studio-input:focus { outline: none; border-color: #22c55e; background: #ffffff; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1); }
+
+    /* Switches */
+    .toggle-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 0; border-top: 1px solid #f1f5f9; margin-top: 5px;
+    }
+    .toggle-label { font-size: 0.85rem; color: #334155; font-weight: 600; }
+
+    /* Botão Copiar (Verde vibrante) */
+    .btn-copy-glow {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        color: white; border: none; padding: 16px; width: 100%;
+        border-radius: 12px; font-weight: 700; margin-top: 25px;
+        box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3); transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem;
+        cursor: pointer;
+    }
+    .btn-copy-glow:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(22, 163, 74, 0.5); filter: brightness(1.05); }
+    .btn-copy-glow:active { transform: translateY(0); }
+
+    /* 2. ÁREA DE PREVIEW (Direita) */
+    .preview-area { display: flex; flex-direction: column; }
+    
+    /* Mockup de Email (Branco sobre fundo claro, com sombra para destacar) */
+    .email-mockup {
+        background: #ffffff; border-radius: 12px; overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mockup-header {
+        background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0;
+        display: flex; gap: 8px; align-items: center;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-body { padding: 50px; background: white; min-height: 300px; color: #333; }
+
+    /* Wrapper da Assinatura (Onde se copia) */
+    #signature-wrapper {
+        border: 2px dashed #e2e8f0; border-radius: 12px; padding: 25px;
+        transition: all 0.3s; position: relative; margin-top: 20px; background: #fff;
+    }
+    #signature-wrapper:hover { border-color: #22c55e; background: #f0fdf4; }
+    
+    .copy-hint {
+        position: absolute; top: -10px; right: 20px;
+        background: #22c55e; color: #fff; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+        padding: 4px 10px; border-radius: 50rem; opacity: 0; transition: 0.3s; transform: translateY(5px);
+    }
+    #signature-wrapper:hover .copy-hint { opacity: 1; transform: translateY(0); }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 992px) { .studio-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="container py-5">
+    <div class="d-flex align-items-center justify-content-center mb-5 flex-column text-center">
+        <h1 class="fw-bold display-5 mb-2 text-dark">Estúdio de Assinatura</h1>
+        <p class="text-muted" style="max-width: 500px;">Crie uma identidade profissional padronizada para os seus e-mails. Edite os dados à esquerda e veja o resultado em tempo real.</p>
+    </div>
+
+    <div class="studio-grid">
+        
+        <div class="control-panel">
+            <div class="panel-header">
+                <div class="panel-title"><i class="fas fa-sliders-h text-success"></i> Editar Dados</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Nome de Exibição</label>
+                <input type="text" class="studio-input" id="inputName" value="{{ user.username }}" oninput="updateSig()">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Cargo / Título</label>
+                <input type="text" class="studio-input" id="inputRole" value="{{ user.role|capitalize }}" oninput="updateSig()">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Departamento / Lab</label>
+                <input type="text" class="studio-input" id="inputDept" value="{{ lab.acronym }} - {{ lab.name }}" oninput="updateSig()">
+            </div>
+            
+            <div class="toggle-row">
+                <label class="toggle-label" for="checkShowLink">Botão de Portfólio</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="checkShowLink" checked onchange="updateSig()">
+                </div>
+            </div>
+            
+            <div class="toggle-row">
+                <label class="toggle-label" for="checkShowAffil">Logo da Universidade</label>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="checkShowAffil" checked onchange="updateSig()">
+                </div>
+            </div>
+
+            <button onclick="copySignature()" id="btnCopy" class="btn-copy-glow">
+                <i class="far fa-copy"></i> Copiar Assinatura
+            </button>
+        </div>
+
+        <div class="preview-area">
+            <div class="email-mockup">
+                <div class="mockup-header">
+                    <div class="dot bg-danger"></div>
+                    <div class="dot bg-warning"></div>
+                    <div class="dot bg-success"></div>
+                    <span class="ms-3 small text-muted font-monospace">Nova Mensagem</span>
+                </div>
+                <div class="mockup-body">
+                    <p style="color: #64748b; font-family: sans-serif; margin-bottom: 40px; font-size: 15px;">
+                        Prezados colegas,<br><br>
+                        Gostaria de confirmar a reunião de alinhamento para a próxima sexta-feira.<br>
+                        Segue em anexo o relatório preliminar.<br><br>
+                        Atenciosamente,
+                    </p>
+
+                    <div id="signature-wrapper">
+                        <div class="copy-hint">Pronto para Copiar</div>
+                        
+                        <table cellpadding="0" cellspacing="0" border="0" style="font-family: 'Arial', sans-serif; line-height: 1.3; color: #333; width: 100%; max-width: 600px;">
+                            <tr>
+                                <td valign="top" style="width: 80px; padding-right: 20px;">
+                                    <img src="{{ profile_img }}" alt="Foto" width="80" height="80" style="border-radius: 50%; display: block; object-fit: cover; border: 1px solid #e2e8f0;">
+                                </td>
+                                
+                                <td valign="top" style="border-left: 2px solid #22c55e; padding-left: 20px;">
+                                    
+                                    <div id="sigNameDisplay" style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
+                                        {{ user.username }}
+                                    </div>
+                                    
+                                    <div id="sigRoleDisplay" style="font-size: 11px; text-transform: uppercase; color: #15803d; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                        {{ user.role|capitalize }}
+                                    </div>
+                                    
+                                    <div id="sigDeptDisplay" style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
+                                        {{ lab.acronym }} - {{ lab.name }}
+                                    </div>
+
+                                    <table cellpadding="0" cellspacing="0" border="0" id="sigLinkRow" style="display: block;">
+                                        <tr>
+                                            <td style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 4px 10px;">
+                                                <a href="{{ public_link }}" style="text-decoration: none; color: #166534; font-size: 11px; font-weight: bold; display: block;">
+                                                    Aceder ao Portfólio &rarr;
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                
+                                <td valign="top" align="right" style="padding-left: 15px;">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td align="right" style="padding-bottom: 8px;">
+                                                <img src="{{ lab_logo }}" width="45" height="45" style="object-fit: contain; display: block;" title="Logo Laboratório">
+                                            </td>
+                                        </tr>
+                                        <tr id="sigAffilRow" style="display: table-row;">
+                                            <td align="right">
+                                                {% if aff_logo %}
+                                                    <img src="{{ aff_logo }}" width="45" height="45" style="object-fit: contain; display: block; filter: grayscale(100%); opacity: 0.7;" title="Logo Instituição">
+                                                {% else %}
+                                                    <span style="font-size: 9px; color: #94a3b8; font-weight: bold;">{{ lab.affiliation_name }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body fw-bold"><i class="fas fa-check-circle me-2"></i> Copiado! Cole no seu e-mail.</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+    // Função unificada de atualização
+    function updateSig() {
+        // Inputs
+        const name = document.getElementById('inputName').value;
+        const role = document.getElementById('inputRole').value;
+        const dept = document.getElementById('inputDept').value;
+        const showLink = document.getElementById('checkShowLink').checked;
+        const showAffil = document.getElementById('checkShowAffil').checked;
+
+        // Updates Texto
+        document.getElementById('sigNameDisplay').innerText = name;
+        document.getElementById('sigRoleDisplay').innerText = role;
+        document.getElementById('sigDeptDisplay').innerText = dept;
+
+        // Updates Visibilidade
+        document.getElementById('sigLinkRow').style.display = showLink ? 'block' : 'none';
+        
+        // Update Logo Universidade
+        const affilRow = document.getElementById('sigAffilRow');
+        if (affilRow) affilRow.style.display = showAffil ? 'table-row' : 'none';
+    }
+
+    // Função Copiar
+    function copySignature() {
+        const container = document.querySelector('#signature-wrapper table');
+        
+        // Seleção precisa
+        const range = document.createRange();
+        const selection = window.getSelection();
+        range.selectNode(container);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        try {
+            document.execCommand('copy');
+            
+            // Feedback
+            const btn = document.getElementById('btnCopy');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+            btn.style.background = '#059669'; // Emerald 600
+            
+            var toast = new bootstrap.Toast(document.getElementById('liveToast'));
+            toast.show();
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '';
+            }, 2000);
+        } catch (e) {
+            alert('Não foi possível copiar automaticamente.');
+        }
+        selection.removeAllRanges();
+    }
+</script>
+{% endblock %}

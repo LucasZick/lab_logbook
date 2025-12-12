@@ -39,7 +39,7 @@
     </div>
     
     <div class="col-md-7">
-        <div class="header-actions">
+        <div class="header-actions" id="tour-prof-actions">
             <a href="{{ url_for('main.tv_mode') }}" class="btn btn-dark" title="Ativar Modo Apresentação">
                 <i class="fas fa-tv me-2"></i> Modo TV
             </a>
@@ -59,7 +59,7 @@
     </div>
 </div>
 
-<div class="row mb-4">
+<div class="row mb-4" id="tour-prof-cards">
     <div class="col-md-4">
         <div class="content-card p-3 mb-3 stat-card" style="border-color: #22c55e;">
             <div class="d-flex align-items-center">
@@ -86,7 +86,7 @@
     </div>
 </div>
 
-<div class="row mb-4">
+<div class="row mb-4" id="tour-prof-charts">
     <div class="col-md-8">
         <div class="content-card h-100 p-4">
             <h5 class="fw-bold text-dark mb-4"><i class="fas fa-chart-bar text-primary me-2"></i> Atividade Recente (7 Dias)</h5>
@@ -104,7 +104,7 @@
 <div class="row">
     
     <div class="col-lg-8">
-        <div class="content-card mb-4">
+        <div class="content-card mb-4" id="tour-prof-ai">
             <div class="d-flex align-items-center mb-3">
                 <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3" style="width: 40px; height: 40px; font-size: 1.2rem;">
                     <i class="fas fa-robot"></i>
@@ -157,7 +157,7 @@
             </div>
         </div>
 
-        <div class="content-card">
+        <div class="content-card" id="tour-prof-team">
             <h4 class="mb-4">Equipe Ativa</h4>
             {% if active_bolsistas %}
                 <div class="table-responsive">

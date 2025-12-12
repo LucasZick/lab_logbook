@@ -3,282 +3,85 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ title }} - LogBook</title>
+    
+    {% if title %}
+        <title>{{ title }} - Logbook</title>
+    {% else %}
+        <title>Logbook</title>
+    {% endif %}
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+
     <style>
-        /* --- 1. Fonte e Corpo --- */
+        /* --- ESTILOS GERAIS --- */
         body { 
             background-color: #f3f4f6;
-            /* Cria um padrão de pontos sutil */
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 24px 24px; /* Tamanho da grelha */
+            background-size: 24px 24px;
             font-family: 'Inter', sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            display: flex; flex-direction: column; min-height: 100vh;
             color: #1f2937;
         }
 
-        /* --- 2. Navbar com Gradiente (Moderno) --- */
+        /* --- NAVBAR --- */
         .navbar {
-            /* 0.65 significa 65% de cor, 35% transparente */
-            background: rgba(255, 255, 255, 0.65) !important; 
-            
-            /* O efeito de desfoque */
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            
+            background: rgba(255, 255, 255, 0.85) !important; 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-            
-            padding-top: 0.8rem;
-            padding-bottom: 0.8rem;
-            
-            /* Fixa no topo */
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            padding: 0.8rem 0; position: sticky; top: 0; z-index: 1000;
         }
-        
-        /* Links da Navbar mais elegantes */
-        .navbar-brand {
-            color: #01552b !important; /* Seu Verde */
-            font-weight: 800;
-            font-size: 1.4rem;
-            letter-spacing: -0.5px;
-        }
-        .nav-link {
-            color: #4b5563 !important; /* Cinza escuro */
-            font-weight: 500;
-            margin: 0 5px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: #01552b !important;
-            background-color: rgba(1, 85, 43, 0.08); /* Fundo verde muito suave */
-        }
+        .navbar-brand { color: #01552b !important; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px; }
+        .nav-link { color: #4b5563 !important; font-weight: 500; margin: 0 5px; border-radius: 8px; transition: 0.2s; }
+        .nav-link:hover, .nav-link.active { color: #01552b !important; background-color: rgba(1, 85, 43, 0.08); }
 
-        /* --- 3. CARTÕES COM IDENTIDADE (ACCENT BORDER) --- */
+        /* --- BRANDING --- */
+        .brand-container { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .brand-logo-box {
+            width: 48px; height: 48px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 2px solid rgba(255,255,255,0.5);
+            overflow: hidden; transition: transform 0.2s; flex-shrink: 0;
+        }
+        .navbar-brand:hover .brand-logo-box { transform: scale(1.1); }
+        .brand-img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+        .brand-info { display: flex; flex-direction: column; line-height: 1; }
+        .brand-title { font-size: 1.2rem; }
+        .brand-subtitle { font-size: 0.65rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }
+
+        /* --- CARDS --- */
         .content-card { 
-            background-color: #ffffff; 
-            border-radius: 16px; 
-            padding: 2rem; 
-            border: 1px solid rgba(0,0,0,0.05);
-            /* Borda no topo com a cor da marca */
-            border-top: 4px solid #01552b; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background-color: #ffffff; border-radius: 16px; padding: 2rem; 
+            border: 1px solid rgba(0,0,0,0.05); border-top: 4px solid #01552b; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); margin-bottom: 2rem;
+            transition: transform 0.2s;
         }
-        .content-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1);
-        }
+        .content-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1); }
+
+        /* --- UTILS --- */
+        main { flex: 1; }
+        footer { background-color: #ffffff; padding: 1.5rem 0; margin-top: auto; border-top: 1px solid #e5e7eb; }
         
-        /* --- 4. Soft Badges (Etiquetas Elegantes) --- */
-        .badge-soft-primary { background-color: #dbeafe; color: #1e40af; }
+        .alert { border-radius: 12px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .badge-soft-success { background-color: #dcfce7; color: #166534; }
         .badge-soft-warning { background-color: #fef3c7; color: #92400e; }
-        .badge-soft-danger  { background-color: #fee2e2; color: #991b1b; }
-        .badge-soft-info    { background-color: #cffafe; color: #155e75; }
-        .badge { padding: 0.5em 0.8em; font-weight: 600; }
-
-        /* --- Empty State (Design Bonito para Listas Vazias) --- */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            background-color: #f9fafb; /* Fundo muito leve */
-            border: 2px dashed #e5e7eb; /* Borda tracejada suave */
-            border-radius: 12px;
-            margin-top: 1rem;
-        }
-        .empty-state i {
-            font-size: 3rem;       /* Ícone grande */
-            color: #d1d5db;        /* Cinza claro */
-            margin-bottom: 1rem;
-            display: block;
-        }
-        .empty-state h5 {
-            font-weight: 600;
-            color: #4b5563;        /* Cinza escuro */
-            margin-bottom: 0.5rem;
-        }
-        .empty-state p {
-            color: #6b7280;        /* Cinza médio */
-            margin-bottom: 0;
-            font-size: 0.95rem;
-        }
-
-        /* --- Layout Geral --- */
-        main { flex: 1; }
-        footer {
-            background-color: #ffffff;
-            padding: 1.5rem 0;
-            margin-top: auto;
-            border-top: 1px solid #e5e7eb;
-        }
         
-        /* Alertas Flutuantes */
-        .alert {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: opacity 0.5s ease-out;
-        }
+        /* Inputs */
+        .form-control:focus, .form-select:focus { border-color: #01552b; box-shadow: 0 0 0 0.25rem rgba(1, 85, 43, 0.15); }
+        .btn-primary { background: linear-gradient(180deg, #01552b 0%, #014421 100%); border: none; }
+        .btn-primary:hover { background: #003319; transform: translateY(-1px); }
 
-        /* --- 1. ANIMAÇÃO DE ENTRADA (Smooth Fade In) --- */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 6px; border: 2px solid #f1f1f1; }
         
-        /* Aplica a animação a todo o conteúdo principal */
-        main {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        /* --- 2. SCROLLBAR PERSONALIZADA (UNIVERSAL) --- */
-        
-        /* Para Firefox */
-        * {
-            scrollbar-width: thin; /* Deixa a barra mais fina */
-            scrollbar-color: #cbd5e1 #f1f1f1; /* Cor do "polegar" e do "trilho" */
-        }
-
-        /* Para Chrome, Edge e Safari */
-        ::-webkit-scrollbar {
-            width: 10px; /* Largura vertical */
-            height: 10px; /* Altura horizontal */
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; /* Cor do fundo da barra */
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1; /* Cor da barra em si (Cinza azulado) */
-            border-radius: 6px; /* Bordas arredondadas */
-            border: 2px solid #f1f1f1; /* Cria um espaço branco ao redor para ficar bonito */
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: #94a3b8; /* Cor mais escura ao passar o rato */
-        }
-
-        /* --- 3. TABELAS MODERNAS (Menos bordas, mais ar) --- */
-        .table {
-            border-collapse: separate; 
-            border-spacing: 0;
-        }
-        .table th {
-            border-top: none;
-            border-bottom: 2px solid #e9ecef;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            color: #6b7280;
-            padding: 1rem 0.75rem;
-        }
-        .table td {
-            vertical-align: middle;
-            border-top: 1px solid #f3f4f6;
-            padding: 1rem 0.75rem;
-            color: #374151;
-        }
-        /* Remove bordas laterais dos primeiros e últimos elementos */
-        .table th:first-child, .table td:first-child { padding-left: 1.5rem; }
-        .table th:last-child, .table td:last-child { padding-right: 1.5rem; }
-
-        /* --- INPUTS COM A SUA MARCA --- */
-        .form-control:focus, .form-select:focus {
-            border-color: #01552b;
-            /* Sombra verde suave e elegante */
-            box-shadow: 0 0 0 0.25rem rgba(1, 85, 43, 0.15);
-        }
-        
-        /* Botões primários com gradiente sutil */
-        .btn-primary {
-            background: linear-gradient(180deg, #01552b 0%, #014421 100%);
-            border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn-primary:hover {
-            background: #003319;
-            transform: translateY(-1px);
-        }
-
-        /* --- BRANDING DA NAVBAR --- */
-        .brand-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none; /* Garante que não sublinha */
-        }
-
-        /* Caixa do Logo */
-        .brand-logo-box {
-            width: 52px;          /* Aumentado (antes 42px) */
-            height: 52px;
-            background: white; 
-            border-radius: 50%;   /* Círculo perfeito: resolve o problema de logos redondas */
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Sombra mais forte para destacar */
-            border: 3px solid rgba(255,255,255,0.3); /* Borda translúcida mais grossa */
-            overflow: hidden;
-            transition: transform 0.2s ease;
-            flex-shrink: 0;       /* Garante que não amassa */
-        }
-
-        /* Efeito ao passar o mouse */
-        .navbar-brand:hover .brand-logo-box {
-            transform: scale(1.1); /* Zoom um pouco maior no hover */
-            border-color: white;
-        }
-
-        .brand-img {
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain;   /* Tenta preencher o círculo (bom para logos cheias) */
-            /* Se a sua logo ficar cortada, mude 'cover' para 'contain' na linha de baixo: */
-            /* object-fit: contain; */ 
-            padding: 2px;        /* Padding mínimo */
-        }
-
-        /* Texto */
-        .brand-info {
-            display: flex;
-            flex-direction: column;
-            line-height: 1;
-        }
-
-        .brand-title {
-            font-size: 1.25rem; /* Maior */
-            margin-bottom: -2px;
-        }
-
-        .brand-subtitle {
-            font-size: 0.65rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-top: 2px;
-        }
-
-        /* Ícone de fallback (quando não tem lab) */
-        .brand-icon-fallback {
-            font-size: 1.2rem;
-            color: #01552b; /* Verde da marca dentro do box branco */
-        }
-        
+        /* Animação */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        main { animation: fadeIn 0.4s ease-out forwards; }
     </style>
 </head>
 <body>
@@ -286,15 +89,13 @@
         <div class="container">
             <a class="navbar-brand p-0" href="{{ url_for('main.dashboard') if current_user.is_authenticated and current_user.role == 'professor' else url_for('main.index') }}">
                 <div class="brand-container">
-                    
                     <div class="brand-logo-box">
                         {% if current_lab %}
                             <img src="{{ url_for('static', filename='lab_logos/' + current_lab.image_file) }}" class="brand-img" alt="Logo">
                         {% else %}
-                            <i class="fas fa-robot brand-icon-fallback"></i>
+                            <i class="fas fa-robot" style="font-size: 1.2rem; color: #01552b;"></i>
                         {% endif %}
                     </div>
-
                     <div class="brand-info">
                         {% if current_lab %}
                             <span class="brand-title">{{ current_lab.acronym }}</span>
@@ -304,27 +105,21 @@
                             <span class="brand-subtitle">Gestão Inteligente</span>
                         {% endif %}
                     </div>
-
                 </div>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     {% if current_user.is_authenticated and current_user.role == 'bolsista' %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Meu Painel</a></li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.pending_logs') }}"><i class="fas fa-exclamation-circle"></i> Pendências</a>
-                        </li>
-                    
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home"></i> Painel</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.pending_logs') }}"><i class="fas fa-exclamation-circle"></i> Pendências</a></li>
                     {% endif %}
                     {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.community') }}">
-                                <i class="fas fa-users"></i> Equipe
-                            </a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.community') }}"><i class="fas fa-users"></i> Equipe</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.gallery') }}"><i class="fas fa-project-diagram"></i> Projetos</a></li>
                     {% endif %}
                 </ul>
@@ -333,17 +128,19 @@
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Entrar</a></li>
                     {% else %}
                         {% if current_user.role == 'professor' %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Painel</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.calendar_view') }}"><i class="fas fa-calendar-alt"></i> Calendário</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.lab_settings') }}"><i class="fas fa-cogs"></i> Configurar Lab</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.lab_settings') }}"><i class="fas fa-cogs"></i> Lab</a></li>
                         {% endif %}
+                        
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="{{ url_for('static', filename='profile_pics/' + current_user.image_file) }}" class="rounded-circle me-2" width="30" height="30" style="object-fit: cover;">
+                                <img src="{{ url_for('static', filename='profile_pics/' + current_user.image_file) }}" class="rounded-circle me-2" width="30" height="30" style="object-fit: cover; border: 1px solid #ddd;">
                                 {{ current_user.username }}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="{{ url_for('main.user_profile', username=current_user.username) }}"><i class="fas fa-user-circle me-2"></i> Ver Perfil</a></li>
+                                <li><a href="#" onclick="restartHelp(); return false;" class="dropdown-item"><i class="fas fa-question-circle me-2"></i> Ajuda / Tour</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="{{ url_for('main.logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
                             </ul>
@@ -361,7 +158,7 @@
                 {% for category, message in messages %}
                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 {% endfor %}
             {% endif %}
@@ -375,9 +172,7 @@
         <div class="container text-center py-4">
             <small class="text-muted">
                 Logbook &copy; 2025 <span class="mx-2">|</span>
-                <a href="mailto:{{ admin_email }}?subject=Reportar Problema no Logbook" class="text-decoration-none text-secondary">
-                    <i class="fas fa-bug"></i> Reportar Problema
-                </a>
+                <a href="mailto:{{ admin_email }}" class="text-decoration-none text-secondary">Reportar Problema</a>
             </small>
         </div>
     </footer>
@@ -386,22 +181,181 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Seleciona todos os alertas
             var alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
-                // Espera 4 segundos (4000ms)
                 setTimeout(function() {
-                    // Adiciona classe para fade out (opcional se usar bootstrap fade)
                     alert.classList.remove('show');
-                    // Espera a animação terminar e remove do DOM
-                    setTimeout(function() {
-                        alert.remove();
-                    }, 150);
+                    setTimeout(function() { alert.remove(); }, 150);
                 }, 4000);
             });
         });
     </script>
     
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const driverObj = window.driver.js.driver;
+                const userRole = "{{ current_user.role if current_user.is_authenticated else '' }}";
+                
+                if (!userRole) return;
+
+                // --- 1. TOUR DO BOLSISTA (Corrigido) ---
+            const stepsStudent = [
+                { 
+                    popover: { 
+                        title: '👋 Bem-vindo ao Logbook!', 
+                        description: 'Esta plataforma substitui o caderno de papel. Aqui você registra sua evolução, gera relatórios e garante suas horas complementares.' 
+                    } 
+                },
+                { 
+                    element: '#tour-student-status', 
+                    popover: { 
+                        title: '🚦 O Semáforo do Dia', 
+                        description: 'Sua meta é deixar este indicador <b>Verde</b> todos os dias que vier ao laboratório. Se estiver Amarelo, você esqueceu de registrar hoje!' 
+                    } 
+                },
+                // --- PASSO CORRIGIDO: PROJETOS vs GERAL ---
+                { 
+                    element: '#tour-student-new-project', 
+                    popover: { 
+                        title: '💡 Projetos vs. Geral', 
+                        description: 'O ideal é organizar suas pesquisas em <b>Projetos</b>. <br><br>Se for uma atividade avulsa (limpeza, reunião, estudo), você pode selecionar <b>"Geral"</b> na lista. <br>Mas se for iniciar uma nova linha de pesquisa, <b>clique aqui</b> para criar um projeto específico.' 
+                    } 
+                },
+                { 
+                    element: '#tour-student-form', 
+                    popover: { 
+                        title: '📝 O Registro (Log)', 
+                        description: 'Descreva o que fez de forma técnica. <br><b>Dica:</b> Use o campo "Próximos Passos" para ajudar o seu "eu do futuro" a lembrar onde parou na próxima vez.' 
+                    } 
+                },
+                { 
+                    element: '#tour-student-frequency', 
+                    popover: { 
+                        title: '📅 Mapa de Consistência', 
+                        description: 'Professores olham muito para isso. Dias preenchidos mostram compromisso. Tente não deixar muitos "buracos" na sua semana.' 
+                    } 
+                },
+                { 
+                    element: '#tour-student-history', 
+                    popover: { 
+                        title: '🗂️ Seu Histórico', 
+                        description: 'Errou algo? Você pode editar seus registros aqui por até <b>7 dias</b>. Depois disso, eles são "congelados" para garantir a integridade dos dados.' 
+                    } 
+                },
+                { 
+                    element: '#tour-student-report', 
+                    popover: { 
+                        title: '📄 Relatório Oficial', 
+                        description: 'O "Pulo do Gato": Clique aqui para gerar um PDF automático, formatado e pronto para assinar. Use para prestar contas ou validar horas de bolsa.' 
+                    } 
+                }
+            ];
+
+                // --- 2. TOUR DO PROFESSOR (Gestão) ---
+                const stepsProfessor = [
+                    { 
+                        popover: { 
+                            title: '👨‍🏫 Painel de Controle', 
+                            description: 'Olá Professor! O Logbook centraliza a gestão científica do seu laboratório. Vamos ver como monitorar sua equipe sem microgerenciamento.' 
+                        } 
+                    },
+                    { 
+                        element: '#tour-prof-cards', 
+                        popover: { 
+                            title: '🔢 Indicadores Chave', 
+                            description: 'Uma visão instantânea de saúde: Veja quantos bolsistas estão ativos hoje e se há <b>solicitações pendentes</b> aguardando sua aprovação.' 
+                        } 
+                    },
+                    { 
+                        element: '#tour-prof-charts', 
+                        popover: { 
+                            title: '📈 Tendências e Foco', 
+                            description: 'Analise o ritmo do laboratório:<br>• <b>Esquerda:</b> O volume de registros nos últimos 7 dias.<br>• <b>Direita:</b> Quais projetos estão consumindo mais esforço da equipe.' 
+                        } 
+                    },
+                    { 
+                        element: '#tour-prof-actions', 
+                        popover: { 
+                            title: '🛠️ Ferramentas de Gestão', 
+                            description: '<ul><li><b>Modo TV:</b> Deixe rodando num monitor no laboratório para mostrar atividades em tempo real.</li><li><b>Convidar:</b> Envie links para novos alunos entrarem.</li></ul>' 
+                        } 
+                    },
+                    { 
+                        element: '#tour-prof-ai', 
+                        popover: { 
+                            title: '🤖 Seu Assistente IA', 
+                            description: 'Não tem tempo de ler 50 diários? A IA lê por você. <br>Clique aqui para gerar um <b>Resumo Executivo</b> da semana, apontando progressos e gargalos da equipe.' 
+                        } 
+                    },
+                    { 
+                        element: '#tour-prof-team', 
+                        popover: { 
+                            title: '👥 Gestão Individual', 
+                            description: 'Aqui está sua lista de alunos. Clique no ícone de <b>Olho</b> para ver o diário detalhado de um aluno específico ou no <b>Pause</b> para desativar ex-membros.' 
+                        } 
+                    },
+                    { 
+                        popover: { 
+                            title: 'Laboratório Configurado! 🎓', 
+                            description: 'Agora é só convidar seus alunos. Eles receberão um tutorial próprio ensinando a preencher os logs.' 
+                        } 
+                    }
+                ];
+
+                function markTourComplete() {
+                    fetch("{{ url_for('main.complete_tour') }}", { 
+                        method: "POST",
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"
+                        }
+                    }).catch(e => console.log(e));
+                }
+
+                window.startTour = function(isManual = false) {
+                    const steps = (userRole === 'professor') ? stepsProfessor : stepsStudent;
+                    
+                    // Validação de segurança: se a página não tem os elementos, não roda
+                    const firstElement = document.querySelector(steps[1].element);
+                    if (!firstElement && !isManual) return;
+
+                    const tourDriver = driverObj({
+                        showProgress: true, 
+                        animate: true, 
+                        allowClose: true,
+                        // Textos em Português
+                        doneBtnText: 'Concluir', 
+                        nextBtnText: 'Próximo →', 
+                        prevBtnText: '← Voltar',
+                        steps: steps,
+                        onDestroyed: () => { if (!isManual) markTourComplete(); }
+                    });
+
+                    tourDriver.drive();
+                };
+
+                // Auto-Início
+                {% if current_user.is_authenticated %}
+                    const tourCompleted = {{ 'true' if current_user.tour_completed else 'false' }};
+                    if (!tourCompleted) {
+                        setTimeout(() => { startTour(false); }, 1500); // Delay um pouco maior para carregar UI
+                    }
+                {% endif %}
+                
+            } catch (error) {
+                console.error("Erro no Tour:", error);
+            }
+        });
+        
+        function restartHelp() {
+            if (window.startTour) window.startTour(true);
+        }
+    </script>
+
     {% block scripts %}{% endblock %}
+
 </body>
 </html>

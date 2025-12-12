@@ -1137,7 +1137,7 @@ def user_profile(username):
     total_logs = user.logs.count()
     recent_logs = user.logs.order_by(LogEntry.entry_date.desc()).limit(5).all()
     image_file = url_for('static', filename='profile_pics/' + user.image_file)
-    return render_template('user_profile.html', user=user, total_logs=total_logs, image_file=image_file, recent_logs=recent_logs)
+    return render_template('user_profile.html', user=user, title=user.username, total_logs=total_logs, image_file=image_file, recent_logs=recent_logs)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -1427,3 +1427,43 @@ def public_lab(lab_id):
                            total_logs=total_logs,
                            top_skills=top_skills,
                            recent_activity=recent_activity)
+
+@bp.route('/tools/signature')
+@login_required
+def generate_signature():
+    # Precisamos de URLs absolutas (http://...) para as imagens funcionarem no Gmail
+    # Nota: Em localhost, as imagens podem não aparecer para quem recebe o email, 
+    # mas funcionarão perfeitamente quando você subir para o servidor real.
+    
+    user = current_user
+    lab = user.laboratory
+    
+    # URL da foto de perfil
+    profile_img = url_for('static', filename='profile_pics/' + user.image_file, _external=True)
+    
+    # URL do logo do lab
+    lab_logo = url_for('static', filename='lab_logos/' + lab.image_file, _external=True)
+    
+    # URL do logo da instituição (se houver)
+    aff_logo = None
+    if lab.affiliation_logo:
+        aff_logo = url_for('static', filename='lab_logos/' + lab.affiliation_logo, _external=True)
+        
+    # Link para o perfil público do aluno
+    public_link = url_for('main.user_profile', username=user.username, _external=True)
+
+    return render_template('signature_generator.html', 
+                           user=user, 
+                           title=user.username,
+                           lab=lab,
+                           profile_img=profile_img,
+                           lab_logo=lab_logo,
+                           aff_logo=aff_logo,
+                           public_link=public_link)
+
+@bp.route('/api/complete_tour', methods=['POST'])
+@login_required
+def complete_tour():
+    current_user.tour_completed = True
+    db.session.commit()
+    return jsonify({'status': 'success'})

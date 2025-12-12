@@ -82,7 +82,7 @@
         </h2>
         <p class="text-muted mb-0">Vamos registar o progresso de hoje?</p>
     </div>
-    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <div class="col-md-4 text-md-end mt-3 mt-md-0" id="tour-student-status">
         {% if has_log_today %}
             <span class="badge badge-soft-success p-2 px-3 rounded-pill">
                 <i class="fas fa-check-circle me-2"></i> Registro de hoje completo
@@ -98,7 +98,7 @@
 <div class="row">
     
     <div class="col-lg-4 mb-4">
-        <div class="content-card position-sticky" style="top: 100px;">
+        <div class="content-card position-sticky" style="top: 100px;" id="tour-student-form">
             <div class="d-flex align-items-center mb-3">
                 <div class="bg-success bg-opacity-10 text-success rounded p-2 me-3">
                     <i class="fas fa-pen-nib"></i>
@@ -120,7 +120,7 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         {{ form.project_select.label(class="form-label fw-bold small text-uppercase text-muted mb-0") }}
-                        <a href="{{ url_for('main.new_project') }}" class="text-decoration-none small fw-bold" style="color: #01552b; font-size: 0.8rem;">
+                        <a href="{{ url_for('main.new_project') }}" class="text-decoration-none small fw-bold" id="tour-student-new-project" style="color: #01552b; font-size: 0.8rem;">
                             <i class="fas fa-plus-circle"></i> Novo Projeto
                         </a>
                     </div>
@@ -154,7 +154,7 @@
 
     <div class="col-lg-8">
         
-        <div class="content-card mb-4">
+        <div class="content-card mb-4" id="tour-student-frequency">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="fw-bold mb-0"><i class="fas fa-calendar-day text-primary me-2"></i> Frequência</h5>
                 
@@ -206,7 +206,7 @@
                 
                 <a href="{{ url_for('main.print_report', user_id=current_user.id, month=request.args.get('mes', current_month_num), year=request.args.get('ano', current_year)) }}" 
                 target="_blank" 
-                class="btn btn-sm btn-outline-dark">
+                class="btn btn-sm btn-outline-dark" id="tour-student-report">
                     <i class="fas fa-file-pdf me-1"></i> Relatório Oficial
                 </a>
             </div>
