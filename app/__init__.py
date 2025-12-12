@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_apscheduler import APScheduler
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -18,6 +19,10 @@ scheduler = APScheduler()
 def create_app(config_class=Config, start_scheduler=True):
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+    )
 
     db.init_app(app)
     migrate.init_app(app, db)

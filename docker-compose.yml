@@ -16,6 +16,7 @@ services:
       # Mapeia a pasta local de fotos para dentro do contentor
       # Assim, as fotos sobrevivem a um 'docker compose down'
       - ./app/static/profile_pics:/app/app/static/profile_pics
+      - ./app/static/lab_logos:/app/app/static/lab_logos
 
   # Serviço do Banco de Dados PostgreSQL
   db:
