@@ -49,4 +49,11 @@ else
     echo "ERRO: O arquivo de backup não foi criado!"
 fi
 
+echo "Enviando para o Google Drive..."
+rclone copy "$BACKUP_DIR/$FILENAME" gdrive:Backups_Oracle
+
+# (Opcional) Limpa arquivos antigos no Google Drive (mantém 30 dias)
+rclone delete gdrive:Backups_Oracle --min-age 30d
+# =============================================
+
 echo "--- Fim ---"
