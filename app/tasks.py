@@ -121,8 +121,16 @@ def send_weekly_report_job(test_mode=False, force_email=None, target_lab_id=None
                                                    period=period_str,
                                                    lab_name=lab.name)
                 
+                # --- A CORREÇÃO ESTÁ AQUI ---
+                # Pegamos o sender oficial (Tupla: 'Logbook Lab', 'suporte@...')
+                sender_oficial = app.config.get('MAIL_DEFAULT_SENDER') 
+                
+                # Fallback de segurança caso a config falhe
+                if not sender_oficial:
+                    sender_oficial = ('Logbook Lab', 'suporte@logbook-lab.com.br')
+
                 send_email(subject,
-                           sender=app.config['MAIL_USERNAME'],
+                           sender=sender_oficial,  # <--- MUDOU DE MAIL_USERNAME PARA ISSO
                            recipients=recipients,
                            text_body="Relatório disponível em HTML.",
                            html_body=final_email_html)
