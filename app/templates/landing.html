@@ -6,12 +6,54 @@
     main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
     /* nav { display: none !important; } */ 
 
+    :root {
+        --bg-dark: #020617;       
+        --bg-card: #1e293b;       
+        --text-main: #f8fafc;     
+        --text-muted: #94a3b8;    
+        --accent: #4ade80;        /* Verde Neon */
+        --accent-glow: rgba(74, 222, 128, 0.5);
+    }
+
     body {
-        background-color: #0f172a;
-        color: white;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
         font-family: 'Inter', sans-serif;
         overflow-x: hidden;
     }
+
+    /* --- 2. RODAPÉ CLARO (SOLICITAÇÃO ATENDIDA) --- */
+    /* Forçamos o rodapé a ser branco, ignorando o tema escuro da página */
+    footer { 
+        background-color: #ffffff !important; 
+        border-top: 1px solid #cbd5e1 !important;
+        margin-top: 0 !important;
+        padding-top: 5rem !important;
+        padding-bottom: 2rem !important;
+        color: #475569 !important; /* Texto cinza escuro */
+    }
+    
+    /* Títulos do rodapé em preto */
+    footer h6 { 
+        color: #0f172a !important; 
+        font-weight: 800 !important; 
+        letter-spacing: 0.5px; 
+    }
+    
+    /* Links em cinza médio */
+    footer p, footer small, footer span { color: #64748b !important; }
+    footer a { color: #64748b !important; transition: 0.3s; }
+    footer a:hover { color: #01552b !important; text-decoration: underline !important; } /* Verde original no hover */
+    
+    /* Logo original (sem filtro branco) */
+    .footer-brand { 
+        color: #01552b !important; 
+        filter: none !important; 
+        font-weight: 800 !important;
+    }
+    
+    /* Linha divisória final */
+    .footer-bottom { border-top: 1px solid #e2e8f0 !important; }
 
     /* Utilitários de Texto */
     .text-gradient {
@@ -297,7 +339,7 @@
     
     <div class="hero-content animate-up">
         <div class="badge-tech">
-            <div class="hero-badge-dot"></div> v1.0 Stable
+            <div class="hero-badge-dot"></div> v2.1 Stable
         </div>
         <h1 class="hero-title">
             A Inteligência do seu <br>
@@ -344,7 +386,7 @@
 <section class="section-padding bento-section">
     <div class="text-center mb-5">
         <h2 class="fw-bold fs-1 mb-3">Tudo o que precisa. Num só lugar.</h2>
-        <p class="text-muted fs-5">Ferramentas desenhadas especificamente para o fluxo académico.</p>
+        <p class="fs-5">Ferramentas desenhadas especificamente para o fluxo académico.</p>
     </div>
 
     <div class="bento-grid">
@@ -367,7 +409,7 @@
                 <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1);">
                     <div class="progress-bar bg-success" style="width: 75%"></div>
                 </div>
-                <div class="d-flex justify-content-between mt-2 small text-muted">
+                <div class="d-flex justify-content-between mt-2 small">
                     <span>Nível 3</span>
                     <span>750/1000 XP</span>
                 </div>
@@ -442,7 +484,7 @@
                     {% if lab.affiliation_logo %}
                         <img src="{{ url_for('static', filename='lab_logos/' + lab.affiliation_logo) }}" class="aff-logo-mini">
                     {% else %}
-                        <i class="fas fa-university text-muted"></i>
+                        <i class="fas fa-university"></i>
                     {% endif %}
                     {{ lab.affiliation_name }}
                 </div>
@@ -463,16 +505,39 @@
 </section>
 
 <section class="faq-section">
-    <h2 class="faq-title">Perguntas Frequentes</h2>
+    <h2 class="faq-title">Dúvidas Comuns</h2>
     <div class="faq-container">
+        
         <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-question">Como faço para entrar? <i class="fas fa-chevron-down"></i></div>
-            <div class="faq-answer">O sistema é restrito aos membros do laboratório. Clique em "Criar Conta" e aguarde a aprovação.</div>
+            <div class="faq-question">Como faço para entrar no sistema? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">O Logbook é restrito. Você deve criar uma conta clicando em "Criar Conta". Seu acesso ficará como "Pendente" até que o professor responsável pelo laboratório aprove sua entrada.</div>
         </div>
+
         <div class="faq-item" onclick="toggleFaq(this)">
-            <div class="faq-question">É gratuito? <i class="fas fa-chevron-down"></i></div>
-            <div class="faq-answer">Sim, o Logbook é uma ferramenta open-source desenvolvida internamente.</div>
+            <div class="faq-question">Esqueci minha senha, e agora? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Na tela de login, clique em "Esqueci a Senha". Enviaremos um link de recuperação para o seu e-mail institucional cadastrado.</div>
         </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">Quem pode ver meus registros? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Seus registros são visíveis para você, para os professores administradores do seu laboratório e para colegas de equipe (se o projeto for compartilhado). A privacidade acadêmica é prioridade.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">Como funciona a Inteligência Artificial? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Nossa IA lê seus registros diários e, no final da semana, compila um resumo executivo destacando seu progresso e eventuais bloqueios. Isso ajuda seu orientador a te ajudar, sem microgerenciamento.</div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">Posso exportar meus dados para o TCC? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Com certeza! Você pode gerar um PDF formatado com todo o seu histórico de atividades, filtrado por datas ou projetos. É ideal para anexar como relatório técnico ou validar horas complementares.</div>
+        </div>
+        
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">Funciona no celular? <i class="fas fa-chevron-down"></i></div>
+            <div class="faq-answer">Sim! O Logbook é 100% responsivo. Você pode registrar suas atividades direto da bancada pelo smartphone.</div>
+        </div>
+
     </div>
 </section>
 

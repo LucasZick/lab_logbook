@@ -2,108 +2,158 @@
 
 {% block content %}
 <style>
-    /* --- RESET & LAYOUT (Igual ao Registro) --- */
+    /* --- RESET E LAYOUT (Geral) --- */
     nav, footer { display: none !important; }
     main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; height: 100vh; }
-    
-    .auth-wrapper {
-        display: flex; min-height: 100vh; width: 100%; background: white;
-    }
+    body { background-color: #ffffff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
-    /* --- LADO ESQUERDO (Visual) --- */
+    /* Container Principal dividido */
+    .auth-wrapper { display: flex; min-height: 100vh; width: 100%; }
+
+    /* --- LADO ESQUERDO (Visual e Marca) --- */
     .auth-visual {
-        flex: 1; background-color: #020617; position: relative;
+        flex: 1; position: relative;
         display: flex; flex-direction: column; justify-content: center; padding: 4rem;
-        color: white; overflow: hidden;
+        color: white; overflow: hidden; background: #01552b;
     }
+    
     .visual-bg {
-        position: absolute; inset: 0; opacity: 0.4;
-        /* Mesma imagem do registro para consistência, ou pode variar */
-        background-image: url('https://images.unsplash.com/photo-1535378437327-b7128d8de746?q=80&w=1974&auto=format&fit=crop');
+        position: absolute; inset: 0;
+        /* Imagem inicial (será trocada pelo JS) */
+        background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop'); /* IT/Tech */
         background-size: cover; background-position: center;
+        /* Adicionado transição de opacidade para o slideshow suave */
+        transition: opacity 0.8s ease-in-out, transform 10s ease;
+        opacity: 0.4; /* Opacidade base */
     }
+    /* Classe auxiliar para o fade-out durante a troca */
+    .visual-bg.fade-out { opacity: 0 !important; }
+    .auth-visual:hover .visual-bg { transform: scale(1.05); }
+
     .visual-overlay {
         position: absolute; inset: 0;
-        /* Mesmo gradiente da marca */
-        background: linear-gradient(135deg, rgba(1, 85, 43, 0.9), rgba(2, 6, 23, 0.95));
+        background: linear-gradient(135deg, rgba(1, 85, 43, 0.9) 0%, rgba(2, 6, 23, 0.8) 100%);
     }
-    .visual-content { position: relative; z-index: 10; max-width: 500px; }
     
-    .visual-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.8; color: #4ade80; }
-    .visual-title { font-size: 3.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 1.5rem; }
-    .visual-text { font-size: 1.2rem; color: #cbd5e1; line-height: 1.6; }
+    .visual-content { position: relative; z-index: 10; max-width: 480px; }
+    
+    /* --- NOVA ESTRUTURA DE LOGO (Lado Esquerdo) --- */
+    .visual-brand-wrapper {
+        display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;
+    }
+    .visual-logo-icon { 
+        height: 45px; width: auto;
+        filter: brightness(0) invert(1); /* Deixa o ícone branco */ 
+    }
+    .visual-logo-text {
+        font-size: 1.8rem; font-weight: 800; color: white; letter-spacing: -0.5px;
+    }
 
-    /* --- LADO DIREITO (Formulário) --- */
+    .visual-title { font-size: 2.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+    .visual-text { font-size: 1.15rem; color: rgba(255,255,255,0.9); line-height: 1.6; font-weight: 500; }
+
+
+    /* --- LADO DIREITO (Formulário Claro) --- */
     .auth-form-container {
         width: 550px; display: flex; flex-direction: column; justify-content: center;
-        padding: 4rem; background: white; overflow-y: auto; position: relative;
+        padding: 4rem 5rem; background: white; position: relative;
     }
 
-    /* Botão Voltar */
     .btn-back-home {
         position: absolute; top: 2rem; right: 2rem; color: #64748b; 
         text-decoration: none; font-weight: 600; font-size: 0.9rem;
         display: flex; align-items: center; gap: 8px; transition: 0.2s;
+        padding: 8px 16px; border-radius: 50px; background: #f1f5f9;
     }
-    .btn-back-home:hover { color: #01552b; }
+    .btn-back-home:hover { color: #01552b; background: #e2e8f0; }
 
     .form-header { margin-bottom: 2.5rem; }
-    .form-title { font-size: 2rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; }
-    .form-subtitle { color: #64748b; font-size: 1rem; }
+    
+    /* --- NOVA ESTRUTURA DE LOGO (Lado Direito) --- */
+    .form-brand-wrapper {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; justify-content: center;
+    }
+    .form-logo-icon { height: 38px; width: auto; } /* Ícone colorido original */
+    .form-logo-text {
+        font-size: 1.5rem; font-weight: 800; color: #01552b; letter-spacing: -0.5px;
+    }
 
-    /* Inputs Modernos */
+    .form-title { font-size: 2rem; font-weight: 800; color: #111827; margin-bottom: 0.5rem; text-align: center; }
+    .form-subtitle { color: #64748b; font-size: 1rem; text-align: center; }
+
+    /* Inputs com Identidade da Marca */
+    .form-floating { position: relative; }
+    .input-icon {
+        position: absolute; top: 50%; left: 15px; transform: translateY(-50%);
+        color: #94a3b8; z-index: 5; transition: 0.3s;
+    }
+    
     .form-floating > .form-control {
-        border-radius: 12px; border: 1px solid #e2e8f0; background-color: #f8fafc;
+        background-color: #f8fafc; border: 1px solid #e2e8f0;
+        border-radius: 12px; padding-left: 45px;
+        color: #1e293b; font-weight: 500;
     }
     .form-floating > .form-control:focus {
         background-color: white; border-color: #01552b; box-shadow: 0 0 0 4px rgba(1, 85, 43, 0.1);
     }
-    .form-floating > label { color: #94a3b8; }
+    .form-floating > label { color: #64748b; padding-left: 45px; }
+    .form-floating > .form-control:focus ~ .input-icon,
+    .form-floating > .form-control:not(:placeholder-shown) ~ .input-icon { color: #01552b; }
 
-    /* Utilitários de Login (Senha/Lembrar) */
     .password-wrapper { position: relative; }
     .toggle-pass {
         position: absolute; top: 50%; right: 15px; transform: translateY(-50%);
-        color: #94a3b8; cursor: pointer; z-index: 5; padding: 5px;
+        color: #94a3b8; cursor: pointer; z-index: 5; padding: 5px; transition: 0.2s;
     }
     .toggle-pass:hover { color: #01552b; }
 
     .login-meta {
-        display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; margin-top: 0.5rem;
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; margin-top: 1rem;
     }
+    .form-check-input { background-color: #f1f5f9; border-color: #cbd5e1; width: 1.2em; height: 1.2em; }
     .form-check-input:checked { background-color: #01552b; border-color: #01552b; }
-    .forgot-link { color: #01552b; font-weight: 600; text-decoration: none; font-size: 0.9rem; }
-    .forgot-link:hover { text-decoration: underline; }
+    .forgot-link { color: #01552b; font-weight: 600; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
+    .forgot-link:hover { color: #014421; text-decoration: underline; }
 
-    /* Botão Principal */
     .btn-submit {
-        background: #01552b; color: white; width: 100%; padding: 1rem;
+        background: linear-gradient(135deg, #01552b 0%, #014421 100%);
+        color: white; width: 100%; padding: 1rem;
         border-radius: 12px; font-weight: 700; font-size: 1.1rem; border: none;
-        transition: 0.3s;
+        transition: 0.3s; box-shadow: 0 4px 15px rgba(1, 85, 43, 0.2);
     }
-    .btn-submit:hover { background: #014421; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(1, 85, 43, 0.3); }
+    .btn-submit:hover { 
+        background: linear-gradient(135deg, #016634 0%, #01552b 100%);
+        transform: translateY(-2px); 
+        box-shadow: 0 10px 25px -5px rgba(1, 85, 43, 0.3);
+    }
 
-    .register-link { text-align: center; margin-top: 2rem; font-size: 0.9rem; color: #64748b; }
+    .register-link { text-align: center; margin-top: 2rem; font-size: 0.95rem; color: #64748b; }
     .register-link a { color: #01552b; font-weight: 700; text-decoration: none; }
+    .register-link a:hover { text-decoration: underline; }
 
-    /* Responsivo */
     @media (max-width: 992px) {
-        .auth-wrapper { flex-direction: column; }
+        .auth-wrapper { flex-direction: column; overflow-y: auto; }
         .auth-visual { display: none; }
-        .auth-form-container { width: 100%; padding: 2rem; }
+        .auth-form-container { width: 100%; min-height: 100vh; padding: 3rem 2rem; }
+        .btn-back-home { top: 1rem; right: 1rem; }
     }
 </style>
 
 <div class="auth-wrapper">
     
     <div class="auth-visual">
-        <div class="visual-bg"></div>
+        <div class="visual-bg" id="slideshow-bg"></div>
         <div class="visual-overlay"></div>
+        
         <div class="visual-content animate__animated animate__fadeInLeft">
-            <i class="fas fa-fingerprint visual-icon"></i>
-            <h1 class="visual-title">Acesso Seguro.</h1>
+            <div class="visual-brand-wrapper">
+                <img src="{{ url_for('static', filename='logo_logbook.png') }}" class="visual-logo-icon" alt="Logbook Icon">
+                <span class="visual-logo-text">LOGBOOK</span>
+            </div>
+            
+            <h1 class="visual-title">Gestão científica <br>multidisciplinar.</h1>
             <p class="visual-text">
-                Bem-vindo de volta ao ecossistema de gestão do seu laboratório. Acompanhe projetos, equipes e resultados num só lugar.
+                A plataforma centralizada que se adapta ao seu campo de pesquisa. Da bancada de química ao laboratório de robótica.
             </p>
         </div>
     </div>
@@ -114,46 +164,56 @@
         </a>
 
         <div class="form-header animate__animated animate__fadeIn">
-            <h2 class="form-title">Entrar</h2>
-            <p class="form-subtitle">Insira as suas credenciais para continuar.</p>
+            <div class="form-brand-wrapper">
+                <img src="{{ url_for('static', filename='logo_logbook.png') }}" class="form-logo-icon" alt="Logbook Icon">
+                <span class="form-logo-text">LOGBOOK</span>
+            </div>
+            <h2 class="form-title">Acesse sua conta</h2>
+            <p class="form-subtitle">Entre com suas credenciais institucionais.</p>
         </div>
 
         <form action="" method="post" novalidate class="animate__animated animate__fadeInUp animate__delay-1s">
             {{ form.hidden_tag() }}
             
-            <div class="form-floating mb-3">
-                {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
+            <div class="form-floating mb-4">
+                <i class="fas fa-user input-icon"></i>
+                {% if form.username.errors %}
+                    {{ form.username(class="form-control is-invalid", id="username", placeholder="Usuário") }}
+                    <div class="invalid-feedback">{{ form.username.errors[0] }}</div>
+                {% else %}
+                    {{ form.username(class="form-control", id="username", placeholder="Usuário") }}
+                {% endif %}
                 <label for="username">Nome de Usuário</label>
-                {% for error in form.username.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                {% endfor %}
             </div>
 
-            <div class="password-wrapper mb-3">
+            <div class="password-wrapper mb-4">
                 <div class="form-floating">
-                    {{ form.password(class="form-control", id="password", placeholder="Senha") }}
+                    <i class="fas fa-lock input-icon"></i>
+                    {% if form.password.errors %}
+                        {{ form.password(class="form-control is-invalid", id="password", placeholder="Senha") }}
+                        <div class="invalid-feedback">{{ form.password.errors[0] }}</div>
+                    {% else %}
+                        {{ form.password(class="form-control", id="password", placeholder="Senha") }}
+                    {% endif %}
                     <label for="password">Senha</label>
                     <i class="far fa-eye toggle-pass" onclick="togglePassword()"></i>
                 </div>
-                {% for error in form.password.errors %}
-                    <div class="text-danger small mt-1">{{ error }}</div>
-                {% endfor %}
             </div>
 
             <div class="login-meta">
-                <div class="form-check">
-                    {{ form.remember_me(class="form-check-input") }}
-                    <label class="form-check-label text-muted small" for="remember_me">Manter conectado</label>
+                <div class="form-check d-flex align-items-center">
+                    {{ form.remember_me(class="form-check-input me-2") }}
+                    <label class="form-check-label text-muted small fw-semibold" for="remember_me">Manter conectado</label>
                 </div>
                 <a href="{{ url_for('main.reset_password_request') }}" class="forgot-link">Esqueceu a senha?</a>
             </div>
 
-            {{ form.submit(class="btn-submit", value="Acessar o Sistema") }}
-
+            {{ form.submit(class="btn-submit", value="Entrar no Sistema") }}
         </form>
 
         <div class="register-link animate__animated animate__fadeIn animate__delay-1s">
-            Ainda não tem conta? <a href="{{ url_for('main.register') }}">Solicitar Acesso</a>
+            Ainda não faz parte da equipe? <br class="d-block d-sm-none">
+            <a href="{{ url_for('main.register') }}" class="ms-1">Solicitar Credenciamento</a>
         </div>
     </div>
 
@@ -163,18 +223,51 @@
 {% block scripts %}
 {{ super() }}
 <script>
+    // Toggle Senha
     function togglePassword() {
         const input = document.getElementById('password');
         const icon = document.querySelector('.toggle-pass');
         if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
+            input.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
         } else {
-            input.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
+            input.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
         }
     }
+
+    // --- SLIDESHOW DO BACKGROUND ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const bgElement = document.getElementById('slideshow-bg');
+        
+        // Lista de imagens de alta qualidade (Unsplash) para diferentes áreas
+        const images = [
+            'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop', // TI / Server
+            'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1470&auto=format&fit=crop', // Química / Tubos
+            'https://images.unsplash.com/photo-1576086213369-97a306d36557?q=80&w=2000&auto=format&fit=crop', // Biologia / Microscópio
+            'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=2070&auto=format&fit=crop'  // Engenharia / Robótica
+        ];
+        
+        let currentIndex = 0;
+
+        // Pré-carrega as imagens para evitar "piscadas" na primeira troca
+        images.forEach(src => { const img = new Image(); img.src = src; });
+
+        function changeBackground() {
+            // 1. Fade Out (adiciona classe que define opacity: 0)
+            bgElement.classList.add('fade-out');
+
+            // 2. Aguarda a transição CSS terminar (800ms definido no CSS)
+            setTimeout(() => {
+                // 3. Troca a imagem e avança o índice
+                currentIndex = (currentIndex + 1) % images.length;
+                bgElement.style.backgroundImage = `url('${images[currentIndex]}')`;
+                
+                // 4. Fade In (remove a classe, voltando a opacity: 0.4)
+                bgElement.classList.remove('fade-out');
+            }, 800); // Tempo deve casar com o transition do CSS
+        }
+
+        // Inicia o ciclo a cada 6 segundos
+        setInterval(changeBackground, 6000);
+    });
 </script>
 {% endblock %}
