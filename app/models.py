@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import time
 
 from flask import current_app
@@ -42,6 +42,8 @@ class Laboratory(db.Model):
     
     # NOVO: Tags personalizadas deste lab
     tags = db.relationship('ProjectTag', backref='laboratory', lazy='dynamic')
+
+    board_items = db.relationship('BoardItem', backref='laboratory', lazy=True)
 
     def __repr__(self):
         return f'<Lab {self.acronym}>'
@@ -216,3 +218,40 @@ class LogEntry(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     
     __table_args__ = (db.UniqueConstraint('user_id', 'entry_date', name='_user_date_uc'),)
+
+class BoardItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=True) # Pode ser nulo se for só imagem
+    
+    # Novo campo para guardar Imagem ou Desenho
+    image_file = db.Column(db.String(255), nullable=True) 
+    
+    item_type = db.Column(db.String(20), default='note') # 'note', 'image'
+    color = db.Column(db.String(20), default='yellow')
+
+    due_date = db.Column(db.DateTime, nullable=True)
+    
+    x = db.Column(db.Integer)
+    y = db.Column(db.Integer)
+    w = db.Column(db.Integer, default=2)
+    h = db.Column(db.Integer, default=2)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    laboratory_id = db.Column(db.Integer, db.ForeignKey('laboratory.id'), nullable=True)
+    
+    # Relacionamento para acessar via user.board_items
+    user = db.relationship('User', backref=db.backref('board_items', lazy=True, cascade="all, delete-orphan"))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'content': self.content,
+            'image_file': self.image_file,
+            'item_type': self.item_type,
+            'color': self.color,
+            'x': self.x, 'y': self.y, 'w': self.w, 'h': self.h,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'laboratory_id': self.laboratory_id
+        }

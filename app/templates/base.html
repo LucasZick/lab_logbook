@@ -228,6 +228,7 @@
                     {% if current_user.is_authenticated and current_user.role == 'bolsista' %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-home me-1"></i> Painel</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.pending_logs') }}"><i class="fas fa-exclamation-circle me-1"></i> Pendências</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.board', username=current_user.username) }}"><i class="fas fa-columns me-1"></i> Quadro</a></li>
                     {% endif %}
                     
                     {% if current_user.is_authenticated %}

@@ -1,11 +1,11 @@
 import itertools
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import calendar
 from flask import json, render_template, flash, redirect, url_for, request, Blueprint, abort, current_app, jsonify, make_response
 from app import db
 from app.forms import ActivateAccountForm, EditLabForm, LabForm, LoginForm, RegistrationForm, LogEntryForm, EditProfileForm, ChangePasswordForm, ProjectForm, ResetPasswordRequestForm, ResetPasswordForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import ProjectTag, User, LogEntry, Project, Laboratory
+from app.models import BoardItem, ProjectTag, User, LogEntry, Project, Laboratory
 from urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_, func
@@ -1467,3 +1467,204 @@ def complete_tour():
     current_user.tour_completed = True
     db.session.commit()
     return jsonify({'status': 'success'})
+
+@bp.route("/board")
+@bp.route("/board/<username>")
+@login_required
+def board(username):
+    # Busca o usuário pelo nome (se não achar, dá 404)
+    user = User.query.filter_by(username=username).first_or_404()
+    
+    # Busca itens que são DO usuário E NÃO SÃO do laboratório (laboratory_id é None)
+    # Isso impede que avisos do mural apareçam no quadro pessoal
+    items = BoardItem.query.filter_by(user_id=user.id, laboratory_id=None).all()
+    
+    # Verifica se quem está acessando é o dono
+    is_owner = (current_user.id == user.id)
+
+    return render_template('board.html', 
+                           user=user, 
+                           items=items, 
+                           is_owner=is_owner,
+                           is_lab_board=False) # Flag importante
+
+# --- ROTA 2: Adicionar Item (API) ---
+@bp.route("/api/board/add", methods=['POST'])
+@login_required
+def add_board_item():
+    # Recebe FORM DATA para suportar arquivos
+    item_type = request.form.get('item_type', 'note')
+    content = request.form.get('content', '')
+    color = request.form.get('color', 'yellow')
+
+    # Tratamento de Data
+    due_date_str = request.form.get('due_date')
+    due_date = None
+    if due_date_str and due_date_str.strip():
+        try:
+            due_date = datetime.fromisoformat(due_date_str)
+        except ValueError:
+            due_date = None
+    
+    image_filename = None
+    
+    # Upload de Imagem
+    if 'file' in request.files:
+        file = request.files['file']
+        if file and file.filename != '':
+            # Substitua 'board_uploads' pelo caminho correto se necessário
+            # image_filename = save_image_file(file, 'board_uploads') 
+            pass # Descomente a linha acima quando tiver a função importada
+
+    # Lógica do Laboratório vs Pessoal
+    is_lab_board = request.form.get('is_lab_board') == 'true'
+    lab_id = None
+    
+    if is_lab_board:
+        # Segurança: Só professor posta no mural do lab
+        if current_user.role != 'professor':
+            return jsonify({'error': 'Unauthorized'}), 403
+        lab_id = current_user.laboratory_id
+
+    new_item = BoardItem(
+        content=content,
+        color=color,
+        item_type=item_type,
+        due_date=due_date,
+        image_file=image_filename,
+        x=None, y=None, # Gridstack decide a posição
+        w=4 if item_type == 'image' else 2,
+        h=4 if item_type == 'image' else 2,
+        user_id=current_user.id,
+        laboratory_id=lab_id,
+    )
+    
+    db.session.add(new_item)
+    db.session.commit()
+    
+    return jsonify(new_item.to_dict())
+
+# --- ROTA 3: Salvar Posição/Cor/Data (API) ---
+@bp.route("/api/board/update", methods=['POST'])
+@login_required
+def update_board_item():
+    data = request.get_json()
+    
+    # CASO 1: Lista (Drag & Drop - Atualiza Posições)
+    if isinstance(data, list):
+        for item_data in data:
+            item = BoardItem.query.get(item_data['id'])
+            if not item: continue
+
+            # Verificação de Permissão
+            is_allowed = False
+            if item.laboratory_id:
+                # Se for do Lab, só professor do mesmo lab mexe
+                if current_user.role == 'professor' and current_user.laboratory_id == item.laboratory_id:
+                    is_allowed = True
+            elif item.user_id == current_user.id:
+                # Se for pessoal, só o dono mexe
+                is_allowed = True
+
+            if is_allowed:
+                item.x = item_data.get('x', item.x)
+                item.y = item_data.get('y', item.y)
+                item.w = item_data.get('w', item.w)
+                item.h = item_data.get('h', item.h)
+    
+    # CASO 2: Dicionário (Atualiza Propriedades Únicas: Cor, Data)
+    elif isinstance(data, dict):
+        item = BoardItem.query.get(data.get('id'))
+        if item:
+            # Verificação de Permissão (Mesma lógica acima)
+            is_allowed = False
+            if item.laboratory_id:
+                if current_user.role == 'professor' and current_user.laboratory_id == item.laboratory_id:
+                    is_allowed = True
+            elif item.user_id == current_user.id:
+                is_allowed = True
+
+            if is_allowed:
+                if 'color' in data: 
+                    item.color = data['color']
+                
+                if 'due_date' in data:
+                    if data['due_date']:
+                        item.due_date = datetime.fromisoformat(data['due_date'])
+                    else:
+                        item.due_date = None
+
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
+# --- ROTA 4: Deletar Item (API) ---
+@bp.route("/api/board/delete/<int:item_id>", methods=['DELETE'])
+@login_required
+def delete_board_item(item_id):
+    item = BoardItem.query.get_or_404(item_id)
+    
+    # Verificação de Permissão SaaS
+    if item.laboratory_id:
+        # Se é item do laboratório, precisa ser professor DESSES laboratório
+        if current_user.role != 'professor' or current_user.laboratory_id != item.laboratory_id:
+            return jsonify({'error': 'Unauthorized'}), 403
+    else:
+        # Se é item pessoal, precisa ser o dono
+        if item.user_id != current_user.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({'status': 'deleted'})
+
+# --- ROTA 5: Atualizar Conteúdo de Texto/Checklist ---
+@bp.route("/api/board/update_content", methods=['POST'])
+@login_required
+def update_board_content():
+    data = request.get_json()
+    item_id = data.get('id')
+    new_content = data.get('content')
+    
+    item = BoardItem.query.get_or_404(item_id)
+    
+    # Verificação de Permissão SaaS
+    if item.laboratory_id:
+        if current_user.role != 'professor' or current_user.laboratory_id != item.laboratory_id:
+            return jsonify({'error': 'Unauthorized'}), 403
+    else:
+        if item.user_id != current_user.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+    
+    item.content = new_content
+    db.session.commit()
+    return jsonify({'status': 'saved', 'content': item.content})
+
+# --- ROTA 6: Visualizar Mural do Laboratório ---
+@bp.route("/board/lab")
+@login_required
+def lab_board():
+    if not current_user.laboratory_id:
+        flash('Você não está vinculado a nenhum laboratório.', 'danger')
+        return redirect(url_for('main.dashboard'))
+
+    # Busca o laboratório
+    lab = Laboratory.query.get(current_user.laboratory_id)
+    
+    # Busca itens vinculados ao LABORATÓRIO
+    items = BoardItem.query.filter_by(laboratory_id=lab.id).all()
+    
+    # Permissão: Só professores editam este quadro
+    is_owner = (current_user.role == 'professor')
+    
+    # Cria objeto fake para o template exibir o nome do Lab
+    lab_as_user = {
+        'id': 'lab_virtual',
+        'username': f'Mural: {lab.name}',
+        'image_file': 'default.jpg' # Certifique-se de que essa imagem existe ou use uma lógica no template
+    }
+
+    return render_template('board.html', 
+                           user=lab_as_user, 
+                           items=items, 
+                           is_owner=is_owner,
+                           is_lab_board=True) # Flag importante

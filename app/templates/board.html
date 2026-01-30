@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4/bootstrap-4.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<style>
+    /* --- 1. LAYOUT --- */
+    footer { display: none !important; }
+    main.container { 
+        max-width: 100% !important; padding: 0 !important; margin: 0 !important; 
+        height: calc(100vh - 70px); display: flex; flex-direction: column; overflow: hidden; 
+        transition: 0.3s;
+    }
+    
+    /* Zen Mode */
+    body.zen-mode main.container { height: 100vh; margin-top: 0 !important; }
+    body.zen-mode nav { display: none !important; }
+
+    .board-wrapper { 
+        flex: 1; background-color: #f3f4f6; overflow: auto; padding: 40px; position: relative; 
+        transition: background 0.3s; 
+    }
+    
+    /* Padrões de Fundo */
+    .bg-dots { background-image: radial-gradient(#d1d5db 1.5px, transparent 1.5px); background-size: 24px 24px; }
+    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px); }
+    .bg-lines { background-size: 100% 40px; background-image: linear-gradient(to bottom, #e5e7eb 1px, transparent 1px); }
+    .bg-white-board { background-color: #ffffff; background-image: none; }
+
+    /* --- 2. TOOLBAR --- */
+    .board-toolbar { 
+        position: sticky; top: 0; z-index: 40; background: rgba(255, 255, 255, 0.95); 
+        backdrop-filter: blur(10px); border-bottom: 1px solid #e5e7eb; padding: 10px 25px; 
+        display: flex; justify-content: space-between; align-items: center; 
+    }
+    
+    .profile-section { display: flex; align-items: center; gap: 12px; }
+    .profile-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .profile-info h5 { margin: 0; font-size: 1rem; font-weight: 700; color: #1f2937; }
+    .profile-info span { font-size: 0.75rem; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .toolbar-group { display: flex; align-items: center; gap: 10px; }
+    .search-box { position: relative; width: 200px; transition: width 0.3s; }
+    .search-box:focus-within { width: 260px; }
+    .search-box input { width: 100%; padding: 6px 12px 6px 35px; border-radius: 20px; border: 1px solid #e5e7eb; font-size: 0.9rem; transition: border-color 0.2s; }
+    .search-box input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.85rem; }
+
+    .settings-dropdown { position: relative; }
+    .settings-menu { position: absolute; top: 100%; right: 0; margin-top: 10px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid #e5e7eb; width: 220px; display: none; overflow: hidden; z-index: 1000; }
+    .settings-menu.show { display: block; animation: fadeIn 0.2s; }
+    .settings-header { padding: 10px 15px; background: #f9fafb; border-bottom: 1px solid #f3f4f6; font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
+    .settings-item { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; color: #374151; font-size: 0.9rem; transition: 0.1s; }
+    .settings-item:hover { background: #f3f4f6; }
+    .settings-divider { height: 1px; background: #e5e7eb; margin: 5px 0; }
+
+    /* --- 3. CARDS --- */
+    .grid-stack-item-content { border-radius: 12px; padding: 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; overflow: hidden; background: white; }
+    .type-task { background: #ffffff; font-family: 'Inter', sans-serif; border-top: 5px solid #e5e7eb; color: #374151; height: 100%; }
+    .task-yellow { border-top-color: #fcd34d !important; } .task-pink { border-top-color: #f472b6 !important; }
+    .task-green { border-top-color: #4ade80 !important; } .task-blue { border-top-color: #3b82f6 !important; }
+    .task-header { padding: 12px 15px 5px; font-weight: 700; font-size: 0.8rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+    .progress-track { width: 60px; height: 5px; background: #f3f4f6; border-radius: 10px; overflow: hidden; margin-left: auto; }
+    .progress-fill { height: 100%; background: #10b981; width: 0%; transition: width 0.3s ease; }
+    .task-body { padding: 5px 15px 15px; flex-grow: 1; overflow-y: auto; outline: none; cursor: default; }
+    .task-footer { padding: 8px 15px; border-top: 1px solid #f3f4f6; background: #fafafa; display: flex; justify-content: flex-end; }
+    .todo-line { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 4px; padding: 2px 0; }
+    .todo-box { margin-top: 5px; cursor: pointer; width: 16px; height: 16px; accent-color: #3b82f6; flex-shrink: 0; }
+    .todo-text { outline: none; flex: 1; line-height: 1.5; font-size: 0.95rem; min-height: 24px; border-bottom: 1px solid transparent; }
+    .todo-text:focus { border-bottom-color: #e5e7eb; }
+    .todo-done .todo-text { text-decoration: line-through; color: #9ca3af; } .todo-done .todo-box { opacity: 0.6; }
+
+    .type-note { font-family: 'Kalam', cursive; font-size: 1.4rem; line-height: 1.3; color: #1f2937; padding: 20px; border: none; text-align: center; display: flex; align-items: center; justify-content: center; }
+    .note-yellow { background: #fef9c3; } .note-pink { background: #fce7f3; } .note-green { background: #dcfce7; } .note-blue { background: #dbeafe; }
+    .note-editable { outline: none; min-width: 50px; white-space: pre-wrap; word-break: break-word; }
+    .note-editable a { color: #2563eb; text-decoration: underline; font-weight: bold; position: relative; z-index: 10; pointer-events: auto; }
+    .note-editable:empty::before { content: attr(data-placeholder); color: rgba(0,0,0,0.25); pointer-events: none; font-style: italic; }
+
+    .card-image { background: transparent; box-shadow: none; border: none; }
+    .board-img-content { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 4px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .ui-resizable-se { width: 15px !important; height: 15px !important; bottom: 5px !important; right: 5px !important; }
+    .date-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; background: #e5e7eb; color: #4b5563; position: relative; }
+    .date-badge.overdue { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; } .date-badge.future { background: #dbeafe; color: #1e40af; }
+    .date-input-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    
+    #saveStatus { font-size: 0.85rem; font-weight: 600; color: #6b7280; display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s ease; }
+    #saveStatus.active { opacity: 1; } #saveStatus.saving { color: #d97706; } #saveStatus.saved { color: #059669; } #saveStatus.editing { color: #2563eb; }
+
+    .fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 100; }
+    .fab-main { width: 64px; height: 64px; border-radius: 50%; background: #111827; color: white; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s; }
+    .fab-main:hover { transform: scale(1.05); background: #000; }
+    .fab-menu { position: absolute; bottom: 80px; right: 7px; display: flex; flex-direction: column; gap: 15px; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s; }
+    .fab-menu.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .fab-item { display: flex; align-items: center; justify-content: flex-end; gap: 15px; cursor: pointer; }
+    .fab-label { background: white; padding: 6px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .fab-btn { width: 50px; height: 50px; border-radius: 50%; border: none; color: white; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.2s; }
+    .fab-item:hover .fab-btn { transform: scale(1.1); }
+    .btn-fab-note { background: #f59e0b; } .btn-fab-task { background: #3b82f6; } .btn-fab-img { background: #10b981; } .btn-fab-draw { background: #8b5cf6; }
+    
+    .palette-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #e5e7eb; cursor: pointer; transition: transform 0.2s; }
+    .palette-btn.active { box-shadow: 0 0 0 2px #000; transform: scale(1.1); }
+    #contextMenu { display: none; position: absolute; z-index: 1000; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 160px; overflow: hidden; padding: 5px 0; }
+    .ctx-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+    .ctx-item:hover { background: #f3f4f6; } .ctx-danger:hover { background: #fee2e2; color: #dc2626; }
+    .modal-backdrop { z-index: 1040 !important; } .modal { z-index: 1050 !important; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="board-toolbar">
+    <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('main.dashboard') if current_user.role == 'professor' else url_for('main.index') }}" 
+            class="btn btn-light border rounded-circle">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="profile-section">
+            <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="profile-img">
+            <div class="profile-info">
+                <h5>{{ user.username }}</h5>
+                {% if is_owner %}
+                    <span class="text-primary fw-bold">
+                        {% if is_lab_board %}Gerenciando Mural{% else %}Meu Quadro{% endif %}
+                    </span>
+                {% else %}
+                    <span class="text-muted">Modo Visualização</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if is_owner %}
+        <div id="saveStatus" class="ms-3">
+            <i class="fas fa-cloud"></i> <span>Pronto</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="toolbar-group">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="boardSearch" placeholder="Filtrar notas..." onkeyup="filterBoard()">
+        </div>
+
+        <button onclick="toggleZenMode()" class="btn btn-light border" title="Tela Cheia"><i class="fas fa-expand"></i></button>
+        
+        <div class="settings-dropdown">
+            <button onclick="toggleSettings()" class="btn btn-light border" title="Opções"><i class="fas fa-cog"></i></button>
+            <div class="settings-menu" id="settingsMenu">
+                <div class="settings-header">Visualização</div>
+                <div class="settings-item" onclick="setBackground('bg-dots')"><i class="fas fa-braille"></i> Pontos</div>
+                <div class="settings-item" onclick="setBackground('bg-grid')"><i class="fas fa-border-all"></i> Grade</div>
+                <div class="settings-item" onclick="setBackground('bg-lines')"><i class="fas fa-grip-lines"></i> Caderno</div>
+                <div class="settings-item" onclick="setBackground('bg-white-board')"><i class="far fa-square"></i> Branco</div>
+                
+                <div class="settings-divider"></div>
+                <div class="settings-header">Ferramentas</div>
+                <div class="settings-item" onclick="exportBoard()"><i class="fas fa-camera"></i> Baixar Imagem</div>
+                
+                {% if is_owner %}
+                <div class="settings-divider"></div>
+                <div class="settings-item" onclick="compactBoard()"><i class="fas fa-th"></i> Organizar Tudo</div>
+                <div class="settings-item text-danger" onclick="deleteAll()"><i class="fas fa-trash"></i> Limpar Quadro</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="board-wrapper bg-dots" id="boardContainer">
+    <div class="grid-stack"></div>
+</div>
+
+{% if is_owner %}
+<div class="fab-container">
+    <div class="fab-menu" id="fabMenu">
+        <div class="fab-item" data-bs-toggle="modal" data-bs-target="#drawModal"><span class="fab-label">Desenhar</span><button class="fab-btn btn-fab-draw"><i class="fas fa-paint-brush"></i></button></div>
+        <div class="fab-item" onclick="document.getElementById('imgUpload').click()"><span class="fab-label">Imagem</span><button class="fab-btn btn-fab-img"><i class="fas fa-image"></i></button></div>
+        <div class="fab-item" onclick="addCard('task')"><span class="fab-label">Lista</span><button class="fab-btn btn-fab-task"><i class="fas fa-check"></i></button></div>
+        <div class="fab-item" onclick="addCard('note')"><span class="fab-label">Nota</span><button class="fab-btn btn-fab-note"><i class="fas fa-sticky-note"></i></button></div>
+    </div>
+    <button class="fab-main" onclick="toggleFab()"><i class="fas fa-plus"></i></button>
+    <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="uploadImage(this)">
+</div>
+
+<div id="contextMenu">
+    <div class="ctx-item" onclick="changeColor('yellow')"><div style="width:12px;height:12px;border-radius:50%;background:#fcd34d"></div> Amarelo</div>
+    <div class="ctx-item" onclick="changeColor('pink')"><div style="width:12px;height:12px;border-radius:50%;background:#f472b6"></div> Rosa</div>
+    <div class="ctx-item" onclick="changeColor('green')"><div style="width:12px;height:12px;border-radius:50%;background:#4ade80"></div> Verde</div>
+    <div class="ctx-item" onclick="changeColor('blue')"><div style="width:12px;height:12px;border-radius:50%;background:#60a5fa"></div> Azul</div>
+    <hr class="my-1">
+    <div class="ctx-item text-danger" onclick="deleteCurrentItem()"><i class="fas fa-trash-alt"></i> Excluir</div>
+</div>
+
+<div class="modal fade" id="drawModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold ps-3">Rascunho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body text-center p-3"><canvas id="drawingCanvas" width="900" height="500" style="background:white; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); cursor:crosshair;"></canvas></div>
+            <div class="modal-footer border-0 justify-content-center pb-4 pt-0">
+                <button class="btn btn-outline-secondary" onclick="clearCanvas()">Limpar</button>
+                <div class="palette-btn" style="background:#000" onclick="setPenColor(this, '#000')"></div>
+                <div class="palette-btn" style="background:#ef4444" onclick="setPenColor(this, '#ef4444')"></div>
+                <div class="palette-btn" style="background:#22c55e" onclick="setPenColor(this, '#22c55e')"></div>
+                <div class="palette-btn" style="background:#3b82f6" onclick="setPenColor(this, '#3b82f6')"></div>
+                <div class="vr mx-2"></div>
+                <button class="btn btn-dark fw-bold px-4" onclick="saveDrawing()">Adicionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack-all.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    const isOwner = {{ 'true' if is_owner else 'false' }};
+    const isLabBoard = {{ 'true' if is_lab_board else 'false' }};
+    const statusEl = document.getElementById('saveStatus');
+    let currentRightClickId = null;
+    let saveTimeout;
+
+    // --- 1. GRIDSTACK INIT ---
+    var grid = GridStack.init({
+        column: 12, cellHeight: 120, margin: 15, animate: true,
+        disableResize: !isOwner, disableDrag: !isOwner, 
+        float: true, resizable: { handles: 'se' }
+    });
+
+    // --- 2. CARREGAR ITENS ---
+    var items = [
+        {% for item in items %}
+        {
+            id: "{{ item.id }}",
+            x: {{ item.x if item.x is not none else 'undefined' }}, y: {{ item.y if item.y is not none else 'undefined' }},
+            w: {{ item.w }}, h: {{ item.h }},
+            content: `{{ item.content | default('') | safe }}`,
+            color: "{{ item.color }}", type: "{{ item.item_type }}", image: "{{ item.image_file }}",
+            due_date: "{{ item.due_date if item.due_date else '' }}"
+        },
+        {% endfor %}
+    ];
+    items.forEach(item => loadWidget(item));
+
+    function loadWidget(item) {
+        let contentHtml = '';
+        let widgetClass = '';
+        let extraClass = '';
+
+        if (item.type === 'image') {
+            widgetClass = 'card-image';
+            contentHtml = `<img src="/static/board_uploads/${item.image}" class="board-img-content">`;
+        } 
+        else if (item.type === 'task') {
+            widgetClass = 'type-task';
+            extraClass = `task-${item.color}`;
+            if (!item.content || item.content.trim() === '') {
+                item.content = `<div class="todo-line"><input type="checkbox" class="todo-box"><div class="todo-text" ${isOwner ? 'contenteditable="true"' : ''}></div></div>`;
+            }
+            
+            let dateHtml = '<span class="text-muted small">Sem prazo</span>';
+            let badgeClass = '';
+            if (item.due_date) {
+                const today = new Date().toISOString().split('T')[0];
+                const itemDateStr = item.due_date.split('T')[0];
+                if (itemDateStr < today) badgeClass = 'overdue'; else badgeClass = 'future';
+                const d = new Date(item.due_date);
+                dateHtml = `<i class="fas fa-calendar-alt"></i> ${d.getDate()}/${d.getMonth()+1}`;
+            } else { dateHtml = `<i class="far fa-calendar"></i>`; }
+
+            const datePicker = isOwner ? 
+                `<div class="date-badge ${badgeClass}">${dateHtml}<input type="date" class="date-input-hidden" onchange="saveDate('${item.id}', this)" value="${item.due_date ? item.due_date.split('T')[0] : ''}"></div>` 
+                : `<div class="date-badge ${badgeClass}">${dateHtml}</div>`;
+
+            contentHtml = `
+                <div class="task-header"><span>CHECKLIST</span><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div></div>
+                <div class="task-body">${item.content}</div><div class="task-footer">${datePicker}</div>`;
+        } 
+        else {
+            widgetClass = 'type-note'; extraClass = `note-${item.color}`;
+            let safeContent = item.content;
+            const editable = isOwner ? 'contenteditable="true"' : '';
+            const pointer = isOwner ? '' : 'pointer-events: none;';
+            contentHtml = `<div class="note-editable d-flex align-items-center justify-content-center" ${editable} style="${pointer}" 
+                            data-placeholder="Ideia..." oninput="updateStatus('editing')"
+                            onblur="saveNoteContent('${item.id}', this)" onfocus="updateStatus('editing')">${safeContent}</div>`;
+        }
+
+        const posAttr = (item.x !== undefined && item.x !== null) ? `gs-x="${item.x}" gs-y="${item.y}"` : 'gs-auto-position="true"';
+        const contextMenuAttr = isOwner ? `oncontextmenu="openContextMenu(event, '${item.id}')"` : '';
+
+        const widgetHtml = `
+        <div class="grid-stack-item" gs-id="${item.id}" ${posAttr} gs-w="${item.w}" gs-h="${item.h}">
+            <div class="grid-stack-item-content ${widgetClass} ${extraClass}" ${contextMenuAttr}>
+                ${contentHtml}
+            </div>
+        </div>`;
+        grid.addWidget(widgetHtml);
+        if(item.type === 'task') { const el = document.querySelector(`.grid-stack-item[gs-id="${item.id}"]`); updateProgress(el.querySelector('.task-body')); }
+    }
+
+    // --- FUNÇÕES PÚBLICAS ---
+    window.toggleZenMode = function() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => console.log(err));
+            document.body.classList.add('zen-mode');
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            document.body.classList.remove('zen-mode');
+        }
+    };
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) document.body.classList.remove('zen-mode');
+        else document.body.classList.add('zen-mode');
+    });
+
+    window.filterBoard = function() {
+        const term = document.getElementById('boardSearch').value.toLowerCase();
+        document.querySelectorAll('.grid-stack-item').forEach(w => {
+            if (w.innerText.toLowerCase().includes(term)) { w.style.opacity = '1'; w.style.pointerEvents = 'auto'; } 
+            else { w.style.opacity = '0.1'; w.style.pointerEvents = 'none'; }
+        });
+    };
+
+    window.toggleSettings = () => document.getElementById('settingsMenu').classList.toggle('show');
+    window.setBackground = (cls) => {
+        document.querySelector('.board-wrapper').className = 'board-wrapper ' + cls;
+        toggleSettings();
+    };
+    window.exportBoard = () => {
+        const board = document.querySelector('.board-wrapper');
+        html2canvas(board, { scale: 2, backgroundColor: '#f3f4f6' }).then(c => {
+            const l = document.createElement('a'); l.download = `Board-${new Date().toISOString().slice(0,10)}.png`; l.href = c.toDataURL(); l.click();
+        });
+        toggleSettings();
+    };
+    document.addEventListener('click', (e) => {
+        if(!e.target.closest('.settings-dropdown')) document.getElementById('settingsMenu').classList.remove('show');
+        if(isOwner && !e.target.closest('#contextMenu')) document.getElementById('contextMenu').style.display='none';
+    });
+
+    function updateProgress(taskBody) {
+        if (!taskBody) return;
+        const total = taskBody.querySelectorAll('.todo-box').length;
+        const checked = taskBody.querySelectorAll('.todo-box:checked').length;
+        const percent = total === 0 ? 0 : (checked / total) * 100;
+        const card = taskBody.closest('.grid-stack-item-content');
+        const bar = card.querySelector('.progress-fill');
+        if(bar) bar.style.width = percent + '%';
+    }
+
+    // --- FUNÇÕES RESTRITAS (Só is_owner) ---
+    {% if is_owner %}
+
+    document.addEventListener("DOMContentLoaded", function(){
+        const modalElement = document.getElementById('drawModal');
+        if (modalElement) {
+            document.body.appendChild(modalElement);
+            const canvas = document.getElementById('drawingCanvas'); const ctx = canvas.getContext('2d'); let painting = false;
+            modalElement.addEventListener('shown.bs.modal', ()=> { ctx.lineCap='round'; ctx.lineWidth=3; ctx.strokeStyle='#000'; });
+            function startP(e){ painting=true; draw(e); } function endP(){ painting=false; ctx.beginPath(); }
+            function draw(e){ if(!painting)return; const r=canvas.getBoundingClientRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height; const x=((e.clientX||e.touches[0].clientX)-r.left)*sx; const y=((e.clientY||e.touches[0].clientY)-r.top)*sy; ctx.lineTo(x,y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x,y); }
+            canvas.addEventListener('mousedown', startP); canvas.addEventListener('mouseup', endP); canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startP(e)}); canvas.addEventListener('touchend', endP); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e)});
+            window.clearCanvas = () => ctx.clearRect(0,0,canvas.width,canvas.height);
+            window.setPenColor = (btn, c) => { ctx.strokeStyle=c; document.querySelectorAll('.palette-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
+            window.saveDrawing = () => { canvas.toBlob(b=>{ const fd=new FormData(); fd.append('file',b,'draw.png'); fd.append('item_type','image'); submitItem(fd,true); bootstrap.Modal.getInstance(modalElement).hide(); setTimeout(clearCanvas,500); }); };
+        }
+    });
+
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('todo-text') || e.target.classList.contains('note-editable')) {
+            updateStatus('editing');
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                if(e.target.classList.contains('todo-text')) saveTaskState(e.target);
+                else saveNoteContent(e.target.closest('.grid-stack-item').getAttribute('gs-id'), e.target);
+            }, 1000);
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (!e.target.classList.contains('todo-text')) return;
+        const currentLine = e.target.closest('.todo-line');
+        const taskBody = currentLine.parentElement;
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const newLine = document.createElement('div'); newLine.className = 'todo-line';
+            newLine.innerHTML = `<input type="checkbox" class="todo-box"><div class="todo-text" contenteditable="true"></div>`;
+            currentLine.after(newLine); newLine.querySelector('.todo-text').focus();
+            updateProgress(taskBody); saveTaskState(taskBody);
+        }
+        if (e.key === 'Backspace' && e.target.innerText === '') {
+            if (taskBody.children.length > 1) {
+                e.preventDefault(); const prevLine = currentLine.previousElementSibling;
+                currentLine.remove();
+                if (prevLine) {
+                    const r = document.createRange(); const s = window.getSelection(); const t = prevLine.querySelector('.todo-text');
+                    r.selectNodeContents(t); r.collapse(false); s.removeAllRanges(); s.addRange(r);
+                }
+                updateProgress(taskBody); saveTaskState(taskBody);
+            }
+        }
+    });
+
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('todo-box')) {
+            const line = e.target.closest('.todo-line');
+            if (e.target.checked) line.classList.add('todo-done'); else line.classList.remove('todo-done');
+            updateProgress(e.target.closest('.task-body')); saveTaskState(e.target);
+        }
+    });
+
+    function saveTaskState(elementInside) {
+        let widget = elementInside.closest('.grid-stack-item');
+        if(!widget) return;
+        let itemId = widget.getAttribute('gs-id');
+        let taskBody = widget.querySelector('.task-body');
+        taskBody.querySelectorAll('input[type="checkbox"]').forEach(box => { if (box.checked) box.setAttribute('checked', 'checked'); else box.removeAttribute('checked'); });
+        saveContent(itemId, taskBody.innerHTML);
+    }
+
+    window.compactBoard = () => { grid.compact(); toggleSettings(); };
+    window.deleteAll = () => {
+        Swal.fire({ title: 'Limpar tudo?', text: "Sem volta!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim' })
+        .then((result) => {
+            if (result.isConfirmed) {
+                document.querySelectorAll('.grid-stack-item').forEach(el => {
+                    fetch(`/api/board/delete/${el.getAttribute('gs-id')}`, {method:'DELETE', headers:{'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}});
+                    grid.removeWidget(el);
+                }); toggleSettings();
+            }
+        });
+    };
+
+    window.saveDate = function(id, input) { updateStatus('saving'); fetch('/api/board/update', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify({ id: id, due_date: input.value }) }).then(() => { updateStatus('saved'); setTimeout(() => location.reload(), 500); }); };
+    window.addCard = function(type) { let color = type === 'task' ? 'blue' : 'yellow'; submitItem({ item_type: type, content: '', color: color }); toggleFab(); };
+    window.uploadImage = function(input) { if (input.files[0]) { const fd = new FormData(); fd.append('file', input.files[0]); fd.append('item_type', 'image'); submitItem(fd, true); input.value = ''; toggleFab(); } };
+
+    function submitItem(data, isFormData=false) {
+        let opts = { method: 'POST', headers: { 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}" } };
+        if (isFormData) {
+            data.append('is_lab_board', isLabBoard);
+            opts.body = data;
+        } else {
+            const fd = new FormData();
+            for (const key in data) fd.append(key, data[key]);
+            fd.append('is_lab_board', isLabBoard);
+            opts.body = fd;
+        }
+        updateStatus('saving');
+        fetch('/api/board/add', opts).then(r => r.json()).then(resData => {
+            const newItem = { id: resData.id, x: resData.x, y: resData.y, w: resData.w, h: resData.h, content: resData.content, color: resData.color, type: resData.item_type, image: resData.image_file, due_date: resData.due_date };
+            loadWidget(newItem); updateStatus('saved');
+        });
+    }
+
+    window.saveNoteContent = (id, el) => {
+        let text = el.innerText;
+        const html = text.replace(/(https?:\/\/[^\s]+)/g, url => `<a href="${url}" target="_blank" contenteditable="false">${url}</a>`);
+        if (text !== html) el.innerHTML = html;
+        saveContent(id, el.innerHTML);
+    };
+
+    function saveContent(id, content) { updateStatus('saving'); fetch('/api/board/update_content', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify({ id: id, content: content }) }).then(() => updateStatus('saved')); }
+    grid.on('change', function(e, items) { if (!items) return; updateStatus('saving'); const u = items.map(i => ({ id: i.el.getAttribute('gs-id'), x: i.x, y: i.y, w: i.w, h: i.h })); fetch('/api/board/update', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify(u) }).then(() => updateStatus('saved')); });
+
+    function updateStatus(s) {
+        if(!statusEl) return;
+        statusEl.className = ''; statusEl.classList.add('active');
+        const icon = statusEl.querySelector('i'); const text = statusEl.querySelector('span');
+        if (s === 'editing') { statusEl.classList.add('editing'); icon.className = 'fas fa-pen'; text.innerText = 'Editando...'; } 
+        else if (s === 'saving') { statusEl.classList.add('saving'); icon.className = 'fas fa-cloud-upload-alt'; text.innerText = 'Salvando...'; } 
+        else if (s === 'saved') { statusEl.classList.add('saved'); icon.className = 'fas fa-check-circle'; text.innerText = 'Salvo'; setTimeout(() => { statusEl.classList.remove('active'); }, 2000); }
+    }
+
+    window.toggleFab = function() { document.getElementById('fabMenu').classList.toggle('active'); document.querySelector('.fab-main i').classList.toggle('fa-plus'); document.querySelector('.fab-main i').classList.toggle('fa-times'); };
+    window.openContextMenu = function(e, id) { e.preventDefault(); currentRightClickId = id; const m = document.getElementById('contextMenu'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; };
+    
+    window.changeColor = function(c) {
+        if (!currentRightClickId) return;
+        const el = document.querySelector(`.grid-stack-item[gs-id="${currentRightClickId}"] .grid-stack-item-content`);
+        const colors = ['yellow', 'pink', 'green', 'blue'];
+        colors.forEach(col => { el.classList.remove(`note-${col}`); el.classList.remove(`task-${col}`); });
+        if (el.querySelector('.task-header')) el.classList.add(`task-${c}`); else el.classList.add(`note-${c}`);
+        updateStatus('saving');
+        fetch('/api/board/update', { method:'POST', headers:{'Content-Type':'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body:JSON.stringify({id:currentRightClickId, color:c}) }).then(() => updateStatus('saved'));
+    };
+    window.deleteCurrentItem = function() { if(!currentRightClickId)return; fetch(`/api/board/delete/${currentRightClickId}`, {method:'DELETE', headers:{'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}}).then(() => grid.removeWidget(document.querySelector(`.grid-stack-item[gs-id="${currentRightClickId}"]`))); };
+
+    {% endif %}
+</script>
+{% endblock %}

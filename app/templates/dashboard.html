@@ -10,24 +10,72 @@
         transition: transform 0.2s;
     }
     .stat-card:hover { transform: translateY(-3px); }
+    
     .stat-icon {
         width: 48px; height: 48px;
         border-radius: 12px;
         display: flex; align-items: center; justify-content: center;
         font-size: 1.5rem;
     }
+    
     .avatar-sm { width: 32px; height: 32px; object-fit: cover; }
+    
+    .hover-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .hover-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    
+    /* Estilo para os Cards Compactos dos Quadros */
+    .hover-compact-card {
+        background: #fff;
+        transition: all 0.2s;
+        border-radius: 12px;
+    }
+    .hover-compact-card:hover {
+        transform: translateY(-3px);
+        border-color: #01552b !important;
+        box-shadow: 0 4px 12px rgba(1, 85, 43, 0.15) !important;
+    }
+
     .table-hover tbody tr:hover { background-color: rgba(1, 85, 43, 0.03); }
-    .action-buttons .btn { margin-left: 0.5rem; }
     
     /* Header Actions */
     .header-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        justify-content: flex-end;
-        flex-wrap: wrap;
+        display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap;
     }
+
+    .mural-card-professor {
+        /* Gradiente Verde Profundo (Mesma identidade do aluno) */
+        background: linear-gradient(135deg, #047857 0%, #01552b 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Círculo decorativo sutil no fundo */
+    .mural-card-professor::before {
+        content: '';
+        position: absolute;
+        top: -50px; right: -50px;
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .mural-icon-wrapper {
+        background: rgba(255, 255, 255, 0.2); /* Branco Translúcido */
+        backdrop-filter: blur(4px);
+        color: #ffffff;
+        width: 60px; height: 60px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* Efeito Hover específico */
+    .hover-up { transition: transform 0.2s, box-shadow 0.2s; }
+    .hover-up:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; }
 </style>
 
 <div class="row mb-4 align-items-center">
@@ -101,9 +149,95 @@
     </div>
 </div>
 
+<div class="col-12 mb-4">
+    <a href="{{ url_for('main.lab_board') }}" class="text-decoration-none">
+        <div class="card border-0 shadow-sm hover-up mural-card-professor">
+            <div class="card-body p-4 d-flex align-items-center position-relative" style="z-index: 1;">
+                
+                <div class="mural-icon-wrapper me-3">
+                    <i class="fas fa-bullhorn fa-2x"></i>
+                </div>
+                
+                <div>
+                    <h4 class="fw-bold mb-1">Mural Oficial do Laboratório</h4>
+                    <p class="mb-0 opacity-75 small">
+                        Avisos, regras e comunicados oficiais.
+                        {% if current_user.role == 'professor' %} (Você pode editar) {% endif %}
+                    </p>
+                </div>
+                
+                <div class="ms-auto">
+                    <i class="fas fa-chevron-right text-white opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12 mb-3">
+        <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+            <div class="d-flex align-items-center">
+                <h5 class="fw-bold text-dark mb-0 me-3">
+                    <i class="fas fa-columns me-2 text-primary"></i> Quadros de Trabalho
+                </h5>
+                <span class="badge bg-light text-secondary border rounded-pill">
+                    {{ active_bolsistas|length }}
+                </span>
+            </div>
+            
+            <div class="input-group input-group-sm" style="max-width: 250px;">
+                <span class="input-group-text bg-white border-end-0 ps-3">
+                    <i class="fas fa-search text-muted small"></i>
+                </span>
+                <input type="text" id="boardSearchInput" class="form-control border-start-0" 
+                       placeholder="Filtrar aluno..." onkeyup="filterBoards()">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        {% if active_bolsistas and active_bolsistas|length > 0 %}
+            <div class="row g-3" id="boardsContainer">
+                {% for student in active_bolsistas %}
+                <div class="col-6 col-md-4 col-lg-2 board-item" data-name="{{ student.username|lower }}">
+                    <a href="{{ url_for('main.board', username=current_user.username) }}" class="text-decoration-none">
+                        <div class="card h-100 border shadow-sm hover-compact-card text-center p-3">
+                            <div class="position-relative d-inline-block mx-auto mb-2">
+                                <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" 
+                                     class="rounded-circle border" width="45" height="45" style="object-fit: cover;">
+                                <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle"></span>
+                            </div>
+                            <h6 class="fw-bold text-dark mb-0 text-truncate" style="font-size: 0.9rem;">
+                                {{ student.username }}
+                            </h6>
+                            <small class="text-muted" style="font-size: 0.7rem;">Ver Quadro</small>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if active_bolsistas|length > 6 %}
+            <div class="text-center mt-3" id="btnShowMoreWrapper">
+                <button class="btn btn-sm btn-light border text-muted rounded-pill px-4" onclick="toggleBoards()" id="btnToggleBoards">
+                    <i class="fas fa-chevron-down me-1"></i> Ver Todos
+                </button>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="alert alert-light border py-2 small">
+                <i class="fas fa-info-circle me-2"></i> Nenhum quadro disponível (sem bolsistas ativos).
+            </div>
+        {% endif %}
+    </div>
+</div>
+
 <div class="row">
     
     <div class="col-lg-8">
+        
         <div class="content-card mb-4" id="tour-prof-ai">
             <div class="d-flex align-items-center mb-3">
                 <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3" style="width: 40px; height: 40px; font-size: 1.2rem;">
@@ -115,25 +249,22 @@
             <div class="row g-4">
                 <div class="col-md-6 border-end">
                     <h6 class="text-uppercase text-muted small fw-bold mb-3">Análise Semanal</h6>
-                    
                     <form action="{{ url_for('main.generate_report') }}" method="get" onsubmit="showLoading('btn-weekly-report')">
                         <div class="mb-3">
-                            <label class="form-label small">Selecione um dia de referência</label>
+                            <label class="form-label small">Dia de referência</label>
                             <input type="date" class="form-control" name="selected_date" value="{{ today_date }}">
                         </div>
                         <button type="submit" class="btn btn-outline-primary w-100" id="btn-weekly-report">
-                            <i class="fas fa-magic me-2"></i> Gerar Relatório da Semana
+                            <i class="fas fa-magic me-2"></i> Gerar Relatório
                         </button>
                     </form>
                 </div>
 
                 <div class="col-md-6">
                     <h6 class="text-uppercase text-muted small fw-bold mb-3">Análise Mensal</h6>
-                    
                     <form action="{{ url_for('main.generate_report') }}" method="get" onsubmit="showLoading('btn-monthly-report')">
                         <input type="hidden" name="report_type" value="month">
                         <div class="row g-2 mb-3">
-                            <label class="form-label small">Selecione o mês</label>
                             <div class="col-8">
                                 <select class="form-select" name="month_num">
                                     {% for num, nome in meses.items() %}
@@ -150,7 +281,7 @@
                             </div>
                         </div>
                         <button type="submit" class="btn btn-outline-success w-100" id="btn-monthly-report">
-                            <i class="fas fa-chart-pie me-2"></i> Gerar Relatório do Mês
+                            <i class="fas fa-chart-pie me-2"></i> Gerar Relatório
                         </button>
                     </form>
                 </div>
@@ -183,7 +314,7 @@
                     </table>
                 </div>
             {% else %}
-                <div class="empty-state py-4"><i class="fas fa-users text-muted mb-2" style="font-size: 2rem;"></i><p class="text-muted mb-0">Sem bolsistas ativos.</p></div>
+                <div class="empty-state py-4 text-center"><i class="fas fa-users text-muted mb-2" style="font-size: 2rem;"></i><p class="text-muted mb-0">Sem bolsistas ativos.</p></div>
             {% endif %}
         </div>
     </div>
@@ -198,7 +329,10 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="avatar-sm rounded-circle me-2">
-                            <div style="line-height: 1.2;"><small class="d-block fw-bold">{{ user.username }}</small><small class="text-muted" style="font-size: 0.75rem;">{{ user.email }}</small></div>
+                            <div style="line-height: 1.2;">
+                                <small class="d-block fw-bold">{{ user.username }}</small>
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ user.email }}</small>
+                            </div>
                         </div>
                         <div>
                             <a href="{{ url_for('main.approve_user', user_id=user.id) }}" class="btn btn-sm btn-success py-0 px-2"><i class="fas fa-check"></i></a>
@@ -242,26 +376,84 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    // Esta função é chamada diretamente pelo 'onsubmit' do formulário
     function showLoading(btnId) {
         const btn = document.getElementById(btnId);
         if (btn) {
-            // Mudar o texto e adicionar o spinner
-            const originalWidth = btn.offsetWidth; // Mantém a largura para não pular
+            const originalWidth = btn.offsetWidth;
             btn.style.width = `${originalWidth}px`;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>A processar...';
-            
-            // Adiciona uma classe visual de desabilitado, mas NÃO usa o atributo 'disabled'
-            // (porque 'disabled' pode impedir o submit em alguns navegadores se for rápido demais)
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
             btn.classList.add('disabled');
             btn.style.pointerEvents = 'none';
         }
-        // Retorna true para permitir que o formulário seja enviado normalmente
         return true;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Gráficos (Mantidos iguais)
+        // --- LÓGICA DE FILTRO E VER MAIS/MENOS PARA QUADROS ---
+        
+        // 1. Ocultar itens excedentes no início
+        const items = document.querySelectorAll('.board-item');
+        const limit = 6;
+        if (items.length > limit) {
+            items.forEach((item, index) => {
+                if (index >= limit) item.classList.add('d-none');
+            });
+        }
+        
+        // 2. Função de Filtro (Busca)
+        window.filterBoards = function() {
+            const input = document.getElementById('boardSearchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.board-item');
+            const btnWrapper = document.getElementById('btnShowMoreWrapper');
+
+            items.forEach(item => {
+                const name = item.getAttribute('data-name');
+                if (name.includes(input)) {
+                    item.classList.remove('d-none');
+                } else {
+                    item.classList.add('d-none');
+                }
+            });
+
+            // Se pesquisar, esconde o botão "Ver Todos"
+            if (btnWrapper) {
+                btnWrapper.style.display = input.length > 0 ? 'none' : 'block';
+                if (input.length === 0) resetView();
+            }
+        };
+
+        // 3. Função do Botão Toggle
+        window.toggleBoards = function() {
+            const items = document.querySelectorAll('.board-item');
+            const btn = document.getElementById('btnToggleBoards');
+            const isExpanded = btn.innerHTML.includes('chevron-up');
+            
+            if (isExpanded) {
+                // Contrair
+                items.forEach((item, index) => {
+                    if (index >= limit) item.classList.add('d-none');
+                });
+                btn.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Ver Todos';
+            } else {
+                // Expandir
+                items.forEach(item => item.classList.remove('d-none'));
+                btn.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Ver Menos';
+            }
+        };
+
+        // 4. Resetar para estado inicial
+        function resetView() {
+            const items = document.querySelectorAll('.board-item');
+            const btn = document.getElementById('btnToggleBoards');
+            items.forEach((item, index) => {
+                if (index >= limit) item.classList.add('d-none');
+                else item.classList.remove('d-none');
+            });
+            if(btn) btn.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Ver Todos';
+        }
+
+
+        // --- GRÁFICOS ---
         const ctxActivity = document.getElementById('activityChart');
         if (ctxActivity) {
             new Chart(ctxActivity.getContext('2d'), {
