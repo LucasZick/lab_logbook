@@ -201,7 +201,7 @@
             <div class="row g-3" id="boardsContainer">
                 {% for student in active_bolsistas %}
                 <div class="col-6 col-md-4 col-lg-2 board-item" data-name="{{ student.username|lower }}">
-                    <a href="{{ url_for('main.board', username=current_user.username) }}" class="text-decoration-none">
+                    <a href="{{ url_for('main.board', username=student.username) }}" class="text-decoration-none">
                         <div class="card h-100 border shadow-sm hover-compact-card text-center p-3">
                             <div class="position-relative d-inline-block mx-auto mb-2">
                                 <img src="{{ url_for('static', filename='profile_pics/' + student.image_file) }}" 

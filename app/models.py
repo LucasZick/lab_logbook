@@ -222,6 +222,7 @@ class LogEntry(db.Model):
 class BoardItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=True) # Pode ser nulo se for só imagem
+    title = db.Column(db.Text, nullable=True) # Pode ser nulo se for só imagem
     
     # Novo campo para guardar Imagem ou Desenho
     image_file = db.Column(db.String(255), nullable=True) 
@@ -247,6 +248,7 @@ class BoardItem(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'title': self.title,
             'content': self.content,
             'image_file': self.image_file,
             'item_type': self.item_type,

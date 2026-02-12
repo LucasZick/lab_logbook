@@ -104,6 +104,12 @@ def save_affiliation_logo(form_picture):
     # Logo da Afiliação: Pasta lab_logos, Tamanho 150x150 (Pequeno)
     return save_image_file(form_picture, 'lab_logos', output_size=(150, 150))
 
+def save_board_image(form_picture):
+    # Salva na pasta 'board_uploads'
+    # Define largura máx de 1000px para não ficar gigante no navegador, 
+    # mas mantendo qualidade para ver detalhes
+    return save_image_file(form_picture, 'board_uploads', max_width=1000)
+
 def get_lab_categories():
     if not current_user.is_authenticated or not current_user.laboratory_id:
         return [('Geral', 'Geral')]
@@ -1496,47 +1502,69 @@ def add_board_item():
     item_type = request.form.get('item_type', 'note')
     content = request.form.get('content', '')
     color = request.form.get('color', 'yellow')
+    
+    # 1. Tratamento Inteligente do Título
+    # Se o usuário não mandou título, define um padrão baseado no tipo
+    raw_title = request.form.get('title', '').strip()
+    if not raw_title:
+        defaults = {
+            'note': 'Nota Rápida',
+            'task': 'Lista de Tarefas',
+            'image': 'Imagem'
+        }
+        title = defaults.get(item_type, 'Novo Item')
+    else:
+        title = raw_title
 
-    # Tratamento de Data
+    # 2. Tratamento de Data (String -> Datetime)
     due_date_str = request.form.get('due_date')
     due_date = None
     if due_date_str and due_date_str.strip():
         try:
+            # Tenta converter ISO format (YYYY-MM-DD)
             due_date = datetime.fromisoformat(due_date_str)
         except ValueError:
             due_date = None
     
+    # 3. Tratamento de Imagem
     image_filename = None
-    
-    # Upload de Imagem
     if 'file' in request.files:
         file = request.files['file']
         if file and file.filename != '':
-            # Substitua 'board_uploads' pelo caminho correto se necessário
-            # image_filename = save_image_file(file, 'board_uploads') 
-            pass # Descomente a linha acima quando tiver a função importada
+            try:
+                # Chama sua função utilitária (certifique-se que ela está importada)
+                image_filename = save_board_image(file)
+            except Exception as e:
+                print(f"Erro ao salvar imagem: {e}")
+                return jsonify({'error': 'Erro ao processar imagem'}), 500
 
-    # Lógica do Laboratório vs Pessoal
+    # 4. Lógica de Permissão (Laboratório vs Pessoal)
     is_lab_board = request.form.get('is_lab_board') == 'true'
     lab_id = None
+    user_id_owner = current_user.id
     
     if is_lab_board:
         # Segurança: Só professor posta no mural do lab
         if current_user.role != 'professor':
             return jsonify({'error': 'Unauthorized'}), 403
         lab_id = current_user.laboratory_id
+        user_id_owner = None # Itens de lab não pertencem a um user específico na visualização, ou pertencem ao prof. Depende da sua modelagem. Normalmente deixa user_id do criador mesmo com lab_id preenchido.
+        # Ajuste: Vamos manter o user_id do criador para saber quem postou, mas o lab_id define que é do lab.
+        user_id_owner = current_user.id 
 
+    # 5. Criação do Objeto
     new_item = BoardItem(
+        title=title,           # <--- Título Adicionado
         content=content,
         color=color,
         item_type=item_type,
-        due_date=due_date,
+        due_date=due_date,     # <--- Data Corrigida
         image_file=image_filename,
-        x=None, y=None, # Gridstack decide a posição
+        x=None, y=None,        # Gridstack decide a posição automática
         w=4 if item_type == 'image' else 2,
         h=4 if item_type == 'image' else 2,
-        user_id=current_user.id,
-        laboratory_id=lab_id,
+        user_id=user_id_owner,
+        laboratory_id=lab_id
     )
     
     db.session.add(new_item)
@@ -1544,13 +1572,14 @@ def add_board_item():
     
     return jsonify(new_item.to_dict())
 
-# --- ROTA 3: Salvar Posição/Cor/Data (API) ---
+
+# --- ROTA 3: Salvar Posição/Cor/Data/Título/Conteúdo (API) ---
 @bp.route("/api/board/update", methods=['POST'])
 @login_required
 def update_board_item():
     data = request.get_json()
     
-    # CASO 1: Lista (Drag & Drop - Atualiza Posições)
+    # CASO 1: Lista (Drag & Drop - Atualiza apenas Posições em lote)
     if isinstance(data, list):
         for item_data in data:
             item = BoardItem.query.get(item_data['id'])
@@ -1558,12 +1587,12 @@ def update_board_item():
 
             # Verificação de Permissão
             is_allowed = False
+            # Se tem lab_id, é do laboratório
             if item.laboratory_id:
-                # Se for do Lab, só professor do mesmo lab mexe
                 if current_user.role == 'professor' and current_user.laboratory_id == item.laboratory_id:
                     is_allowed = True
+            # Se não tem lab_id, é pessoal
             elif item.user_id == current_user.id:
-                # Se for pessoal, só o dono mexe
                 is_allowed = True
 
             if is_allowed:
@@ -1572,7 +1601,7 @@ def update_board_item():
                 item.w = item_data.get('w', item.w)
                 item.h = item_data.get('h', item.h)
     
-    # CASO 2: Dicionário (Atualiza Propriedades Únicas: Cor, Data)
+    # CASO 2: Dicionário (Edição de Conteúdo, Título, Cor, Data)
     elif isinstance(data, dict):
         item = BoardItem.query.get(data.get('id'))
         if item:
@@ -1585,12 +1614,25 @@ def update_board_item():
                 is_allowed = True
 
             if is_allowed:
-                if 'color' in data: 
+                # Atualizações Genéricas
+                if 'title' in data:     # <--- Atualiza Título
+                    item.title = data['title']
+                
+                if 'content' in data:   # <--- Atualiza Conteúdo (Texto da nota ou HTML da lista)
+                    item.content = data['content']
+
+                if 'color' in data:     # <--- Atualiza Cor
                     item.color = data['color']
                 
-                if 'due_date' in data:
-                    if data['due_date']:
-                        item.due_date = datetime.fromisoformat(data['due_date'])
+                if 'due_date' in data:  # <--- Atualiza Data
+                    date_val = data['due_date']
+                    if date_val:
+                        try:
+                            # Tenta converter string ISO para data, ou usa None se falhar
+                            item.due_date = datetime.fromisoformat(date_val.replace('Z', '+00:00'))
+                        except ValueError:
+                             # Se vier formato invalido, ignora ou seta None
+                             pass 
                     else:
                         item.due_date = None
 

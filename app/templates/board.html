@@ -4,214 +4,280 @@
 <link href="https://cdn.jsdelivr.net/npm/gridstack@7.2.3/dist/gridstack.min.css" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4/bootstrap-4.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <style>
-    /* --- 1. LAYOUT --- */
-    footer { display: none !important; }
-    main.container { 
-        max-width: 100% !important; padding: 0 !important; margin: 0 !important; 
-        height: calc(100vh - 70px); display: flex; flex-direction: column; overflow: hidden; 
-        transition: 0.3s;
+    /* --- VARIÁVEIS E GERAL --- */
+    :root {
+        --bg-color: #f8fafc;
+        --toolbar-bg: rgba(255, 255, 255, 0.9); /* Mais opaco para leitura */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --primary-color: #0f172a;
+        --accent-color: #3b82f6;
     }
-    
-    /* Zen Mode */
+
+    footer { display: none !important; }
+    main.container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; height: calc(100vh - 70px); display: flex; flex-direction: column; overflow: hidden; font-family: 'Inter', sans-serif; }
     body.zen-mode main.container { height: 100vh; margin-top: 0 !important; }
     body.zen-mode nav { display: none !important; }
+    .board-wrapper { flex: 1; background-color: var(--bg-color); overflow: auto; padding: 40px; position: relative; transition: background 0.3s ease; }
 
-    .board-wrapper { 
-        flex: 1; background-color: #f3f4f6; overflow: auto; padding: 40px; position: relative; 
-        transition: background 0.3s; 
-    }
-    
     /* Padrões de Fundo */
-    .bg-dots { background-image: radial-gradient(#d1d5db 1.5px, transparent 1.5px); background-size: 24px 24px; }
-    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px); }
-    .bg-lines { background-size: 100% 40px; background-image: linear-gradient(to bottom, #e5e7eb 1px, transparent 1px); }
+    .bg-dots { background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px); background-size: 24px 24px; }
+    .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px); }
+    .bg-lines { background-size: 100% 40px; background-image: linear-gradient(to bottom, #e2e8f0 1px, transparent 1px); }
     .bg-white-board { background-color: #ffffff; background-image: none; }
 
-    /* --- 2. TOOLBAR --- */
-    .board-toolbar { 
-        position: sticky; top: 0; z-index: 40; background: rgba(255, 255, 255, 0.95); 
-        backdrop-filter: blur(10px); border-bottom: 1px solid #e5e7eb; padding: 10px 25px; 
-        display: flex; justify-content: space-between; align-items: center; 
+    /* --- TOOLBAR E MENU CORRIGIDO --- */
+    .board-toolbar { position: sticky; top: 0; z-index: 50; background: var(--toolbar-bg); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); }
+    .profile-section { display: flex; align-items: center; gap: 14px; }
+    .profile-img { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; border: 2px solid white; box-shadow: var(--shadow-md); }
+    .profile-info h5 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--primary-color); }
+    .badge-role { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: #e0f2fe; color: #0284c7; }
+    
+    .search-box { position: relative; width: 220px; }
+    .search-box input { width: 100%; padding: 8px 16px 8px 40px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; font-size: 0.9rem; }
+    .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .tool-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+    .tool-btn:hover { background: #f8fafc; color: var(--accent-color); border-color: var(--accent-color); }
+
+    /* CORREÇÃO DO MENU DE CONFIGURAÇÕES */
+    #settingsMenu {
+        right: 0 !important; /* Força alinhamento à direita */
+        left: auto !important; /* Impede alinhamento à esquerda */
+        top: 100% !important;
+        margin-top: 10px;
+        transform: none !important; /* Remove transforms do Bootstrap se houver */
+        width: 240px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    /* --- CORES --- */
+    .board-bg-white { background-color: #ffffff; border: 1px solid #e2e8f0; }
+    .board-bg-yellow { background-color: #fef9c3; border: 1px solid #fde047; }
+    .board-bg-pink { background-color: #fce7f3; border: 1px solid #f9a8d4; }
+    .board-bg-green { background-color: #dcfce7; border: 1px solid #86efac; }
+    .board-bg-blue { background-color: #dbeafe; border: 1px solid #93c5fd; }
+
+    /* --- WIDGETS GERAL --- */
+    .grid-stack-item-content { 
+        border-radius: 16px; 
+        box-shadow: var(--shadow-md); 
+        display: flex; flex-direction: column; 
+        overflow: hidden; /* Mantém o conteúdo dentro das bordas redondas */
+    }
+    .card-header-custom { padding: 10px 15px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.4); }
+    .board-card-title { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.9rem; color: #334155; border-radius: 4px; padding: 2px 4px; }
+
+    /* --- NOTA (CORREÇÃO DE SCROLL) --- */
+    .type-note { 
+        height: 100%; 
+        display: flex; 
+        flex-direction: column; 
+        font-family: 'Kalam', cursive; 
+        font-size: 1.4rem; 
+        color: #1e293b; 
+        background: transparent;
     }
     
-    .profile-section { display: flex; align-items: center; gap: 12px; }
-    .profile-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .profile-info h5 { margin: 0; font-size: 1rem; font-weight: 700; color: #1f2937; }
-    .profile-info span { font-size: 0.75rem; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    .toolbar-group { display: flex; align-items: center; gap: 10px; }
-    .search-box { position: relative; width: 200px; transition: width 0.3s; }
-    .search-box:focus-within { width: 260px; }
-    .search-box input { width: 100%; padding: 6px 12px 6px 35px; border-radius: 20px; border: 1px solid #e5e7eb; font-size: 0.9rem; transition: border-color 0.2s; }
-    .search-box input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-    .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 0.85rem; }
-
-    .settings-dropdown { position: relative; }
-    .settings-menu { position: absolute; top: 100%; right: 0; margin-top: 10px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid #e5e7eb; width: 220px; display: none; overflow: hidden; z-index: 1000; }
-    .settings-menu.show { display: block; animation: fadeIn 0.2s; }
-    .settings-header { padding: 10px 15px; background: #f9fafb; border-bottom: 1px solid #f3f4f6; font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
-    .settings-item { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; color: #374151; font-size: 0.9rem; transition: 0.1s; }
-    .settings-item:hover { background: #f3f4f6; }
-    .settings-divider { height: 1px; background: #e5e7eb; margin: 5px 0; }
-
-    /* --- 3. CARDS --- */
-    .grid-stack-item-content { border-radius: 12px; padding: 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; overflow: hidden; background: white; }
-    .type-task { background: #ffffff; font-family: 'Inter', sans-serif; border-top: 5px solid #e5e7eb; color: #374151; height: 100%; }
-    .task-yellow { border-top-color: #fcd34d !important; } .task-pink { border-top-color: #f472b6 !important; }
-    .task-green { border-top-color: #4ade80 !important; } .task-blue { border-top-color: #3b82f6 !important; }
-    .task-header { padding: 12px 15px 5px; font-weight: 700; font-size: 0.8rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; display: flex; justify-content: space-between; align-items: center; }
-    .progress-track { width: 60px; height: 5px; background: #f3f4f6; border-radius: 10px; overflow: hidden; margin-left: auto; }
-    .progress-fill { height: 100%; background: #10b981; width: 0%; transition: width 0.3s ease; }
-    .task-body { padding: 5px 15px 15px; flex-grow: 1; overflow-y: auto; outline: none; cursor: default; }
-    .task-footer { padding: 8px 15px; border-top: 1px solid #f3f4f6; background: #fafafa; display: flex; justify-content: flex-end; }
-    .todo-line { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 4px; padding: 2px 0; }
-    .todo-box { margin-top: 5px; cursor: pointer; width: 16px; height: 16px; accent-color: #3b82f6; flex-shrink: 0; }
-    .todo-text { outline: none; flex: 1; line-height: 1.5; font-size: 0.95rem; min-height: 24px; border-bottom: 1px solid transparent; }
-    .todo-text:focus { border-bottom-color: #e5e7eb; }
-    .todo-done .todo-text { text-decoration: line-through; color: #9ca3af; } .todo-done .todo-box { opacity: 0.6; }
-
-    .type-note { font-family: 'Kalam', cursive; font-size: 1.4rem; line-height: 1.3; color: #1f2937; padding: 20px; border: none; text-align: center; display: flex; align-items: center; justify-content: center; }
-    .note-yellow { background: #fef9c3; } .note-pink { background: #fce7f3; } .note-green { background: #dcfce7; } .note-blue { background: #dbeafe; }
-    .note-editable { outline: none; min-width: 50px; white-space: pre-wrap; word-break: break-word; }
-    .note-editable a { color: #2563eb; text-decoration: underline; font-weight: bold; position: relative; z-index: 10; pointer-events: auto; }
-    .note-editable:empty::before { content: attr(data-placeholder); color: rgba(0,0,0,0.25); pointer-events: none; font-style: italic; }
-
-    .card-image { background: transparent; box-shadow: none; border: none; }
-    .board-img-content { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 4px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .ui-resizable-se { width: 15px !important; height: 15px !important; bottom: 5px !important; right: 5px !important; }
-    .date-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; background: #e5e7eb; color: #4b5563; position: relative; }
-    .date-badge.overdue { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; } .date-badge.future { background: #dbeafe; color: #1e40af; }
-    .date-input-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .note-editable { 
+        outline: none; 
+        flex: 1; 
+        padding: 10px 20px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        text-align: center;
+        
+        /* O Segredo do Scroll Invisível */
+        overflow-y: auto;          /* Permite scroll se necessário */
+        scrollbar-width: none;     /* Firefox: Esconde a barra */
+        -ms-overflow-style: none;  /* IE/Edge: Esconde a barra */
+    }
     
-    #saveStatus { font-size: 0.85rem; font-weight: 600; color: #6b7280; display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s ease; }
-    #saveStatus.active { opacity: 1; } #saveStatus.saving { color: #d97706; } #saveStatus.saved { color: #059669; } #saveStatus.editing { color: #2563eb; }
+    /* Chrome/Safari: Esconde a barra */
+    .note-editable::-webkit-scrollbar { 
+        display: none; 
+    }
+    
+    .note-editable:empty::before { content: attr(data-placeholder); color: rgba(0,0,0,0.3); font-style: italic; }
 
-    .fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 100; }
-    .fab-main { width: 64px; height: 64px; border-radius: 50%; background: #111827; color: white; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s; }
-    .fab-main:hover { transform: scale(1.05); background: #000; }
-    .fab-menu { position: absolute; bottom: 80px; right: 7px; display: flex; flex-direction: column; gap: 15px; opacity: 0; pointer-events: none; transform: translateY(20px); transition: all 0.3s; }
+    /* --- LISTA DE TAREFAS --- */
+    .type-task { height: 100%; display: flex; flex-direction: column; background: transparent; }
+    .task-body { padding: 5px 15px 10px; flex-grow: 1; overflow-y: auto; }
+    /* Scrollbar Bonita apenas na Lista (onde é útil) */
+    .task-body::-webkit-scrollbar { width: 5px; }
+    .task-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+    
+    .todo-line { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px; padding: 6px 8px; border-radius: 8px; transition: background 0.1s; cursor: text; }
+    .todo-line:hover { background-color: rgba(0,0,0,0.03); }
+    .todo-box { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 2px solid #cbd5e1; border-radius: 5px; margin-top: 3px; cursor: pointer; position: relative; transition: all 0.2s; background: white; flex-shrink: 0; }
+    .todo-box:checked { background-color: #10b981; border-color: #10b981; }
+    .todo-box:checked::after { content: '✓'; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: bold; }
+    .todo-text { outline: none; flex: 1; font-size: 0.95rem; line-height: 1.5; color: #334155; word-break: break-word; }
+    .todo-done .todo-text { text-decoration: line-through; color: #94a3b8; }
+
+    /* Barra de Progresso */
+    .progress-container { padding: 0 15px; margin-top: 8px; margin-bottom: 5px; }
+    .progress-track { height: 6px; background-color: rgba(0,0,0,0.08); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* --- IMAGEM --- */
+    .img-container { height: 100%; display: flex; flex-direction: column; background: transparent; }
+
+    /* --- PRAZO --- */
+    .card-footer-custom { margin-top: auto; padding: 8px 15px; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.4); display: flex; justify-content: flex-end; }
+    .date-pill { font-size: 0.75rem; font-weight: 600; padding: 6px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; cursor: pointer; user-select: none; border: 1px solid transparent; }
+    .date-pill:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: white; }
+    .date-pill.empty { background: rgba(0,0,0,0.05); color: #64748b; border: 1px dashed #cbd5e1; }
+    .date-pill.future { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+    .date-pill.overdue { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .date-input-hidden { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+
+    /* --- FLUTUANTES --- */
+    .fab-container { position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 9999 !important; display: flex; flex-direction: column; align-items: flex-end; }
+    .fab-main { width: 65px; height: 65px; border-radius: 24px; background: var(--primary-color); color: white; border: none; box-shadow: 0 15px 30px rgba(15, 23, 42, 0.3); font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s; }
+    .fab-main:hover { transform: scale(1.1) rotate(90deg); background: black; }
+    .fab-menu { position: absolute; bottom: 80px; right: 0; display: flex; flex-direction: column; gap: 15px; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; margin-right: 5px; }
     .fab-menu.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
-    .fab-item { display: flex; align-items: center; justify-content: flex-end; gap: 15px; cursor: pointer; }
-    .fab-label { background: white; padding: 6px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .fab-btn { width: 50px; height: 50px; border-radius: 50%; border: none; color: white; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.2s; }
-    .fab-item:hover .fab-btn { transform: scale(1.1); }
-    .btn-fab-note { background: #f59e0b; } .btn-fab-task { background: #3b82f6; } .btn-fab-img { background: #10b981; } .btn-fab-draw { background: #8b5cf6; }
+    .fab-btn { width: 50px; height: 50px; border-radius: 16px; border: none; color: white; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md); transition: transform 0.2s; }
+    .fab-item:hover .fab-btn { transform: scale(1.15); }
+    .fab-label { background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; color: #334155; box-shadow: var(--shadow-md); margin-right: 15px; }
+
+    #contextMenu { display: none; position: fixed !important; z-index: 10000; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 180px; padding: 6px; animation: popIn 0.1s; }
+    .ctx-item { padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: #334155; font-weight: 500; }
+    .ctx-item:hover { background: var(--accent-color); color: white; }
+    .ctx-item:hover .ctx-dot { border-color: white; }
+    .ctx-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); }
     
-    .palette-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #e5e7eb; cursor: pointer; transition: transform 0.2s; }
-    .palette-btn.active { box-shadow: 0 0 0 2px #000; transform: scale(1.1); }
-    #contextMenu { display: none; position: absolute; z-index: 1000; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 160px; overflow: hidden; padding: 5px 0; }
-    .ctx-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
-    .ctx-item:hover { background: #f3f4f6; } .ctx-danger:hover { background: #fee2e2; color: #dc2626; }
-    .modal-backdrop { z-index: 1040 !important; } .modal { z-index: 1050 !important; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    #saveStatus { font-size: 0.8rem; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: white; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 8px; opacity: 0; transition: opacity 0.3s; }
+    #saveStatus.active { opacity: 1; }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .empty-state { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #94a3b8; pointer-events: none; }
+    .empty-state i { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; color: #cbd5e1; }
 </style>
 
 <div class="board-toolbar">
-    <div class="d-flex align-items-center gap-3">
-        <a href="{{ url_for('main.dashboard') if current_user.role == 'professor' else url_for('main.index') }}" 
-            class="btn btn-light border rounded-circle">
-            <i class="fas fa-arrow-left"></i>
-        </a>
+    <div class="d-flex align-items-center gap-4">
+        <a href="{{ url_for('main.dashboard') if current_user.role == 'professor' else url_for('main.index') }}" class="tool-btn text-decoration-none" title="Voltar"><i class="fas fa-arrow-left"></i></a>
+        
         <div class="profile-section">
             <img src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}" class="profile-img">
             <div class="profile-info">
                 <h5>{{ user.username }}</h5>
                 {% if is_owner %}
-                    <span class="text-primary fw-bold">
-                        {% if is_lab_board %}Gerenciando Mural{% else %}Meu Quadro{% endif %}
-                    </span>
+                    <span class="badge-role">{% if is_lab_board %}Admin Mural{% else %}Dono{% endif %}</span>
                 {% else %}
-                    <span class="text-muted">Modo Visualização</span>
+                    <span class="badge-role badge-viewer">Visitante</span>
                 {% endif %}
             </div>
         </div>
 
         {% if is_owner %}
-        <div id="saveStatus" class="ms-3">
-            <i class="fas fa-cloud"></i> <span>Pronto</span>
+        <div id="saveStatus">
+            <div class="spinner-border spinner-border-sm text-primary" role="status" style="display:none"></div>
+            <i class="fas fa-check-circle text-success" style="display:none"></i>
+            <span class="status-text">Pronto</span>
         </div>
         {% endif %}
     </div>
 
-    <div class="toolbar-group">
+    <div class="d-flex align-items-center gap-3">
         <div class="search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="boardSearch" placeholder="Filtrar notas..." onkeyup="filterBoard()">
+            <input type="text" id="boardSearch" placeholder="Pesquisar no quadro..." onkeyup="filterBoard()">
         </div>
 
-        <button onclick="toggleZenMode()" class="btn btn-light border" title="Tela Cheia"><i class="fas fa-expand"></i></button>
+        <button onclick="toggleZenMode()" class="tool-btn" title="Modo Zen (Tela Cheia)"><i class="fas fa-expand"></i></button>
         
-        <div class="settings-dropdown">
-            <button onclick="toggleSettings()" class="btn btn-light border" title="Opções"><i class="fas fa-cog"></i></button>
-            <div class="settings-menu" id="settingsMenu">
-                <div class="settings-header">Visualização</div>
-                <div class="settings-item" onclick="setBackground('bg-dots')"><i class="fas fa-braille"></i> Pontos</div>
-                <div class="settings-item" onclick="setBackground('bg-grid')"><i class="fas fa-border-all"></i> Grade</div>
-                <div class="settings-item" onclick="setBackground('bg-lines')"><i class="fas fa-grip-lines"></i> Caderno</div>
-                <div class="settings-item" onclick="setBackground('bg-white-board')"><i class="far fa-square"></i> Branco</div>
-                
-                <div class="settings-divider"></div>
-                <div class="settings-header">Ferramentas</div>
-                <div class="settings-item" onclick="exportBoard()"><i class="fas fa-camera"></i> Baixar Imagem</div>
-                
+        <div class="position-relative">
+            <button onclick="toggleSettings()" class="tool-btn" title="Configurações"><i class="fas fa-sliders-h"></i></button>
+            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-2" id="settingsMenu" style="width: 240px; border-radius: 12px;">
+                <h6 class="dropdown-header text-uppercase small fw-bold">Fundo do Quadro</h6>
+                <a class="dropdown-item rounded mb-1" href="#" onclick="setBackground('bg-dots')"><i class="fas fa-braille me-2 text-muted"></i> Pontilhada</a>
+                <a class="dropdown-item rounded mb-1" href="#" onclick="setBackground('bg-grid')"><i class="fas fa-border-all me-2 text-muted"></i> Grade</a>
+                <a class="dropdown-item rounded mb-1" href="#" onclick="setBackground('bg-lines')"><i class="fas fa-grip-lines me-2 text-muted"></i> Pautada</a>
+                <a class="dropdown-item rounded mb-1" href="#" onclick="setBackground('bg-white-board')"><i class="far fa-square me-2 text-muted"></i> Branco Puro</a>
+                <div class="dropdown-divider"></div>
+                <h6 class="dropdown-header text-uppercase small fw-bold">Ações</h6>
+                <a class="dropdown-item rounded mb-1" href="#" onclick="exportBoard()"><i class="fas fa-camera me-2 text-muted"></i> Salvar como Imagem</a>
                 {% if is_owner %}
-                <div class="settings-divider"></div>
-                <div class="settings-item" onclick="compactBoard()"><i class="fas fa-th"></i> Organizar Tudo</div>
-                <div class="settings-item text-danger" onclick="deleteAll()"><i class="fas fa-trash"></i> Limpar Quadro</div>
+                <a class="dropdown-item rounded mb-1" href="#" onclick="compactBoard()"><i class="fas fa-th-large me-2 text-muted"></i> Organizar Bagunça</a>
+                <a class="dropdown-item rounded mb-1 text-danger" href="#" onclick="deleteAll()"><i class="fas fa-trash-alt me-2"></i> Limpar Tudo</a>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<div class="board-wrapper bg-dots" id="boardContainer">
+<div class="board-wrapper bg-dots {{ 'is-owner' if is_owner else '' }}" id="boardContainer">
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <i class="far fa-sticky-note"></i>
+        <h3>Este quadro está vazio</h3>
+        <p>Comece adicionando uma nota, lista ou desenho!</p>
+    </div>
     <div class="grid-stack"></div>
 </div>
 
 {% if is_owner %}
-<div class="fab-container">
+<!-- Estes itens serão movidos para o body pelo JS -->
+<div class="fab-container" id="fabContainerFixed">
     <div class="fab-menu" id="fabMenu">
-        <div class="fab-item" data-bs-toggle="modal" data-bs-target="#drawModal"><span class="fab-label">Desenhar</span><button class="fab-btn btn-fab-draw"><i class="fas fa-paint-brush"></i></button></div>
-        <div class="fab-item" onclick="document.getElementById('imgUpload').click()"><span class="fab-label">Imagem</span><button class="fab-btn btn-fab-img"><i class="fas fa-image"></i></button></div>
-        <div class="fab-item" onclick="addCard('task')"><span class="fab-label">Lista</span><button class="fab-btn btn-fab-task"><i class="fas fa-check"></i></button></div>
-        <div class="fab-item" onclick="addCard('note')"><span class="fab-label">Nota</span><button class="fab-btn btn-fab-note"><i class="fas fa-sticky-note"></i></button></div>
+        <div class="fab-item" data-bs-toggle="modal" data-bs-target="#drawModal">
+            <span class="fab-label">Desenhar</span><button class="fab-btn" style="background: #8b5cf6;"><i class="fas fa-paint-brush"></i></button>
+        </div>
+        <div class="fab-item" onclick="document.getElementById('imgUpload').click()">
+            <span class="fab-label">Imagem</span><button class="fab-btn" style="background: #10b981;"><i class="fas fa-image"></i></button>
+        </div>
+        <div class="fab-item" onclick="addCard('task')">
+            <span class="fab-label">Lista</span><button class="fab-btn" style="background: #3b82f6;"><i class="fas fa-check"></i></button>
+        </div>
+        <div class="fab-item" onclick="addCard('note')">
+            <span class="fab-label">Nota</span><button class="fab-btn" style="background: #f59e0b;"><i class="fas fa-sticky-note"></i></button>
+        </div>
     </div>
     <button class="fab-main" onclick="toggleFab()"><i class="fas fa-plus"></i></button>
     <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="uploadImage(this)">
 </div>
 
 <div id="contextMenu">
-    <div class="ctx-item" onclick="changeColor('yellow')"><div style="width:12px;height:12px;border-radius:50%;background:#fcd34d"></div> Amarelo</div>
-    <div class="ctx-item" onclick="changeColor('pink')"><div style="width:12px;height:12px;border-radius:50%;background:#f472b6"></div> Rosa</div>
-    <div class="ctx-item" onclick="changeColor('green')"><div style="width:12px;height:12px;border-radius:50%;background:#4ade80"></div> Verde</div>
-    <div class="ctx-item" onclick="changeColor('blue')"><div style="width:12px;height:12px;border-radius:50%;background:#60a5fa"></div> Azul</div>
-    <hr class="my-1">
+    <div class="ctx-item" onclick="changeColor('yellow')"><div class="ctx-dot" style="background:#fcd34d"></div> Amarelo</div>
+    <div class="ctx-item" onclick="changeColor('pink')"><div class="ctx-dot" style="background:#f472b6"></div> Rosa</div>
+    <div class="ctx-item" onclick="changeColor('green')"><div class="ctx-dot" style="background:#4ade80"></div> Verde</div>
+    <div class="ctx-item" onclick="changeColor('blue')"><div class="ctx-dot" style="background:#60a5fa"></div> Azul</div>
+    <hr class="my-1 opacity-25">
     <div class="ctx-item text-danger" onclick="deleteCurrentItem()"><i class="fas fa-trash-alt"></i> Excluir</div>
 </div>
 
 <div class="modal fade" id="drawModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold ps-3">Rascunho</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body text-center p-3"><canvas id="drawingCanvas" width="900" height="500" style="background:white; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); cursor:crosshair;"></canvas></div>
-            <div class="modal-footer border-0 justify-content-center pb-4 pt-0">
-                <button class="btn btn-outline-secondary" onclick="clearCanvas()">Limpar</button>
-                <div class="palette-btn" style="background:#000" onclick="setPenColor(this, '#000')"></div>
-                <div class="palette-btn" style="background:#ef4444" onclick="setPenColor(this, '#ef4444')"></div>
-                <div class="palette-btn" style="background:#22c55e" onclick="setPenColor(this, '#22c55e')"></div>
-                <div class="palette-btn" style="background:#3b82f6" onclick="setPenColor(this, '#3b82f6')"></div>
-                <div class="vr mx-2"></div>
-                <button class="btn btn-dark fw-bold px-4" onclick="saveDrawing()">Adicionar</button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold"><i class="fas fa-pencil-alt me-2 text-primary"></i>Rascunho Criativo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-0 bg-secondary bg-opacity-10 position-relative">
+                <canvas id="drawingCanvas" width="900" height="500" style="background:white; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: crosshair; margin: 20px; border-radius: 12px;"></canvas>
+            </div>
+            <div class="modal-footer border-0 bg-white justify-content-center py-3">
+                <button class="btn btn-light text-muted border" onclick="clearCanvas()"><i class="fas fa-eraser me-2"></i>Limpar</button>
+                <div class="d-flex gap-2 mx-3 bg-light p-2 rounded-pill border">
+                    <div class="palette-btn active" style="width:28px; height:28px; background:#000; border-radius:50%; cursor:pointer; border:2px solid #e5e7eb" onclick="setPenColor(this, '#000')"></div>
+                    <div class="palette-btn" style="width:28px; height:28px; background:#ef4444; border-radius:50%; cursor:pointer; border:2px solid #e5e7eb" onclick="setPenColor(this, '#ef4444')"></div>
+                    <div class="palette-btn" style="width:28px; height:28px; background:#22c55e; border-radius:50%; cursor:pointer; border:2px solid #e5e7eb" onclick="setPenColor(this, '#22c55e')"></div>
+                    <div class="palette-btn" style="width:28px; height:28px; background:#3b82f6; border-radius:50%; cursor:pointer; border:2px solid #e5e7eb" onclick="setPenColor(this, '#3b82f6')"></div>
+                </div>
+                <button class="btn btn-dark fw-bold px-4 rounded-pill" onclick="saveDrawing()"><i class="fas fa-plus me-2"></i>Adicionar ao Quadro</button>
             </div>
         </div>
     </div>
 </div>
 {% endif %}
-
 {% endblock %}
 
 {% block scripts %}
@@ -220,20 +286,31 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    // --- 1. RESOLVENDO O BUG DO BOTÃO FLUTUANTE ---
+    document.addEventListener("DOMContentLoaded", function() {
+        const fab = document.getElementById('fabContainerFixed');
+        const ctxMenu = document.getElementById('contextMenu');
+        const drawModal = document.getElementById('drawModal');
+        
+        if (fab) document.body.appendChild(fab);
+        if (ctxMenu) document.body.appendChild(ctxMenu);
+        if (drawModal) document.body.appendChild(drawModal);
+    });
+
     const isOwner = {{ 'true' if is_owner else 'false' }};
     const isLabBoard = {{ 'true' if is_lab_board else 'false' }};
-    const statusEl = document.getElementById('saveStatus');
     let currentRightClickId = null;
     let saveTimeout;
 
-    // --- 1. GRIDSTACK INIT ---
+    // --- 2. GRIDSTACK INIT ---
     var grid = GridStack.init({
         column: 12, cellHeight: 120, margin: 15, animate: true,
         disableResize: !isOwner, disableDrag: !isOwner, 
-        float: true, resizable: { handles: 'se' }
+        float: true, resizable: { handles: 'se' },
+        alwaysShowResizeHandle: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     });
 
-    // --- 2. CARREGAR ITENS ---
+    // --- 3. CARREGAR ITENS DO BACKEND ---
     var items = [
         {% for item in items %}
         {
@@ -241,109 +318,178 @@
             x: {{ item.x if item.x is not none else 'undefined' }}, y: {{ item.y if item.y is not none else 'undefined' }},
             w: {{ item.w }}, h: {{ item.h }},
             content: `{{ item.content | default('') | safe }}`,
-            color: "{{ item.color }}", type: "{{ item.item_type }}", image: "{{ item.image_file }}",
+            color: "{{ item.color }}", 
+            type: "{{ item.item_type }}", 
+            image: "{{ item.image_file }}",
+            title: "{{ item.title if item.title else '' }}",
             due_date: "{{ item.due_date if item.due_date else '' }}"
         },
         {% endfor %}
     ];
+    
+    if (items.length === 0 && isOwner) document.getElementById('emptyState').style.display = 'block';
     items.forEach(item => loadWidget(item));
 
+    // --- 4. RENDERIZAÇÃO DE WIDGETS ---
     function loadWidget(item) {
-        let contentHtml = '';
-        let widgetClass = '';
-        let extraClass = '';
+        document.getElementById('emptyState').style.display = 'none';
+        let contentHtml = '', widgetClass = '', extraClass = '';
 
+        let defaultTitle = 'Sem Título';
+        if (item.type === 'note') defaultTitle = 'Nota Rápida';
+        if (item.type === 'image') defaultTitle = 'Imagem';
+        if (item.type === 'task') defaultTitle = 'Tarefas';
+
+        let displayTitle = item.title ? item.title : defaultTitle;
+        const titleAttr = isOwner ? `contenteditable="true" onblur="saveTitle('${item.id}', this)" onkeydown="handleTitleEnter(event, this)"` : '';
+            
+        const headerHtml = `
+            <div class="card-header-custom">
+                <span class="board-card-title" ${titleAttr} title="Clique para editar">${displayTitle}</span>
+                ${isOwner ? `<i class="fas fa-ellipsis-h text-muted opacity-50 hover-opacity-100" style="cursor: pointer; padding: 5px;" onclick="openContextMenu(event, '${item.id}')"></i>` : ''}
+            </div>
+        `;
+
+        // LÓGICA POR TIPO
         if (item.type === 'image') {
+            let imgSrc = item.image ? `/static/board_uploads/${item.image}` : '';
+            contentHtml = `
+                <div class="img-container">
+                    ${headerHtml}
+                    <div style="flex: 1; overflow: hidden; position: relative; background: #f3f4f6;">
+                        <img src="${imgSrc}" class="board-img-content" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/400?text=Erro'">
+                    </div>
+                </div>`;
             widgetClass = 'card-image';
-            contentHtml = `<img src="/static/board_uploads/${item.image}" class="board-img-content">`;
-        } 
-        else if (item.type === 'task') {
-            widgetClass = 'type-task';
+        
+        } else if (item.type === 'task') {
             extraClass = `task-${item.color}`;
             if (!item.content || item.content.trim() === '') {
                 item.content = `<div class="todo-line"><input type="checkbox" class="todo-box"><div class="todo-text" ${isOwner ? 'contenteditable="true"' : ''}></div></div>`;
             }
-            
-            let dateHtml = '<span class="text-muted small">Sem prazo</span>';
-            let badgeClass = '';
-            if (item.due_date) {
-                const today = new Date().toISOString().split('T')[0];
-                const itemDateStr = item.due_date.split('T')[0];
-                if (itemDateStr < today) badgeClass = 'overdue'; else badgeClass = 'future';
-                const d = new Date(item.due_date);
-                dateHtml = `<i class="fas fa-calendar-alt"></i> ${d.getDate()}/${d.getMonth()+1}`;
-            } else { dateHtml = `<i class="far fa-calendar"></i>`; }
-
-            const datePicker = isOwner ? 
-                `<div class="date-badge ${badgeClass}">${dateHtml}<input type="date" class="date-input-hidden" onchange="saveDate('${item.id}', this)" value="${item.due_date ? item.due_date.split('T')[0] : ''}"></div>` 
-                : `<div class="date-badge ${badgeClass}">${dateHtml}</div>`;
+            let progressColor = '#3b82f6';
+            if (item.color === 'green') progressColor = '#22c55e';
+            if (item.color === 'pink') progressColor = '#ec4899';
+            if (item.color === 'yellow') progressColor = '#eab308';
 
             contentHtml = `
-                <div class="task-header"><span>CHECKLIST</span><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div></div>
-                <div class="task-body">${item.content}</div><div class="task-footer">${datePicker}</div>`;
-        } 
-        else {
-            widgetClass = 'type-note'; extraClass = `note-${item.color}`;
-            let safeContent = item.content;
-            const editable = isOwner ? 'contenteditable="true"' : '';
-            const pointer = isOwner ? '' : 'pointer-events: none;';
-            contentHtml = `<div class="note-editable d-flex align-items-center justify-content-center" ${editable} style="${pointer}" 
-                            data-placeholder="Ideia..." oninput="updateStatus('editing')"
-                            onblur="saveNoteContent('${item.id}', this)" onfocus="updateStatus('editing')">${safeContent}</div>`;
+                <div class="type-task">
+                    ${headerHtml}
+                    <div class="progress-container mx-3 mt-2"><div class="progress-track" style="height: 6px; background: rgba(0,0,0,0.08); border-radius: 3px;"><div class="progress-fill" style="width:0%; background-color: ${progressColor}; height: 100%; transition: width 0.4s;"></div></div></div>
+                    <div class="task-body" style="padding: 10px 15px;">${item.content}</div>
+                    <div class="card-footer-custom" style="padding: 8px 15px; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.4); text-align: right;">${getDueDateHtml(item)}</div>
+                </div>`;
+        
+        } else { // Note com Deteção Inteligente de YouTube
+            let isVideo = false;
+            let videoId = null;
+
+            // Extrai o texto limpo para testar o regex
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = item.content;
+            const plainText = tempDiv.innerText || tempDiv.textContent;
+
+            // Regex do YouTube
+            const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+            const match = plainText.match(ytRegex);
+
+            if (match && match[1]) {
+                isVideo = true;
+                videoId = match[1];
+            }
+
+            const rotate = isVideo ? '0' : (Math.random() * 2 - 1).toFixed(1); 
+            
+            if (isVideo) {
+                // Layout VÍDEO (Corrigido para ser editável em baixo)
+                contentHtml = `
+                    <div class="type-note" style="transform: rotate(${rotate}deg);">
+                        ${headerHtml}
+                        <div style="flex: 1; padding: 10px; display: flex; flex-direction: column;">
+                            <div style="position: relative; width: 100%; padding-bottom: 56.25%; border-radius: 8px; overflow: hidden; background: #000; flex-shrink: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+                                        src="https://www.youtube.com/embed/${videoId}" 
+                                        allowfullscreen></iframe>
+                            </div>
+                            <div class="note-editable" ${isOwner ? 'contenteditable="true"' : ''} 
+                                 style="flex: 1; font-size: 0.9rem; padding: 15px 5px 5px 5px; text-align: left; align-items: flex-start; min-height: 40px; cursor: text;" 
+                                 data-placeholder="Adicione um comentário ou apague o link..."
+                                 oninput="updateStatus('editing')"
+                                 onblur="saveNoteContent('${item.id}', this)"
+                                 onfocus="updateStatus('editing')">
+                                ${item.content}
+                            </div>
+                        </div>
+                    </div>`;
+            } else {
+                // Layout NOTA SIMPLES
+                contentHtml = `
+                    <div class="type-note" style="transform: rotate(${rotate}deg);">
+                        ${headerHtml}
+                        <div class="note-editable" ${isOwner ? 'contenteditable="true"' : ''} 
+                            style="${isOwner ? '' : 'pointer-events: none;'} flex: 1; padding: 10px 20px; display: flex; align-items: center; justify-content: center; cursor: text;" 
+                            data-placeholder="Escreva ou cole um link do YouTube..." 
+                            oninput="updateStatus('editing')" 
+                            onblur="saveNoteContent('${item.id}', this)" 
+                            onfocus="updateStatus('editing')">
+                            ${item.content}
+                        </div>
+                    </div>`;
+            }
         }
 
         const posAttr = (item.x !== undefined && item.x !== null) ? `gs-x="${item.x}" gs-y="${item.y}"` : 'gs-auto-position="true"';
         const contextMenuAttr = isOwner ? `oncontextmenu="openContextMenu(event, '${item.id}')"` : '';
+        let colorClass = `board-bg-${item.color || 'white'}`;
 
         const widgetHtml = `
         <div class="grid-stack-item" gs-id="${item.id}" ${posAttr} gs-w="${item.w}" gs-h="${item.h}">
-            <div class="grid-stack-item-content ${widgetClass} ${extraClass}" ${contextMenuAttr}>
+            <div class="grid-stack-item-content ${colorClass}" ${contextMenuAttr}>
                 ${contentHtml}
             </div>
         </div>`;
+        
         grid.addWidget(widgetHtml);
-        if(item.type === 'task') { const el = document.querySelector(`.grid-stack-item[gs-id="${item.id}"]`); updateProgress(el.querySelector('.task-body')); }
+        if(item.type === 'task') { 
+            const el = document.querySelector(`.grid-stack-item[gs-id="${item.id}"] .task-body`); 
+            if(el) updateProgress(el);
+        }
     }
 
-    // --- FUNÇÕES PÚBLICAS ---
-    window.toggleZenMode = function() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => console.log(err));
-            document.body.classList.add('zen-mode');
-        } else {
-            if (document.exitFullscreen) document.exitFullscreen();
-            document.body.classList.remove('zen-mode');
+    // --- 5. FUNÇÕES DE DATA E PROGRESSO ---
+    function getDueDateHtml(item) {
+        let label = 'Definir Prazo';
+        let pillClass = 'empty';
+        let icon = '<i class="far fa-calendar-plus"></i>';
+        let dateVal = '';
+
+        if (item.due_date) {
+            const today = new Date().toISOString().split('T')[0];
+            const itemDateStr = item.due_date.split('T')[0];
+            dateVal = itemDateStr;
+            const d = new Date(item.due_date);
+            const day = d.getUTCDate().toString().padStart(2, '0');
+            const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+            label = `${day}/${month}`;
+            
+            if (itemDateStr < today) {
+                pillClass = 'overdue'; icon = '<i class="fas fa-exclamation-triangle"></i>'; label += ' (Atrasado)';
+            } else {
+                pillClass = 'future'; icon = '<i class="far fa-clock"></i>';
+            }
         }
-    };
-    document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) document.body.classList.remove('zen-mode');
-        else document.body.classList.add('zen-mode');
-    });
 
-    window.filterBoard = function() {
-        const term = document.getElementById('boardSearch').value.toLowerCase();
-        document.querySelectorAll('.grid-stack-item').forEach(w => {
-            if (w.innerText.toLowerCase().includes(term)) { w.style.opacity = '1'; w.style.pointerEvents = 'auto'; } 
-            else { w.style.opacity = '0.1'; w.style.pointerEvents = 'none'; }
-        });
-    };
-
-    window.toggleSettings = () => document.getElementById('settingsMenu').classList.toggle('show');
-    window.setBackground = (cls) => {
-        document.querySelector('.board-wrapper').className = 'board-wrapper ' + cls;
-        toggleSettings();
-    };
-    window.exportBoard = () => {
-        const board = document.querySelector('.board-wrapper');
-        html2canvas(board, { scale: 2, backgroundColor: '#f3f4f6' }).then(c => {
-            const l = document.createElement('a'); l.download = `Board-${new Date().toISOString().slice(0,10)}.png`; l.href = c.toDataURL(); l.click();
-        });
-        toggleSettings();
-    };
-    document.addEventListener('click', (e) => {
-        if(!e.target.closest('.settings-dropdown')) document.getElementById('settingsMenu').classList.remove('show');
-        if(isOwner && !e.target.closest('#contextMenu')) document.getElementById('contextMenu').style.display='none';
-    });
+        if (isOwner) {
+            return `
+                <div class="date-pill ${pillClass}" onclick="this.querySelector('input').showPicker()" style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+                    ${icon} <span>${label}</span>
+                    <input type="date" class="date-input-hidden" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;"
+                           onchange="saveDate('${item.id}', this)" onclick="event.stopPropagation()" value="${dateVal}">
+                </div>
+            `;
+        }
+        return `<div class="date-pill ${pillClass}" style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">${icon} <span>${label}</span></div>`;
+    }
 
     function updateProgress(taskBody) {
         if (!taskBody) return;
@@ -353,147 +499,178 @@
         const card = taskBody.closest('.grid-stack-item-content');
         const bar = card.querySelector('.progress-fill');
         if(bar) bar.style.width = percent + '%';
+        if (percent === 100 && total > 0 && typeof confetti === 'function') {
+            confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 }, disableForReducedMotion: true });
+        }
     }
 
-    // --- FUNÇÕES RESTRITAS (Só is_owner) ---
+    // --- 6. FUNÇÕES GERAIS E EVENTOS ---
+    function updateStatus(state) {
+        const el = document.getElementById('saveStatus'); if (!el) return; el.className = 'active'; 
+        const txt = el.querySelector('.status-text'); const spin = el.querySelector('.spinner-border'); const check = el.querySelector('.fa-check-circle');
+        if (state === 'editing') { txt.innerText = 'A editar...'; spin.style.display='none'; check.style.display='none'; el.style.color = '#3b82f6'; } 
+        else if (state === 'saving') { txt.innerText = 'A gravar...'; spin.style.display='inline-block'; check.style.display='none'; el.style.color = '#d97706'; } 
+        else if (state === 'saved') { txt.innerText = 'Gravado'; spin.style.display='none'; check.style.display='inline-block'; el.style.color = '#059669'; setTimeout(() => { if(el) el.className = ''; }, 2000); }
+    }
+
     {% if is_owner %}
+    window.submitItem = function(data, isFormData=false) {
+        let opts = { method: 'POST', headers: { 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}" } };
+        if (isFormData) { data.append('is_lab_board', isLabBoard); opts.body = data; } 
+        else { const fd = new FormData(); for (const key in data) fd.append(key, data[key]); fd.append('is_lab_board', isLabBoard); opts.body = fd; }
+        
+        updateStatus('saving');
+        fetch('/api/board/add', opts).then(r => r.json()).then(resData => {
+            const newItem = {
+                id: resData.id, x: resData.x, y: resData.y, w: resData.w, h: resData.h,
+                content: resData.content, color: resData.color, title: resData.title, due_date: resData.due_date,
+                type: resData.item_type || resData.type || 'note', image: resData.image_file || resData.image || ''
+            };
+            items.push(newItem); // Adiciona ao array local
+            loadWidget(newItem); 
+            updateStatus('saved');
+        });
+    }
 
-    document.addEventListener("DOMContentLoaded", function(){
-        const modalElement = document.getElementById('drawModal');
-        if (modalElement) {
-            document.body.appendChild(modalElement);
-            const canvas = document.getElementById('drawingCanvas'); const ctx = canvas.getContext('2d'); let painting = false;
-            modalElement.addEventListener('shown.bs.modal', ()=> { ctx.lineCap='round'; ctx.lineWidth=3; ctx.strokeStyle='#000'; });
-            function startP(e){ painting=true; draw(e); } function endP(){ painting=false; ctx.beginPath(); }
-            function draw(e){ if(!painting)return; const r=canvas.getBoundingClientRect(); const sx=canvas.width/r.width; const sy=canvas.height/r.height; const x=((e.clientX||e.touches[0].clientX)-r.left)*sx; const y=((e.clientY||e.touches[0].clientY)-r.top)*sy; ctx.lineTo(x,y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x,y); }
-            canvas.addEventListener('mousedown', startP); canvas.addEventListener('mouseup', endP); canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startP(e)}); canvas.addEventListener('touchend', endP); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e)});
-            window.clearCanvas = () => ctx.clearRect(0,0,canvas.width,canvas.height);
-            window.setPenColor = (btn, c) => { ctx.strokeStyle=c; document.querySelectorAll('.palette-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
-            window.saveDrawing = () => { canvas.toBlob(b=>{ const fd=new FormData(); fd.append('file',b,'draw.png'); fd.append('item_type','image'); submitItem(fd,true); bootstrap.Modal.getInstance(modalElement).hide(); setTimeout(clearCanvas,500); }); };
+    // --- MÁGICA DE TRANSFORMAÇÃO SEM F5 ---
+    window.saveNoteContent = (id, el) => {
+        let text = el.innerText || "";
+        
+        // Auto-link (sem bloquear a edição)
+        let html = text.replace(/(https?:\/\/[^\s]+)/g, url => `<a href="${url}" target="_blank">${url}</a>`);
+        // Adiciona um espaço fixo se a nota for SÓ o link, para permitir clicar à frente e continuar a escrever
+        if (text === text.match(/(https?:\/\/[^\s]+)/)?.[0]) { html += '&nbsp;'; }
+
+        if (text !== html && !el.innerHTML.includes('<a')) {
+            el.innerHTML = html;
         }
-    });
+        
+        // Grava no Servidor e Atualiza array local
+        saveContent(id, el.innerHTML);
 
+        // Verifica se precisa de virar vídeo ou voltar a ser texto normal
+        const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+        const hasYoutubeLink = ytRegex.test(text);
+        const widgetContent = el.closest('.grid-stack-item-content');
+        const isAlreadyVideo = widgetContent.querySelector('iframe') !== null;
+        
+        // Se o estado mudou (colou link novo OU apagou link antigo)
+        if ((hasYoutubeLink && !isAlreadyVideo) || (!hasYoutubeLink && isAlreadyVideo)) {
+            const localItem = items.find(i => i.id === id);
+            if (localItem) {
+                const gridEl = document.querySelector(`.grid-stack-item[gs-id="${id}"]`);
+                if(gridEl) {
+                    // Guarda a posição atual
+                    localItem.x = gridEl.getAttribute('gs-x'); localItem.y = gridEl.getAttribute('gs-y');
+                    localItem.w = gridEl.getAttribute('gs-w'); localItem.h = gridEl.getAttribute('gs-h');
+                    
+                    // Substitui dinamicamente SEM recarregar a página
+                    grid.removeWidget(gridEl);
+                    loadWidget(localItem);
+                }
+            }
+        }
+    };
+
+    function saveContent(id, content) { 
+        const localItem = items.find(i => i.id === id);
+        if (localItem) localItem.content = content; // Mantém a memória atualizada
+
+        fetch('/api/board/update', { 
+            method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, 
+            body: JSON.stringify({ id: id, content: content }) 
+        }).then(() => updateStatus('saved')); 
+    }
+
+    // O Evento Global de Escrita - Modificado para NÃO roubar o foco
     document.addEventListener('input', function(e) {
         if (e.target.classList.contains('todo-text') || e.target.classList.contains('note-editable')) {
-            updateStatus('editing');
-            clearTimeout(saveTimeout);
+            updateStatus('editing'); clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                if(e.target.classList.contains('todo-text')) saveTaskState(e.target);
-                else saveNoteContent(e.target.closest('.grid-stack-item').getAttribute('gs-id'), e.target);
+                if(e.target.classList.contains('todo-text')) {
+                    saveTaskState(e.target);
+                } else {
+                    // Grava silenciosamente enquanto escreve, a transformação de vídeo só acontece ao clicar fora (blur)
+                    saveContent(e.target.closest('.grid-stack-item').getAttribute('gs-id'), e.target.innerHTML);
+                }
             }, 1000);
         }
     });
 
     document.addEventListener('keydown', function(e) {
         if (!e.target.classList.contains('todo-text')) return;
-        const currentLine = e.target.closest('.todo-line');
-        const taskBody = currentLine.parentElement;
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const newLine = document.createElement('div'); newLine.className = 'todo-line';
-            newLine.innerHTML = `<input type="checkbox" class="todo-box"><div class="todo-text" contenteditable="true"></div>`;
-            currentLine.after(newLine); newLine.querySelector('.todo-text').focus();
-            updateProgress(taskBody); saveTaskState(taskBody);
-        }
-        if (e.key === 'Backspace' && e.target.innerText === '') {
-            if (taskBody.children.length > 1) {
-                e.preventDefault(); const prevLine = currentLine.previousElementSibling;
-                currentLine.remove();
-                if (prevLine) {
-                    const r = document.createRange(); const s = window.getSelection(); const t = prevLine.querySelector('.todo-text');
-                    r.selectNodeContents(t); r.collapse(false); s.removeAllRanges(); s.addRange(r);
-                }
-                updateProgress(taskBody); saveTaskState(taskBody);
-            }
-        }
+        const currentLine = e.target.closest('.todo-line'); const taskBody = currentLine.parentElement;
+        if (e.key === 'Enter') { e.preventDefault(); const newLine = document.createElement('div'); newLine.className = 'todo-line'; newLine.innerHTML = `<input type="checkbox" class="todo-box"><div class="todo-text" contenteditable="true"></div>`; currentLine.after(newLine); newLine.querySelector('.todo-text').focus(); updateProgress(taskBody); saveTaskState(taskBody); }
+        if (e.key === 'Backspace') { const text = e.target.innerText.replace(/\n/g, '').trim(); if (text === '' && taskBody.querySelectorAll('.todo-line').length > 1) { e.preventDefault(); const prev = currentLine.previousElementSibling; const next = currentLine.nextElementSibling; currentLine.remove(); if (prev) { const input = prev.querySelector('.todo-text'); input.focus(); const range = document.createRange(); range.selectNodeContents(input); range.collapse(false); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); } else if (next) { next.querySelector('.todo-text').focus(); } updateProgress(taskBody); saveTaskState(taskBody); } }
     });
-
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('todo-box')) {
-            const line = e.target.closest('.todo-line');
-            if (e.target.checked) line.classList.add('todo-done'); else line.classList.remove('todo-done');
-            updateProgress(e.target.closest('.task-body')); saveTaskState(e.target);
-        }
-    });
-
-    function saveTaskState(elementInside) {
-        let widget = elementInside.closest('.grid-stack-item');
-        if(!widget) return;
-        let itemId = widget.getAttribute('gs-id');
-        let taskBody = widget.querySelector('.task-body');
-        taskBody.querySelectorAll('input[type="checkbox"]').forEach(box => { if (box.checked) box.setAttribute('checked', 'checked'); else box.removeAttribute('checked'); });
-        saveContent(itemId, taskBody.innerHTML);
-    }
-
-    window.compactBoard = () => { grid.compact(); toggleSettings(); };
-    window.deleteAll = () => {
-        Swal.fire({ title: 'Limpar tudo?', text: "Sem volta!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim' })
-        .then((result) => {
-            if (result.isConfirmed) {
-                document.querySelectorAll('.grid-stack-item').forEach(el => {
-                    fetch(`/api/board/delete/${el.getAttribute('gs-id')}`, {method:'DELETE', headers:{'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}});
-                    grid.removeWidget(el);
-                }); toggleSettings();
-            }
-        });
-    };
-
-    window.saveDate = function(id, input) { updateStatus('saving'); fetch('/api/board/update', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify({ id: id, due_date: input.value }) }).then(() => { updateStatus('saved'); setTimeout(() => location.reload(), 500); }); };
-    window.addCard = function(type) { let color = type === 'task' ? 'blue' : 'yellow'; submitItem({ item_type: type, content: '', color: color }); toggleFab(); };
-    window.uploadImage = function(input) { if (input.files[0]) { const fd = new FormData(); fd.append('file', input.files[0]); fd.append('item_type', 'image'); submitItem(fd, true); input.value = ''; toggleFab(); } };
-
-    function submitItem(data, isFormData=false) {
-        let opts = { method: 'POST', headers: { 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}" } };
-        if (isFormData) {
-            data.append('is_lab_board', isLabBoard);
-            opts.body = data;
-        } else {
-            const fd = new FormData();
-            for (const key in data) fd.append(key, data[key]);
-            fd.append('is_lab_board', isLabBoard);
-            opts.body = fd;
-        }
-        updateStatus('saving');
-        fetch('/api/board/add', opts).then(r => r.json()).then(resData => {
-            const newItem = { id: resData.id, x: resData.x, y: resData.y, w: resData.w, h: resData.h, content: resData.content, color: resData.color, type: resData.item_type, image: resData.image_file, due_date: resData.due_date };
-            loadWidget(newItem); updateStatus('saved');
-        });
-    }
-
-    window.saveNoteContent = (id, el) => {
-        let text = el.innerText;
-        const html = text.replace(/(https?:\/\/[^\s]+)/g, url => `<a href="${url}" target="_blank" contenteditable="false">${url}</a>`);
-        if (text !== html) el.innerHTML = html;
-        saveContent(id, el.innerHTML);
-    };
-
-    function saveContent(id, content) { updateStatus('saving'); fetch('/api/board/update_content', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify({ id: id, content: content }) }).then(() => updateStatus('saved')); }
-    grid.on('change', function(e, items) { if (!items) return; updateStatus('saving'); const u = items.map(i => ({ id: i.el.getAttribute('gs-id'), x: i.x, y: i.y, w: i.w, h: i.h })); fetch('/api/board/update', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify(u) }).then(() => updateStatus('saved')); });
-
-    function updateStatus(s) {
-        if(!statusEl) return;
-        statusEl.className = ''; statusEl.classList.add('active');
-        const icon = statusEl.querySelector('i'); const text = statusEl.querySelector('span');
-        if (s === 'editing') { statusEl.classList.add('editing'); icon.className = 'fas fa-pen'; text.innerText = 'Editando...'; } 
-        else if (s === 'saving') { statusEl.classList.add('saving'); icon.className = 'fas fa-cloud-upload-alt'; text.innerText = 'Salvando...'; } 
-        else if (s === 'saved') { statusEl.classList.add('saved'); icon.className = 'fas fa-check-circle'; text.innerText = 'Salvo'; setTimeout(() => { statusEl.classList.remove('active'); }, 2000); }
-    }
-
-    window.toggleFab = function() { document.getElementById('fabMenu').classList.toggle('active'); document.querySelector('.fab-main i').classList.toggle('fa-plus'); document.querySelector('.fab-main i').classList.toggle('fa-times'); };
-    window.openContextMenu = function(e, id) { e.preventDefault(); currentRightClickId = id; const m = document.getElementById('contextMenu'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; };
+    document.addEventListener('change', function(e) { if (e.target.classList.contains('todo-box')) { const line = e.target.closest('.todo-line'); if (e.target.checked) line.classList.add('todo-done'); else line.classList.remove('todo-done'); updateProgress(e.target.closest('.task-body')); saveTaskState(e.target); } });
     
-    window.changeColor = function(c) {
-        if (!currentRightClickId) return;
-        const el = document.querySelector(`.grid-stack-item[gs-id="${currentRightClickId}"] .grid-stack-item-content`);
-        const colors = ['yellow', 'pink', 'green', 'blue'];
-        colors.forEach(col => { el.classList.remove(`note-${col}`); el.classList.remove(`task-${col}`); });
-        if (el.querySelector('.task-header')) el.classList.add(`task-${c}`); else el.classList.add(`note-${c}`);
-        updateStatus('saving');
-        fetch('/api/board/update', { method:'POST', headers:{'Content-Type':'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body:JSON.stringify({id:currentRightClickId, color:c}) }).then(() => updateStatus('saved'));
-    };
-    window.deleteCurrentItem = function() { if(!currentRightClickId)return; fetch(`/api/board/delete/${currentRightClickId}`, {method:'DELETE', headers:{'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}}).then(() => grid.removeWidget(document.querySelector(`.grid-stack-item[gs-id="${currentRightClickId}"]`))); };
+    window.saveTaskState = (elementInside) => { let widget = elementInside.closest('.grid-stack-item'); if(!widget) return; let itemId = widget.getAttribute('gs-id'); let taskBody = widget.querySelector('.task-body'); taskBody.querySelectorAll('input[type="checkbox"]').forEach(box => { if (box.checked) box.setAttribute('checked', 'checked'); else box.removeAttribute('checked'); }); saveContent(itemId, taskBody.innerHTML); }
+    window.saveTitle = function(id, el) { let newTitle = el.innerText.trim(); if (newTitle === '') { newTitle = 'Sem Título'; el.innerText = newTitle; } updateStatus('saving'); fetch('/api/board/update', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify({ id: id, title: newTitle }) }).then(() => updateStatus('saved')); };
+    window.handleTitleEnter = (e, el) => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } };
+    
+    // Atualização de Prazo em tempo real (Sem F5)
+    window.saveDate = function(id, input) { 
+        const newVal = input.value;
+        if(!newVal) return;
+        updateStatus('saving'); 
+        
+        const localItem = items.find(i => i.id === id);
+        if (localItem) {
+            localItem.due_date = newVal + 'T00:00:00';
+            const widget = input.closest('.grid-stack-item-content');
+            const container = widget.querySelector('.card-footer-custom');
+            if (container) container.innerHTML = getDueDateHtml(localItem);
+        }
 
+        fetch('/api/board/update', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify({ id: id, due_date: newVal }) }).then(() => { updateStatus('saved'); }); 
+    };
+
+    grid.on('change', function(e, changeItems) { if (!changeItems) return; updateStatus('saving'); const u = changeItems.map(i => ({ id: i.el.getAttribute('gs-id'), x: i.x, y: i.y, w: i.w, h: i.h })); fetch('/api/board/update', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body: JSON.stringify(u) }).then(() => updateStatus('saved')); });
+    
+    window.openContextMenu = function(e, id) { e.preventDefault(); e.stopPropagation(); currentRightClickId = id; const m = document.getElementById('contextMenu'); m.style.display='block'; let x = e.clientX; let y = e.clientY; if (x + 180 > window.innerWidth) x -= 180; if (y + 200 > window.innerHeight) y -= 200; m.style.left=x+'px'; m.style.top=y+'px'; };
+    document.addEventListener('click', (e) => { if(!e.target.closest('#contextMenu') && !e.target.closest('.fa-ellipsis-h')) document.getElementById('contextMenu').style.display='none'; if(!e.target.closest('.dropdown-menu') && !e.target.closest('.tool-btn')) { const sm = document.getElementById('settingsMenu'); if(sm) sm.classList.remove('show'); } });
+
+    window.changeColor = function(c) {
+        if (!currentRightClickId) return; document.getElementById('contextMenu').style.display = 'none';
+        const widgetContent = document.querySelector(`.grid-stack-item[gs-id="${currentRightClickId}"] .grid-stack-item-content`);
+        if (widgetContent) {
+            ['white', 'yellow', 'pink', 'green', 'blue'].forEach(col => widgetContent.classList.remove(`board-bg-${col}`));
+            widgetContent.classList.add(`board-bg-${c}`);
+        }
+        updateStatus('saving'); fetch('/api/board/update', { method:'POST', headers:{'Content-Type':'application/json', 'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}, body:JSON.stringify({id:currentRightClickId, color:c}) }).then(() => updateStatus('saved'));
+    };
+
+    window.deleteCurrentItem = function() { if(!currentRightClickId) return; document.getElementById('contextMenu').style.display = 'none'; fetch(`/api/board/delete/${currentRightClickId}`, {method:'DELETE', headers:{'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}}).then(() => { grid.removeWidget(document.querySelector(`.grid-stack-item[gs-id="${currentRightClickId}"]`)); if (grid.engine.nodes.length === 0) document.getElementById('emptyState').style.display = 'block'; }); };
+    window.compactBoard = () => { grid.compact(); document.getElementById('settingsMenu').classList.remove('show'); };
+    window.deleteAll = () => { Swal.fire({ title: 'Tem certeza?', text: "Isto apagará todo o quadro!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Sim, limpar tudo', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { document.querySelectorAll('.grid-stack-item').forEach(el => { fetch(`/api/board/delete/${el.getAttribute('gs-id')}`, {method:'DELETE', headers:{'X-CSRFToken': "{{ csrf_token() if csrf_token else '' }}"}}); grid.removeWidget(el); }); document.getElementById('emptyState').style.display = 'block'; } }); };
+    
+    window.toggleFab = function() { document.getElementById('fabMenu').classList.toggle('active'); const icon = document.querySelector('.fab-main i'); icon.className = icon.className.includes('plus') ? 'fas fa-times' : 'fas fa-plus'; };
+    window.addCard = function(type) { let color = type === 'task' ? 'white' : 'yellow'; submitItem({ item_type: type, content: '', color: color }); toggleFab(); };
+    window.uploadImage = function(input) { if (input.files[0]) { const fd = new FormData(); fd.append('file', input.files[0]); fd.append('item_type', 'image'); submitItem(fd, true); input.value = ''; toggleFab(); } };
+    
+    // --- SETUP MODAL DESENHO ---
+    document.addEventListener("DOMContentLoaded", function(){
+        const modalElement = document.getElementById('drawModal');
+        if (modalElement) {
+            const canvas = document.getElementById('drawingCanvas'); const ctx = canvas.getContext('2d'); let painting = false;
+            modalElement.addEventListener('shown.bs.modal', ()=> { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; ctx.lineCap='round'; ctx.lineWidth=3; ctx.strokeStyle='#000'; });
+            function startP(e){ painting=true; draw(e); } function endP(){ painting=false; ctx.beginPath(); }
+            function draw(e){ if(!painting)return; const r=canvas.getBoundingClientRect(); const x=(e.clientX||e.touches[0].clientX)-r.left; const y=(e.clientY||e.touches[0].clientY)-r.top; ctx.lineTo(x,y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x,y); }
+            canvas.addEventListener('mousedown', startP); canvas.addEventListener('mouseup', endP); canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', (e)=>{e.preventDefault();startP(e)}); canvas.addEventListener('touchend', endP); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e)});
+            window.clearCanvas = () => ctx.clearRect(0,0,canvas.width,canvas.height);
+            window.setPenColor = (btn, c) => { ctx.strokeStyle=c; document.querySelectorAll('.palette-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
+            window.saveDrawing = () => { canvas.toBlob(b=>{ const fd=new FormData(); fd.append('file',b,'draw.png'); fd.append('item_type','image'); fd.append('title', 'Rascunho'); submitItem(fd,true); bootstrap.Modal.getInstance(modalElement).hide(); setTimeout(clearCanvas,500); }); };
+        }
+    });
     {% endif %}
+    
+    // Funções de UI adicionais
+    window.toggleZenMode = function() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => console.log(err)); document.body.classList.add('zen-mode'); } else { if (document.exitFullscreen) document.exitFullscreen(); document.body.classList.remove('zen-mode'); } };
+    window.toggleSettings = () => { const menu = document.getElementById('settingsMenu'); if (menu) menu.classList.toggle('show'); };
+    window.setBackground = (cls) => { document.querySelector('.board-wrapper').className = `board-wrapper ${cls} ${isOwner ? 'is-owner' : ''}`; document.getElementById('settingsMenu').classList.remove('show'); };
+    window.filterBoard = function() { const term = document.getElementById('boardSearch').value.toLowerCase(); document.querySelectorAll('.grid-stack-item').forEach(w => { if (w.innerText.toLowerCase().includes(term)) { w.style.opacity = '1'; w.style.filter = 'none'; } else { w.style.opacity = '0.2'; w.style.filter = 'grayscale(100%)'; } }); };
+    window.exportBoard = () => { const board = document.querySelector('.board-wrapper'); updateStatus('saving'); html2canvas(board, { scale: 2, backgroundColor: window.getComputedStyle(board).backgroundColor }).then(c => { const l = document.createElement('a'); l.download = `Logbook-Mural-${new Date().toISOString().slice(0,10)}.png`; l.href = c.toDataURL(); l.click(); updateStatus('saved'); }); document.getElementById('settingsMenu').classList.remove('show'); };
 </script>
 {% endblock %}
