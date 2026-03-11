@@ -867,7 +867,7 @@ def generate_report():
     # --- 5. CHAMADA À API ---
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-pro') 
+        model = genai.GenerativeModel('gemini-2.5-flash') 
         
         response = model.generate_content(master_prompt, request_options={'timeout': 120})
         report_text = response.text
