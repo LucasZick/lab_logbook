@@ -19,6 +19,7 @@ scheduler = APScheduler()
 def create_app(config_class=Config, start_scheduler=True):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
     app.wsgi_app = ProxyFix(
         app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1

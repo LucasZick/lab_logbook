@@ -30,7 +30,7 @@
     {% endif %}
     
     <div style="text-align: center; margin: 35px 0;">
-        <a href="{{ url_for('main.reset_password', token=token, _external=True) }}" 
+        <a href="{{ base_url }}{{ url_for('main.reset_password', token=token) }}" 
            style="background-color: #01552b; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 10px rgba(1, 85, 43, 0.3);">
             Aceitar Convite &rarr;
         </a>
@@ -44,6 +44,8 @@
     
     <p style="font-size: 0.8em; color: #94a3b8; text-align: center;">
         Link de ativação: <br>
-        <a href="{{ url_for('main.reset_password', token=token, _external=True) }}" style="color: #01552b;">{{ url_for('main.reset_password', token=token, _external=True) }}</a>
+        <a href="{{ base_url }}{{ url_for('main.reset_password', token=token) }}" style="color: #01552b;">
+            {{ base_url }}{{ url_for('main.reset_password', token=token) }}
+        </a>
     </p>
 {% endblock %}

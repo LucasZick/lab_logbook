@@ -15,6 +15,8 @@ def send_weekly_report_job(test_mode=False, force_email=None, target_lab_id=None
     
     with app.app_context():
         print(f"--- Job Iniciado ({'TESTE' if test_mode else 'PROD'}) ---")
+
+        domain = "https://logbook-lab.com.br"
         
         # FILTRAGEM INTELIGENTE
         if target_lab_id:
@@ -116,23 +118,23 @@ def send_weekly_report_job(test_mode=False, force_email=None, target_lab_id=None
                 prefix = "[TESTE] " if test_mode else ""
                 subject = f"{prefix}[{lab.acronym}] Relatório Semanal IA - {period_str}"
                 
+                # ADICIONADO: base_url no template HTML
                 final_email_html = render_template('email/weekly_report_email.html', 
                                                    report_content=report_html, 
                                                    period=period_str,
-                                                   lab_name=lab.name)
+                                                   lab_name=lab.name,
+                                                   base_url=domain)
                 
-                # --- A CORREÇÃO ESTÁ AQUI ---
-                # Pegamos o sender oficial (Tupla: 'Logbook Lab', 'suporte@...')
-                sender_oficial = app.config.get('MAIL_DEFAULT_SENDER') 
-                
-                # Fallback de segurança caso a config falhe
-                if not sender_oficial:
-                    sender_oficial = ('Logbook Lab', 'suporte@logbook-lab.com.br')
+                # ADICIONADO: Link real no corpo de texto (Importante para evitar spam)
+                link_painel = f"{domain}/dashboard"
+                text_body_fixo = f"Relatório Semanal disponível. Acesse seu painel em: {link_painel}"
+
+                sender_oficial = app.config.get('MAIL_DEFAULT_SENDER') or ('Logbook Lab', 'suporte@logbook-lab.com.br')
 
                 send_email(subject,
-                           sender=sender_oficial,  # <--- MUDOU DE MAIL_USERNAME PARA ISSO
+                           sender=sender_oficial,
                            recipients=recipients,
-                           text_body="Relatório disponível em HTML.",
+                           text_body=text_body_fixo, # <--- MUDOU AQUI
                            html_body=final_email_html)
                 
                 print(f"  v Sucesso! Enviado para {recipients}")

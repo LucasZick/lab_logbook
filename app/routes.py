@@ -48,42 +48,38 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- FUNÇÃO MESTRE (O MOTOR) ---
 def save_image_file(form_picture, folder, output_size=None, max_width=None):
-    """
-    Função genérica para salvar, renomear e redimensionar imagens.
-    :param folder: Nome da subpasta dentro de static (ex: 'profile_pics')
-    :param output_size: Tupla (largura, altura) para thumbnail (corta/ajusta)
-    :param max_width: Largura máxima para redimensionamento proporcional (para capas)
-    """
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
     
-    # Define o caminho completo
+    # Opcional: Forçar a extensão para .jpg ajuda na compressão uniforme
+    picture_fn = random_hex + ".jpg" 
+    
     full_directory = os.path.join(current_app.root_path, 'static', folder)
-    
-    # Cria a pasta se não existir (Segurança)
     if not os.path.exists(full_directory):
         os.makedirs(full_directory)
         
     picture_path = os.path.join(full_directory, picture_fn)
 
-    # Abre a imagem
     i = Image.open(form_picture)
 
-    # Lógica de Redimensionamento
+    # Converte para RGB (necessário para salvar como JPEG e remover transparências pesadas)
+    if i.mode in ("RGBA", "P"):
+        i = i.convert("RGB")
+
+    # Lógica de Redimensionamento (Já estava ótima!)
     if max_width and i.width > max_width:
-        # Redimensiona mantendo a proporção (para Capas)
         ratio = max_width / float(i.width)
         new_height = int((float(i.height) * float(ratio)))
         i = i.resize((max_width, new_height), Image.Resampling.LANCZOS)
     elif output_size:
-        # Cria thumbnail quadrado (para Avatares/Logos)
         i.thumbnail(output_size)
 
-    # Salva
-    i.save(picture_path)
+    # --- AQUI ESTÁ A MÁGICA DA COMPRESSÃO ---
+    # optimize=True tenta reduzir o arquivo sem perder info
+    # quality=85 é o equilíbrio perfeito entre nitidez e peso (0 a 100)
+    i.save(picture_path, "JPEG", optimize=True, quality=85)
+    
     return picture_fn
 
 # --- FUNÇÕES ESPECÍFICAS (AGORA SÃO ATALHOS) ---

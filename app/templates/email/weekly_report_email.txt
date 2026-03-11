@@ -1,0 +1,12 @@
+ANÁLISE SEMANAL DE ATIVIDADES - LOGBOOK
+
+Período: {{ period }}
+
+Relatório:
+{{ report_content | striptags }}
+
+Para visualizar o relatório completo e os gráficos, acesse o seu painel:
+{{ base_url }}{{ url_for('main.dashboard') }}
+
+Atenciosamente,
+Equipe Logbook
