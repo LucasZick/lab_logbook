@@ -1029,14 +1029,25 @@ def gallery():
 @bp.route('/community')
 @login_required
 def community():
-    users = User.query.filter_by(laboratory_id=current_user.laboratory_id, is_active=True, is_approved=True).order_by(User.username).all()
+    # Trocamos filter_by por filter para poder usar o != (diferente)
+    users = User.query.filter(
+        User.laboratory_id == current_user.laboratory_id,
+        User.is_active == True,
+        User.is_approved == True,
+        User.role != 'admin'  # <-- MUDANÇA AQUI (Se no seu banco for 'superadmin', troque aqui)
+    ).order_by(User.username).all()
     
     for user in users:
         last_log = user.logs.order_by(LogEntry.entry_date.desc()).first()
         if last_log:
-            user.last_project_name = last_log.project; user.last_project_id = last_log.project_id; user.last_active_date = last_log.entry_date
+            user.last_project_name = last_log.project
+            user.last_project_id = last_log.project_id
+            user.last_active_date = last_log.entry_date
         else:
-            user.last_project_name = None; user.last_project_id = None; user.last_active_date = None
+            user.last_project_name = None
+            user.last_project_id = None
+            user.last_active_date = None
+            
     return render_template('community.html', title='Comunidade', users=users, today=date.today(), timedelta=timedelta)
 
 # --- DETALHES E QR CODE ---
