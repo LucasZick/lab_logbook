@@ -1,6 +1,7 @@
 from flask import render_template
 import google.generativeai as genai
 import markdown
+import time  # <--- ADICIONADO AQUI
 from datetime import date, timedelta
 from app import create_app
 from app.models import User, LogEntry, Laboratory
@@ -110,7 +111,10 @@ def send_weekly_report_job(test_mode=False, force_email=None, target_lab_id=None
                     continue
 
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-2.5-pro')
+                
+                # <--- MUDANÇA AQUI: Usando o modelo Flash (mais rápido e com maior limite)
+                model = genai.GenerativeModel('gemini-2.5-flash')
+                
                 response = model.generate_content(master_prompt)
                 report_html = markdown.markdown(response.text)
                 
@@ -134,10 +138,14 @@ def send_weekly_report_job(test_mode=False, force_email=None, target_lab_id=None
                 send_email(subject,
                            sender=sender_oficial,
                            recipients=recipients,
-                           text_body=text_body_fixo, # <--- MUDOU AQUI
+                           text_body=text_body_fixo, 
                            html_body=final_email_html)
                 
                 print(f"  v Sucesso! Enviado para {recipients}")
+
+                # <--- ADICIONADO AQUI: Pausa de 15 segundos para evitar estourar a cota gratuita
+                print("  zZz Pausando 15s para respeitar o limite de requisições do Google API...")
+                time.sleep(15)
 
             except Exception as e:
                 print(f"  x Erro ao processar {lab.acronym}: {e}")
