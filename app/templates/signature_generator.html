@@ -3,80 +3,106 @@
 {% block content %}
 <style>
     /* --- LAYOUT DO ESTÚDIO --- */
-    /* Nota: O fundo agora é herdado do base.html (branco com pontinhos) */
-
     .studio-grid {
-        display: grid; grid-template-columns: 320px 1fr; gap: 40px;
-        max-width: 1200px; margin: 3rem auto; padding: 0 20px;
+        display: grid; 
+        grid-template-columns: 350px 1fr; /* Esquerda fixa, Direita flexível */
+        gap: 40px;
+        max-width: 1300px; /* Aumentei um pouco para dar mais ar */
+        margin: 2rem auto; 
+        padding: 0 20px;
     }
 
-    /* 1. PAINEL DE CONTROLE (Esquerda - TEMA CLARO) */
+    /* 1. PAINEL DE CONTROLE (Esquerda) - AJUSTADO PARA SER MAIS COMPACTO */
     .control-panel {
-        background: #ffffff; /* Cartão branco */
-        border: 1px solid #e2e8f0; border-radius: 16px;
-        box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.07); /* Sombra suave */
-        padding: 25px; height: fit-content;
-        position: sticky; top: 20px;
+        background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;
+        box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.07);
+        padding: 20px; /* Reduzi padding interno */
+        height: fit-content; position: sticky; top: 20px;
     }
     
-    .panel-header {
-        border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px;
-    }
-    .panel-title { font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; color: #0f172a; /* Texto Escuro */ }
+    .panel-header { border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 15px; }
+    .panel-title { font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 8px; color: #0f172a; }
 
-    .form-group { margin-bottom: 18px; }
-    .form-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+    .form-group { margin-bottom: 15px; }
+    .form-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
     
-    /* Inputs adaptados para fundo claro */
     .studio-input {
         width: 100%; background: #f8fafc; border: 1px solid #cbd5e1;
-        color: #0f172a; padding: 12px 15px; border-radius: 8px; transition: 0.3s; font-size: 0.9rem;
+        color: #0f172a; padding: 10px 12px; border-radius: 8px; transition: 0.3s; font-size: 0.85rem;
     }
     .studio-input:focus { outline: none; border-color: #22c55e; background: #ffffff; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1); }
 
-    /* Switches */
     .toggle-row {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 10px 0; border-top: 1px solid #f1f5f9; margin-top: 5px;
+        padding: 8px 0; border-top: 1px solid #f1f5f9; margin-top: 5px;
     }
-    .toggle-label { font-size: 0.85rem; color: #334155; font-weight: 600; }
+    .toggle-label { font-size: 0.8rem; color: #334155; font-weight: 600; }
 
-    /* Botão Copiar (Verde vibrante) */
+    /* Botão Copiar */
     .btn-copy-glow {
         background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-        color: white; border: none; padding: 16px; width: 100%;
-        border-radius: 12px; font-weight: 700; margin-top: 25px;
-        box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3); transition: all 0.2s;
-        display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem;
+        color: white; border: none; padding: 14px; width: 100%;
+        border-radius: 10px; font-weight: 700; margin-top: 15px;
+        box-shadow: 0 4px 15px rgba(22, 163, 74, 0.2); transition: all 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem;
         cursor: pointer;
     }
-    .btn-copy-glow:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(22, 163, 74, 0.5); filter: brightness(1.05); }
-    .btn-copy-glow:active { transform: translateY(0); }
+    .btn-copy-glow:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(22, 163, 74, 0.4); filter: brightness(1.05); }
 
-    /* 2. ÁREA DE PREVIEW (Direita) */
-    .preview-area { display: flex; flex-direction: column; }
+    /* --- NOVA ÁREA DE INSTRUÇÕES (LARGURA TOTAL) --- */
+    .instructions-full-width {
+        max-width: 1300px; margin: 0 auto 3rem auto; padding: 0 20px;
+    }
+    .tutorial-box {
+        background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;
+        padding: 30px; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+    .tutorial-header { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;}
+    .tutorial-header h5 { font-weight: 800; color: #1e293b; margin: 0; }
+    .tutorial-icon { color: #22c55e; font-size: 1.5rem; }
+
+    .nav-pills .nav-link { padding: 10px 20px; font-size: 0.9rem; font-weight: 600; color: #64748b; border-radius: 8px; margin-right: 5px;}
+    .nav-pills .nav-link.active { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;}
     
-    /* Mockup de Email (Branco sobre fundo claro, com sombra para destacar) */
+    .tab-content { padding-top: 20px; }
+    
+    /* Grid para organizar os passos das instruções */
+    .instruction-steps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    .instruction-card {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 20px; display: flex; gap: 15px; align-items: flex-start;
+        transition: 0.2s;
+    }
+    .instruction-card:hover { border-color: #22c55e; background: #ffffff; transform: translateY(-2px); }
+    .step-number {
+        background: #d1fae5; color: #065f46; font-weight: 800; font-size: 0.85rem;
+        width: 28px; height: 28px; border-radius: 50%; display: flex;
+        align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+    }
+    .step-content { flex: 1; }
+    .step-title { font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;}
+    .step-desc { font-size: 0.8rem; color: #64748b; line-height: 1.5; margin: 0; }
+
+    /* --- ÁREA DE PREVIEW (Direita) --- */
+    .preview-area { display: flex; flex-direction: column; }
     .email-mockup {
         background: #ffffff; border-radius: 12px; overflow: hidden;
-        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e2e8f0;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;
         animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .mockup-header {
-        background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0;
-        display: flex; gap: 8px; align-items: center;
-    }
+    .mockup-header { background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; display: flex; gap: 8px; align-items: center; }
     .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .mockup-body { padding: 50px; background: white; min-height: 300px; color: #333; }
+    .mockup-body { padding: 40px; background: white; min-height: 300px; color: #333; }
 
-    /* Wrapper da Assinatura (Onde se copia) */
     #signature-wrapper {
         border: 2px dashed #e2e8f0; border-radius: 12px; padding: 25px;
         transition: all 0.3s; position: relative; margin-top: 20px; background: #fff;
     }
     #signature-wrapper:hover { border-color: #22c55e; background: #f0fdf4; }
-    
     .copy-hint {
         position: absolute; top: -10px; right: 20px;
         background: #22c55e; color: #fff; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
@@ -85,20 +111,25 @@
     #signature-wrapper:hover .copy-hint { opacity: 1; transform: translateY(0); }
 
     @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 992px) { .studio-grid { grid-template-columns: 1fr; } }
+    
+    /* Responsividade */
+    @media (max-width: 992px) { 
+        .studio-grid { grid-template-columns: 1fr; }
+        .control-panel { position: static; margin-bottom: 30px; width: 100%;}
+    }
 </style>
 
-<div class="container py-5">
+<div class="container-fluid py-5 bg-light">
     <div class="d-flex align-items-center justify-content-center mb-5 flex-column text-center">
-        <h1 class="fw-bold display-5 mb-2 text-dark">Estúdio de Assinatura</h1>
-        <p class="text-muted" style="max-width: 500px;">Crie uma identidade profissional padronizada para os seus e-mails. Edite os dados à esquerda e veja o resultado em tempo real.</p>
+        <h1 class="fw-bold display-6 mb-2 text-dark">Estúdio de Assinatura</h1>
+        <p class="text-muted" style="max-width: 500px; font-size: 1rem;">Gere uma identidade profissional padronizada em segundos. Edite, copie e cole no seu e-mail.</p>
     </div>
 
     <div class="studio-grid">
         
         <div class="control-panel">
             <div class="panel-header">
-                <div class="panel-title"><i class="fas fa-sliders-h text-success"></i> Editar Dados</div>
+                <div class="panel-title"><i class="fas fa-sliders-h text-success"></i> Configurar Dados</div>
             </div>
             
             <div class="form-group">
@@ -146,43 +177,34 @@
                 <div class="mockup-body">
                     <p style="color: #64748b; font-family: sans-serif; margin-bottom: 40px; font-size: 15px;">
                         Prezados colegas,<br><br>
-                        Gostaria de confirmar a reunião de alinhamento para a próxima sexta-feira.<br>
-                        Segue em anexo o relatório preliminar.<br><br>
+                        Confirmo o envio do relatório final referente ao projeto do mês passado.<br>
+                        Aguardo o feedback de vocês.<br><br>
                         Atenciosamente,
                     </p>
 
                     <div id="signature-wrapper">
                         <div class="copy-hint">Pronto para Copiar</div>
                         
-                        <table cellpadding="0" cellspacing="0" border="0" style="font-family: 'Arial', sans-serif; line-height: 1.3; color: #333; width: 100%; max-width: 600px;">
+                        <table id="signature-table" cellpadding="0" cellspacing="0" border="0" style="font-family: 'Arial', sans-serif; line-height: 1.3; color: #333; width: 100%; max-width: 600px; text-align: left;">
                             <tr>
                                 <td valign="top" style="width: 80px; padding-right: 20px;">
                                     <img src="{{ profile_img }}" alt="Foto" width="80" height="80" style="border-radius: 50%; display: block; object-fit: cover; border: 1px solid #e2e8f0;">
                                 </td>
                                 
                                 <td valign="top" style="border-left: 2px solid #22c55e; padding-left: 20px;">
-                                    
-                                    <div id="sigNameDisplay" style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
-                                        {{ user.username }}
-                                    </div>
-                                    
-                                    <div id="sigRoleDisplay" style="font-size: 11px; text-transform: uppercase; color: #15803d; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 2px;">
-                                        {{ user.role|capitalize }}
-                                    </div>
-                                    
-                                    <div id="sigDeptDisplay" style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
-                                        {{ lab.acronym }} - {{ lab.name }}
-                                    </div>
+                                    <div id="sigNameDisplay" style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">{{ user.username }}</div>
+                                    <div id="sigRoleDisplay" style="font-size: 11px; text-transform: uppercase; color: #15803d; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 2px;">{{ user.role|capitalize }}</div>
+                                    <div id="sigDeptDisplay" style="font-size: 12px; color: #64748b; margin-bottom: 12px;">{{ lab.acronym }} - {{ lab.name }}</div>
 
-                                    <table cellpadding="0" cellspacing="0" border="0" id="sigLinkRow" style="display: block;">
-                                        <tr>
-                                            <td style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 4px 10px;">
-                                                <a href="{{ public_link }}" style="text-decoration: none; color: #166534; font-size: 11px; font-weight: bold; display: block;">
-                                                    Aceder ao Portfólio &rarr;
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                    <div id="sigLinkRow" style="display: block;">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 4px 10px;">
+                                                    <a href="{{ public_link }}" style="text-decoration: none; color: #166534; font-size: 11px; font-weight: bold; display: block;">Acessar o Portfólio &rarr;</a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
                                 </td>
                                 
                                 <td valign="top" align="right" style="padding-left: 15px;">
@@ -205,7 +227,93 @@
                                 </td>
                             </tr>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions-full-width mt-4">
+        <div class="tutorial-box">
+            <div class="tutorial-header">
+                <i class="fas fa-question-circle tutorial-icon"></i>
+                <h5>Como utilizar a assinatura no seu e-mail?</h5>
+            </div>
+            
+            <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pills-gmail" type="button" role="tab"><i class="fab fa-gmail me-2"></i>Gmail</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-outlook" type="button" role="tab"><i class="fab fa-windows me-2"></i>Outlook (Web/App)</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="pills-gmail" role="tabpanel">
+                    <div class="instruction-steps-grid">
+                        <div class="instruction-card">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="far fa-copy"></i> Copiar</div>
+                                <p class="step-desc">Clique no botão verde <strong>"Copiar Assinatura"</strong> no painel de controle acima.</p>
+                            </div>
                         </div>
+                        <div class="instruction-card">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="fas fa-cog"></i> Configurações</div>
+                                <p class="step-desc">No Gmail, clique na engrenagem superior e selecione <strong>"Ver todas as configurações"</strong>.</p>
+                            </div>
+                        </div>
+                        <div class="instruction-card">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="fas fa-pen-nib"></i> Criar Nova</div>
+                                <p class="step-desc">Role a aba 'Geral' até a seção <strong>Assinatura</strong> e clique em <strong>"Criar nova"</strong>.</p>
+                            </div>
+                        </div>
+                        <div class="instruction-card">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="fas fa-paste"></i> Colar e Salvar</div>
+                                <p class="step-desc">Cole (Ctrl+V) na caixa de texto. Role até o final da página e clique em <strong>"Salvar Alterações"</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="pills-outlook" role="tabpanel">
+                    <div class="instruction-steps-grid">
+                        <div class="instruction-card">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="far fa-copy"></i> Copiar</div>
+                                <p class="step-desc">Clique no botão verde <strong>"Copiar Assinatura"</strong> no painel de controle acima.</p>
+                            </div>
+                        </div>
+                        <div class="instruction-card">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="fas fa-envelope"></i> Nova Mensagem</div>
+                                <p class="step-desc">No Outlook, inicie uma <strong>"Nova Mensagem"</strong> de e-mail.</p>
+                            </div>
+                        </div>
+                        <div class="instruction-card">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="fasPenNib"></i> Assinaturas</div>
+                                <p class="step-desc">Na barra de ferramentas superior, clique em <strong>Assinatura</strong> e escolha <strong>"Assinaturas..."</strong>.</p>
+                            </div>
+                        </div>
+                        <div class="instruction-card">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-title"><i class="fas fa-paste"></i> Colar e OK</div>
+                                <p class="step-desc">Clique em <strong>"Novo"</strong>, dê um nome, cole (Ctrl+V) no campo de texto e clique em <strong>OK</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,64 +323,51 @@
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
   <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert">
     <div class="d-flex">
-      <div class="toast-body fw-bold"><i class="fas fa-check-circle me-2"></i> Copiado! Cole no seu e-mail.</div>
+      <div class="toast-body fw-bold"><i class="fas fa-check-circle me-2"></i> Copiado! Agora é só colar nas configurações do seu e-mail.</div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>
   </div>
 </div>
 
 <script>
-    // Função unificada de atualização
     function updateSig() {
-        // Inputs
-        const name = document.getElementById('inputName').value;
-        const role = document.getElementById('inputRole').value;
-        const dept = document.getElementById('inputDept').value;
-        const showLink = document.getElementById('checkShowLink').checked;
-        const showAffil = document.getElementById('checkShowAffil').checked;
-
-        // Updates Texto
-        document.getElementById('sigNameDisplay').innerText = name;
-        document.getElementById('sigRoleDisplay').innerText = role;
-        document.getElementById('sigDeptDisplay').innerText = dept;
-
-        // Updates Visibilidade
-        document.getElementById('sigLinkRow').style.display = showLink ? 'block' : 'none';
+        document.getElementById('sigNameDisplay').innerText = document.getElementById('inputName').value;
+        document.getElementById('sigRoleDisplay').innerText = document.getElementById('inputRole').value;
+        document.getElementById('sigDeptDisplay').innerText = document.getElementById('inputDept').value;
+        document.getElementById('sigLinkRow').style.display = document.getElementById('checkShowLink').checked ? 'block' : 'none';
         
-        // Update Logo Universidade
         const affilRow = document.getElementById('sigAffilRow');
-        if (affilRow) affilRow.style.display = showAffil ? 'table-row' : 'none';
+        if (affilRow) {
+            affilRow.style.display = document.getElementById('checkShowAffil').checked ? 'table-row' : 'none';
+        }
     }
 
-    // Função Copiar
     function copySignature() {
-        const container = document.querySelector('#signature-wrapper table');
-        
-        // Seleção precisa
+        const signatureTable = document.getElementById('signature-table');
         const range = document.createRange();
         const selection = window.getSelection();
-        range.selectNode(container);
         selection.removeAllRanges();
+        range.selectNode(signatureTable);
         selection.addRange(range);
         
         try {
             document.execCommand('copy');
-            
-            // Feedback
             const btn = document.getElementById('btnCopy');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
-            btn.style.background = '#059669'; // Emerald 600
+            btn.innerHTML = '<i class="fas fa-check"></i> Copiado com sucesso!';
+            btn.style.background = '#059669'; 
             
-            var toast = new bootstrap.Toast(document.getElementById('liveToast'));
+            var toastEl = document.getElementById('liveToast');
+            var toast = new bootstrap.Toast(toastEl, { delay: 4000 });
             toast.show();
 
             setTimeout(() => {
                 btn.innerHTML = originalHTML;
                 btn.style.background = '';
-            }, 2000);
-        } catch (e) {
-            alert('Não foi possível copiar automaticamente.');
+            }, 2500);
+            
+        } catch (err) {
+            alert('Erro ao copiar. Por favor, selecione a assinatura manualmente e aperte Ctrl+C.');
         }
         selection.removeAllRanges();
     }

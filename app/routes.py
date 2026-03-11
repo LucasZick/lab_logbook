@@ -1433,26 +1433,26 @@ def public_lab(lab_id):
 @bp.route('/tools/signature')
 @login_required
 def generate_signature():
-    # Precisamos de URLs absolutas (http://...) para as imagens funcionarem no Gmail
-    # Nota: Em localhost, as imagens podem não aparecer para quem recebe o email, 
-    # mas funcionarão perfeitamente quando você subir para o servidor real.
-    
     user = current_user
     lab = user.laboratory
     
-    # URL da foto de perfil
-    profile_img = url_for('static', filename='profile_pics/' + user.image_file, _external=True)
+    # --- A NOSSA VACINA CONTRA O IP ANTIGO ---
+    # Defina o seu domínio real (sem barra no final)
+    domain = "https://logbook-lab.com.br"
+    
+    # URL da foto de perfil (Concatenando manualmente)
+    profile_img = f"{domain}{url_for('static', filename='profile_pics/' + user.image_file)}"
     
     # URL do logo do lab
-    lab_logo = url_for('static', filename='lab_logos/' + lab.image_file, _external=True)
+    lab_logo = f"{domain}{url_for('static', filename='lab_logos/' + lab.image_file)}"
     
     # URL do logo da instituição (se houver)
     aff_logo = None
     if lab.affiliation_logo:
-        aff_logo = url_for('static', filename='lab_logos/' + lab.affiliation_logo, _external=True)
+        aff_logo = f"{domain}{url_for('static', filename='lab_logos/' + lab.affiliation_logo)}"
         
     # Link para o perfil público do aluno
-    public_link = url_for('main.user_profile', username=user.username, _external=True)
+    public_link = f"{domain}{url_for('main.user_profile', username=user.username)}"
 
     return render_template('signature_generator.html', 
                            user=user, 
