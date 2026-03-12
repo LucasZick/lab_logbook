@@ -938,14 +938,26 @@ def test_report_specific(lab_id):
         
     return redirect(url_for('main.admin_dashboard'))
 
+from flask import abort # Não esqueça de importar o abort no topo do arquivo se já não tiver!
+import itertools # Só garantindo que o itertools tá aí pro seu groupby
+
 @bp.route('/view_logs/<int:student_id>')
 @login_required
-@professor_required
+# MUDANÇA 1: Apagamos o @professor_required daqui!
 def view_logs(student_id):
-    # --- SEGURANÇA: Busca estudante apenas se pertencer ao mesmo lab do professor ---
+    
+    # --- NOVA SEGURANÇA INTELIGENTE ---
+    # Se quem clicou for um bolsista, ele SÓ PODE ver o próprio ID. 
+    # Se tentar espiar o colega, toma bloqueio na cara.
+    if current_user.role == 'bolsista' and current_user.id != student_id:
+        abort(403)
+        
+    # --- SEGURANÇA DO LABORATÓRIO (Mantida) ---
+    # Busca estudante apenas se pertencer ao mesmo lab de quem está acessando
     student = User.query.filter_by(id=student_id, laboratory_id=current_user.laboratory_id).first_or_404()
     
-    if student.role != 'bolsista': abort(404)
+    if student.role != 'bolsista': 
+        abort(404)
     
     target_year = request.args.get('ano', type=int)
     target_month = request.args.get('mes', type=int)
@@ -953,9 +965,11 @@ def view_logs(student_id):
     all_logs = student.logs.order_by(LogEntry.entry_date.desc()).all()
     
     available_months = []
+    # Nota: certifique-se que o dicionário 'meses' está definido no topo do arquivo ou passe ele aqui
     for key, group in itertools.groupby(all_logs, key=lambda log: (log.entry_date.year, log.entry_date.month)):
         year, month = key
-        month_name = f"{meses[month]} de {year}"
+        # Se 'meses' for um dicionário global (ex: {1: 'Janeiro', ...})
+        month_name = f"{meses[month]} de {year}" 
         available_months.append({'year': year, 'month': month, 'name': month_name})
         
     if target_year and target_month:
@@ -969,7 +983,12 @@ def view_logs(student_id):
     else:
         display_logs, current_month_name = [], "Nenhum registro encontrado"
         
-    return render_template('view_logs.html', title=f"Diário de {student.username}", student=student, logs_to_display=display_logs, available_months=available_months, current_month_name=current_month_name)
+    return render_template('view_logs.html', 
+                           title=f"Diário de {student.username}", 
+                           student=student, 
+                           logs_to_display=display_logs, 
+                           available_months=available_months, 
+                           current_month_name=current_month_name)
 
 # --- GESTÃO DE PROJETOS ---
 @bp.route('/projects/new', methods=['GET', 'POST'])
